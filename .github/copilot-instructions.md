@@ -1,3 +1,16 @@
+<!--
+  ⚠️  AUTO-GENERATED FILE — DO NOT EDIT DIRECTLY.
+
+  본 파일은 다음 정본에서 자동 생성됩니다:
+    - AGENTS.md
+
+  수정 흐름:
+    1. 위 정본 파일 수정
+    2. `npm run sync:docs` 실행
+    3. 정본 + 미러를 한 PR 에 함께 commit
+
+  CI 의 `sync:docs:check` 가 정본과 미러 사이의 drift 를 차단합니다.
+-->
 # AGENTS.md — Stampy 에이전트 공통 계약
 
 > **Scope** — 어떤 AI 에이전트(Cursor, Codex, Continue, Claude, …)가 와도 가장 먼저 읽어야 할 벤더 중립 계약. 프로젝트의 도메인 invariants·코드 영역 소유권·협업 규약을 정의한다.

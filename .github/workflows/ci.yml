@@ -37,6 +37,9 @@ jobs:
       - name: Prettier
         run: npm run format:check
 
+      - name: Mirror docs (sync drift check)
+        run: npm run sync:docs:check
+
   commitlint:
     name: Commit message lint
     runs-on: ubuntu-latest

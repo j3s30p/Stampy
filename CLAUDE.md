@@ -2,6 +2,7 @@
 
 > **Scope** — Claude Code / Claude Agent SDK 전용 확장. `AGENTS.md` 를 먼저 읽었다는 전제 위에 Claude 고유 도구·skill 호출·기억 사용 패턴만 얹는다.
 > **Non-Goals** — 다른 벤더 에이전트 지침, 도메인 알고리즘 자체(`.ai-skills/`), 인간용 진입점(`README.md`).
+> **이 파일은 정본 + Claude Code 전용**. 다른 벤더용 미러는 만들지 않는다 (Claude Code 가 직접 읽음). 본 파일을 수정하면 변경된 결정·정책이 다른 정본(`AGENTS.md`·`.ai-skills/`)과 충돌하지 않는지 같은 PR 에서 확인.
 
 ## Inheritance
 
