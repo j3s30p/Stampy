@@ -7,6 +7,7 @@
 
 | Skill                                                      | Triggers (요약)                             | Owner paths                                               | 채움 단계 |
 | ---------------------------------------------------------- | ------------------------------------------- | --------------------------------------------------------- | --------- |
+| [`git-workflow.md`](./git-workflow.md)                     | git/gh 명령 (commit·push·PR·branch·merge)   | 전 영역                                                   | Stage 3   |
 | [`location-verification.md`](./location-verification.md)   | 거리 계산, 도장 인증, GPS 권한              | `src/core/location/`, `src/features/stamp/`               | Stage 2   |
 | [`tour-api-normalization.md`](./tour-api-normalization.md) | TourAPI 호출, 응답 DTO → 도메인 매핑        | `src/features/tour/api/`, `src/features/tour/model/`      | Stage 2   |
 | [`naming-conventions.md`](./naming-conventions.md)         | 새 파일·심볼·이벤트 명명                    | 전 영역                                                   | Stage 2   |
