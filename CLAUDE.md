@@ -1,0 +1,48 @@
+# CLAUDE.md — Stampy Claude 전용 운영 지침
+
+> **Scope** — Claude Code / Claude Agent SDK 전용 확장. `AGENTS.md` 를 먼저 읽었다는 전제 위에 Claude 고유 도구·skill 호출·기억 사용 패턴만 얹는다.
+> **Non-Goals** — 다른 벤더 에이전트 지침, 도메인 알고리즘 자체(`.ai-skills/`), 인간용 진입점(`README.md`).
+
+## Inheritance
+
+`AGENTS.md` 의 invariants / file ownership / branch / quality gate 는 그대로 적용된다. 본 문서와 충돌 시 **`AGENTS.md` 가 우선**한다.
+
+## Skill 호출 우선순위
+
+작업 종류 → 먼저 읽을 skill:
+
+| 작업                   | Skill                                  |
+| ---------------------- | -------------------------------------- |
+| 거리/반경/도장 인증    | `.ai-skills/location-verification.md`  |
+| TourAPI 호출·응답 처리 | `.ai-skills/tour-api-normalization.md` |
+| 새 파일·심볼 이름 결정 | `.ai-skills/naming-conventions.md`     |
+| WebView ↔ RN 메시지    | `.ai-skills/kakao-webview-bridge.md`   |
+| ESLint/tsc 에러 해석   | `.ai-skills/static-analysis-guide.md`  |
+
+해당 작업에 들어가기 **직전** 에 매칭되는 skill 을 읽는다. 미리 전체를 로드하지 않는다.
+
+## Background 읽기 시점
+
+새 영역(`features/stamp`, `features/map`, `features/tour`, `core/*`)을 처음 만질 때 `.ai-background/` 의 해당 주제 문서 1개를 읽고 시작한다. 작업 중에는 재참조하지 않는다.
+
+## Tool usage (Claude Code)
+
+- 파일 편집은 Edit/Write 직접 사용. `sed`/`awk` via Bash 금지.
+- 셸은 패키지 설치·실행에만 Bash. `cd <repo>` 금지 (이미 working dir 이 루트).
+- 독립 호출은 한 메시지에 묶어 병렬화.
+- `repo/` 폴더는 공모전 기획 자료. 코드 작업 중 자동 인덱싱 대상에서 제외.
+
+## Memory hooks
+
+다음을 감지하면 `memory/` 에 즉시 저장:
+
+- 사용자가 "이렇게 하지 마" / "이 방향이 맞다" → `feedback`
+- TourAPI / Kakao 에서 문서에 없는 동작 발견 → `reference`
+- 공모전 일정·심사 기준·팀 결정 → `project`
+- 사용자의 역할·숙련도·선호 → `user`
+
+저장 전 [auto memory 가이드](#) 의 “저장 금지 항목” 체크리스트를 통과해야 한다 (코드 패턴·git 히스토리·일회성 디버깅은 저장하지 않는다).
+
+## Stage 진행 규칙 (하네스 부트스트랩 중)
+
+Stage 0 ~ 6 부트스트랩이 끝나기 전에는 **각 stage 종료 시 사용자 확인을 받고** 다음으로 진행한다. 자율로 다음 stage 로 건너뛰지 않는다.

@@ -1,0 +1,27 @@
+---
+name: tour-api-normalization
+description: 한국관광공사 TourAPI(KorService2) 응답을 진입 즉시 도메인 모델(TourSpot)로 정규화한다. raw DTO 는 features/tour/api 경계 밖으로 흘러나가지 않는다.
+triggers:
+  - TourAPI 엔드포인트 추가
+  - 응답 필드 매핑 / DTO 변환
+  - contentTypeId · areaCode · sigunguCode 등 코드 해석
+  - 좌표(mapx, mapy) → Coordinates 변환
+owner-paths:
+  - src/features/tour/api/Http*Repository.ts
+  - src/features/tour/model/
+phase-1-owner: Backend teammate (real impl). Frontend 은 contract(TourSpot, TourRepository interface)만 정의.
+status: stub
+filled-in-stage: 2
+---
+
+## Intent
+
+TourAPI 응답은 snake_case 와 문자열 숫자(`"37.5665"`)가 섞여 있고 `null`/빈 문자열/빈 객체 표현이 일관적이지 않다. 모든 정규화를 `features/tour/api/` 한 곳에 가두고 도메인 레이어는 `TourSpot` 만 본다.
+
+## To be filled in Stage 2
+
+- 엔드포인트 카탈로그 (areaBasedList2, locationBasedList2, detailCommon2, …)
+- DTO → `TourSpot` mapper 규약 (필드별 trim·parseFloat·`asLatitude` 적용 위치)
+- `contentTypeId` 코드표 (관광지=12, 문화시설=14, 행사=15, …) 와 enum 매핑
+- 페이지네이션·총건수 처리, 에러 응답(`resultCode != "0000"`) 매핑
+- 테스트 픽스처: 실제 응답 샘플 1~2개를 `src/features/tour/api/__fixtures__/` 에 박제
