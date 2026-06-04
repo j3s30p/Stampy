@@ -11,13 +11,15 @@
 
 작업 종류 → 먼저 읽을 skill:
 
-| 작업                   | Skill                                  |
-| ---------------------- | -------------------------------------- |
-| 거리/반경/도장 인증    | `.ai-skills/location-verification.md`  |
-| TourAPI 호출·응답 처리 | `.ai-skills/tour-api-normalization.md` |
-| 새 파일·심볼 이름 결정 | `.ai-skills/naming-conventions.md`     |
-| WebView ↔ RN 메시지    | `.ai-skills/kakao-webview-bridge.md`   |
-| ESLint/tsc 에러 해석   | `.ai-skills/static-analysis-guide.md`  |
+| 작업                                                    | Skill                                  |
+| ------------------------------------------------------- | -------------------------------------- |
+| **git/gh 명령 작성 직전** (commit·push·PR·branch·merge) | `.ai-skills/git-workflow.md`           |
+| 거리/반경/도장 인증                                     | `.ai-skills/location-verification.md`  |
+| TourAPI 호출·응답 처리                                  | `.ai-skills/tour-api-normalization.md` |
+| 새 파일·심볼 이름 결정                                  | `.ai-skills/naming-conventions.md`     |
+| WebView ↔ RN 메시지                                     | `.ai-skills/kakao-webview-bridge.md`   |
+| Mock fixture / Mock repository / DI swap                | `.ai-skills/mock-data-strategy.md`     |
+| ESLint/tsc 에러 해석                                    | `.ai-skills/static-analysis-guide.md`  |
 
 해당 작업에 들어가기 **직전** 에 매칭되는 skill 을 읽는다. 미리 전체를 로드하지 않는다.
 
