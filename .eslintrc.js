@@ -14,6 +14,9 @@ module.exports = {
     '/web-build/*',
     '/repo/*',
     'expo-env.d.ts',
+    // Auto-generated mirror docs (sync-harness-docs.mjs). 정본 수정 후 npm run sync:docs.
+    '/.cursor/**',
+    '/.github/copilot-instructions.md',
   ],
   settings: {
     'import/resolver': {

@@ -7,3 +7,8 @@ android/
 repo/
 package-lock.json
 expo-env.d.ts
+
+# Auto-generated mirror docs (sync-harness-docs.mjs).
+# 정본 수정 → npm run sync:docs → mirror 재생성.
+.cursor/
+.github/copilot-instructions.md

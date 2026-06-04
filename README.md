@@ -38,6 +38,8 @@ npm start
 
 ## Documentation map
 
+### 정본 (편집 대상)
+
 | Audience                     | Document              | Loaded           |
 | ---------------------------- | --------------------- | ---------------- |
 | 사람                         | `README.md` (이 문서) | GitHub front     |
@@ -45,3 +47,14 @@ npm start
 | Claude Code / SDK 전용 확장  | `CLAUDE.md`           | 항상             |
 | 도메인 규칙 (호출형)         | `.ai-skills/*.md`     | 필요 시          |
 | 결정 배경 (그라운딩)         | `.ai-background/*.md` | 영역 진입 시 1회 |
+
+### 미러 (자동 생성, 직접 편집 금지)
+
+`npm run sync:docs` 가 정본에서 만들어내는 벤더별 파일. CI 의 `sync:docs:check` 가 drift 차단.
+
+| Tool               | File                                                                     |
+| ------------------ | ------------------------------------------------------------------------ |
+| GitHub Copilot     | `.github/copilot-instructions.md` ← `AGENTS.md`                          |
+| Cursor (always)    | `.cursor/rules/01-agents.mdc` ← `AGENTS.md`                              |
+| Cursor (on-demand) | `.cursor/rules/skill-<name>.mdc` ← `.ai-skills/<name>.md` (각 skill 1:1) |
+| Codex CLI          | `AGENTS.md` (정본 그대로 읽음, 미러 불필요)                              |

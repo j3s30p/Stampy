@@ -14,8 +14,10 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "quality:fast": "npm-run-all -s typecheck lint format:check",
-    "quality:full": "npm-run-all -s typecheck lint format:check",
+    "quality:fast": "npm-run-all -s typecheck lint format:check sync:docs:check",
+    "quality:full": "npm-run-all -s typecheck lint format:check sync:docs:check",
+    "sync:docs": "node scripts/sync-harness-docs.mjs",
+    "sync:docs:check": "node scripts/sync-harness-docs.mjs --check",
     "prepare": "husky"
   },
   "dependencies": {
