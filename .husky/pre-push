@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+# main / master 로 직접 push 차단.
+# branch protection 도 거부하지만 (admin override 가능성 + AI 실수 방지를 위해) 로컬 한 단계 더.
+# 우회 필요 시(예: 진짜 hotfix) `git push --no-verify` — 하지만 AGENTS.md 규약상 PR 만들 것.
+
+protected_remote_refs="refs/heads/main refs/heads/master"
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  for ref in $protected_remote_refs; do
+    if [ "$remote_ref" = "$ref" ]; then
+      echo ""
+      echo "❌ Direct push to $remote_ref is forbidden."
+      echo ""
+      echo "   AGENTS.md 규약: main 은 PR 을 통해서만 변경된다."
+      echo "   브랜치 만들고 PR 올리세요:"
+      echo "     git checkout -b <area>/<slug>"
+      echo "     git push -u origin <area>/<slug>"
+      echo "     gh pr create"
+      echo ""
+      exit 1
+    fi
+  done
+done
+
+exit 0

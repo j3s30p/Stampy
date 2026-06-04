@@ -32,6 +32,35 @@
 - 독립 호출은 한 메시지에 묶어 병렬화.
 - `repo/` 폴더는 공모전 기획 자료. 코드 작업 중 자동 인덱싱 대상에서 제외.
 
+## 🚫 절대 금지 — 머지 / main 직접 변경
+
+본 프로젝트는 솔로 + 팀원 1 단계라 branch protection 의 `required_approving_review_count` 가 0 이다. 이 의미는 _기술적으로는_ AI 가 만든 PR 을 AI 가 그대로 머지할 수 있다는 뜻이다. **그러나 그렇게 하면 안 된다.**
+
+다음 명령은 어떠한 경우에도 실행하지 않는다:
+
+| 금지 명령                                                                          | 이유                                 |
+| ---------------------------------------------------------------------------------- | ------------------------------------ |
+| `gh pr merge`, `gh pr merge --auto`                                                | 인간 리뷰 없이 main 진입             |
+| `git push origin main`, `git push origin master`                                   | PR 절차 우회 (pre-push hook 도 차단) |
+| `git push --force` (어떤 브랜치든)                                                 | 히스토리 파괴, 리뷰 무력화           |
+| `git push --no-verify`, `git commit --no-verify`                                   | hook 우회 = 가드레일 무력화          |
+| `git merge origin/main` 후 push, `git rebase -i` 후 force-push                     | 같은 효과                            |
+| branch protection / repo 설정 변경 (`gh api -X PUT/PATCH .../protection`, 룰 완화) | 안전망 자체를 약화                   |
+
+**허용되는 흐름** (이것만):
+
+1. 작업 브랜치 생성: `git checkout -b <area>/<slug>`
+2. 변경·commit (hook 자동 적용)
+3. `git push -u origin <area>/<slug>` (작업 브랜치만)
+4. `gh pr create` 로 PR 생성 + 본문 작성
+5. **PR URL 을 사용자에게 보고하고 멈춘다.** 머지는 사용자가 웹 UI 에서 클릭.
+
+PR 후 CI 결과를 사용자에게 알려주거나, 리뷰 코멘트에 답하는 것은 OK. 머지 트리거만 금지.
+
+### 예외 절차
+
+가드레일 자체를 만지는 PR (예: branch protection 튜닝) 도 위 흐름을 동일하게 따른다. 자체 PR 을 자체 머지로 우회하지 않는다. 사용자 손이 거쳐야 한다.
+
 ## Memory hooks
 
 다음을 감지하면 `memory/` 에 즉시 저장:
