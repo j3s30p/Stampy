@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Stampy",
+    "slug": "stampy",
+    "version": "0.0.1",
+    "scheme": "stampy",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.stampy.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "도장 수집 인증에 현재 위치가 필요합니다."
+      }
+    },
+    "android": {
+      "package": "com.stampy.app",
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "도장 수집 인증에 현재 위치가 필요합니다."
+        }
+      ],
+      "expo-asset",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    }
+  }
+}
