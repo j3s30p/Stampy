@@ -1,4 +1,4 @@
-// 변경 시 .ai-skills/static-analysis-guide.md 의 "Format" 섹션 동기화 필수.
+// 변경 시 skills/static-analysis-guide/SKILL.md 의 "Format" 섹션 동기화 필수.
 module.exports = {
   semi: true,
   singleQuote: true,

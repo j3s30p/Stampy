@@ -64,7 +64,7 @@ module.exports = {
           {
             group: ['@shared/mocks', '@shared/mocks/*', '**/shared/mocks', '**/shared/mocks/*'],
             message:
-              '@shared/mocks 는 Mock*Repository 에서만 import 허용. AGENTS.md invariant #5 참조.',
+              '@shared/mocks 는 Mock*Repository 에서만 import 허용. AGENTS.md File ownership 참조.',
           },
         ],
       },

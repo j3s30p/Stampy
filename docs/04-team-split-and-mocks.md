@@ -44,7 +44,7 @@ export class HttpTourRepository implements TourRepository {
 
 - 모든 fixture 는 `src/shared/mocks/` 한 곳. feature 별로 흩지 않는다 (cross-feature 시나리오를 한 곳에서 조립할 수 있어야 한다).
 - 파일 컨벤션: `<도메인>.fixture.ts` — 예: `tourSpots.fixture.ts`, `stamps.fixture.ts`.
-- Production 코드는 `@shared/mocks/*` import 금지. Mock repository (`Mock*Repository`) 만 import 허용. Stage 3 ESLint 룰 `stampy/no-mock-in-production` 으로 강제 예정.
+- Production 코드는 `@shared/mocks/*` import 금지. Mock repository (`Mock*Repository`) 만 import 허용. 현재 ESLint `no-restricted-imports` 로 강제한다.
 
 ## 주입 / Swap 전략
 

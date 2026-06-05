@@ -10,7 +10,7 @@
 //
 // 토큰 효율: 총 ~30줄 출력. 같은 정보를 gh 명령 4번 따로 부르면 200+ 줄 + 4 tool call.
 //
-// 관련: CLAUDE.md "세션 시작 절차", AGENTS.md "Work tracking", .ai-skills/git-workflow.md.
+// 관련: CLAUDE.md "세션 시작 절차", AGENTS.md "Work tracking", skills/git-workflow/SKILL.md.
 
 import { execSync } from 'node:child_process';
 
@@ -167,8 +167,8 @@ function render(g) {
   lines.push('');
 
   lines.push('Read next');
-  lines.push('  • .ai-skills/<matching skill>  ← 작업 직전 1개만');
-  lines.push('  • .ai-background/<영역>          ← 처음 만지는 영역 1회만');
+  lines.push('  • skills/<matching skill>/SKILL.md  ← 작업 직전 1개만');
+  lines.push('  • docs/<영역>.md                    ← 처음 만지는 영역 1회만');
 
   return lines.join('\n');
 }

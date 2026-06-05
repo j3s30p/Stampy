@@ -32,7 +32,7 @@
 
 - **Context**: KorService1 deprecated 예고. KorService2 가 신규 표준.
 - **Decision**: `TOUR_API_BASE_URL = "https://apis.data.go.kr/B551011/KorService2"`.
-- **Consequences**: 일부 엔드포인트 시그니처가 v1과 다름. 마이그레이션 문서는 `.ai-skills/tour-api-normalization.md` (Stage 2).
+- **Consequences**: 일부 엔드포인트 시그니처가 v1과 다름. TourAPI 매핑 작업이 반복되면 `skills/tour-api-normalization/SKILL.md` 를 신설한다.
 
 ## ADR-006 · STAMP_RADIUS_METERS = 100
 
@@ -49,5 +49,5 @@
 ## ADR-008 · 정본 문서 MECE 분리 (이 하네스 자체)
 
 - **Context**: 단일 CLAUDE.md / 단일 README 가 비대해지면 (1) 인간이 안 읽고 (2) 에이전트가 매번 전부 로드해 토큰을 낭비한다.
-- **Decision**: README (사람) / AGENTS (벤더중립) / CLAUDE (Claude) / .ai-skills (호출형) / .ai-background (그라운딩) 5분할.
-- **Consequences**: 갱신 시 “어디에 쓸지” 판단 필요. Stage 4 `sync-harness-docs.sh` 로 정본 → mirror (`.cursorrules` 등) fan-out. Stage 5 verifier 로 MECE 위반(중복 정의/순환 참조) 검출.
+- **Decision**: README (사람) / AGENTS (벤더중립) / CLAUDE (Claude) / `skills/` (호출형) / `docs/` (그라운딩) 5분할.
+- **Consequences**: 갱신 시 “어디에 쓸지” 판단 필요. 다른 벤더용 미러는 만들지 않고, Stage 5 verifier 로 MECE 위반(중복 정의/순환 참조)과 stale reference 를 검출한다.
