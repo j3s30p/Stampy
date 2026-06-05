@@ -1,6 +1,6 @@
 ---
 name: git-workflow
-description: 브랜치 생성·commit·push·PR 까지 모든 git/gh 명령에 적용되는 절차와 금지 사항. AI 는 작업 브랜치 push 까지 기본 수행하되 main 직접 변경 / PR 자체 머지 / hook 우회 어떤 형태로든 하지 않는다.
+description: 브랜치 생성·commit·push·draft PR 까지 모든 git/gh 명령에 적용되는 절차와 금지 사항. AI 는 draft PR 생성/업데이트까지 기본 수행하되 main 직접 변경 / PR ready 전환 / PR 자체 머지 / hook 우회 어떤 형태로든 하지 않는다.
 triggers:
   - git commit / git push / git merge / git rebase / git reset / git revert
   - gh pr create / gh pr merge / gh pr close
@@ -14,7 +14,7 @@ owner-paths:
 
 ## Intent
 
-본 프로젝트는 솔로 + 팀원 1 단계라 branch protection 의 `required_approving_review_count` 가 0 이다. 즉 _기술적으로는_ AI 가 만든 PR 을 AI 토큰으로 그대로 머지할 수 있다. 본 skill 은 그렇게 하지 않도록 절차와 금지 명령을 박제한다. 또 검증된 작은 작업 단위마다 commit + 작업 브랜치 push 를 남겨 세션이 끊겨도 이어받을 수 있게 한다.
+본 프로젝트는 솔로 + 팀원 1 단계라 branch protection 의 `required_approving_review_count` 가 0 이다. 즉 _기술적으로는_ AI 가 만든 PR 을 AI 토큰으로 그대로 머지할 수 있다. 본 skill 은 그렇게 하지 않도록 절차와 금지 명령을 박제한다. 또 검증된 작은 작업 단위마다 commit + 작업 브랜치 push + draft PR 을 남겨 세션이 끊겨도 GitHub 에서 바로 diff 를 볼 수 있게 한다.
 
 ## 허용되는 흐름 (이것만)
 
@@ -24,17 +24,18 @@ owner-paths:
 3. git add <specific files>             # git add -A / git add . 지양
 4. git commit -m "<type>(<scope>): ..." # hook 자동 적용
 5. git push -u origin <area>/<slug>     # 작업 브랜치만 push
-6. commit hash / branch / 검증 결과 보고 # ← AI 작성자의 기본 종착점
-7. gh pr create --title ... --body ...  # 사용자 요청 시에만
+6. gh pr create --draft ...             # PR 이 없으면 draft 로 생성
+7. PR URL / commit hash / 검증 결과 보고 # ← AI 작성자의 기본 종착점
 ```
 
-PR 생성 / PR 머지 / 코멘트 응답은 사용자가 지시할 때만 한다. AI 는 기본적으로 검증된 작업 단위를 commit + push 하고, commit hash / branch / 검증 결과를 보고한다.
+PR 이 이미 있으면 새 commit push 로 PR 을 갱신한다. PR ready 전환 / PR 머지 / 코멘트 응답은 사용자가 지시할 때만 한다. AI 는 기본적으로 검증된 작업 단위를 commit + push + draft PR 로 남기고, PR URL / commit hash / branch / 검증 결과를 보고한다.
 
 ## 절대 금지 명령
 
 | 금지 명령                                                                     | 이유                                     |
 | ----------------------------------------------------------------------------- | ---------------------------------------- |
 | `gh pr merge`, `gh pr merge --auto`, `gh pr merge --squash` 등                | 인간 리뷰 없이 main 진입                 |
+| `gh pr ready`, `gh pr ready --undo` 외 ready 상태 변경                        | 최종 리뷰 요청은 사용자 결정             |
 | `git push origin main`, `git push origin master`                              | PR 절차 우회 (pre-push hook 도 차단)     |
 | `git push --force`, `git push -f`, `git push --force-with-lease`              | 히스토리 파괴, 리뷰 무력화, PR diff 왜곡 |
 | `git push --no-verify`, `git commit --no-verify`                              | hook 우회 = 가드레일 무력화              |
@@ -110,12 +111,12 @@ Feat(stamp): ...                # type 대문자
 
 ## Hook 자동 강제 지점
 
-| Hook         | 시점                     | 동작                                                               |
-| ------------ | ------------------------ | ------------------------------------------------------------------ |
-| `pre-commit` | `git commit`             | `lint-staged` 가 staged 파일에 `eslint --fix` + `prettier --write` |
-| `commit-msg` | `git commit`             | `commitlint` 가 위 형식 검사                                       |
-| `pre-push`   | `git push`               | `refs/heads/main` 또는 `refs/heads/master` 로의 push 거부          |
-| CI on PR     | PR 생성 / PR branch push | typecheck + lint + format check + commitlint (PR 의 모든 commit)   |
+| Hook         | 시점                           | 동작                                                               |
+| ------------ | ------------------------------ | ------------------------------------------------------------------ |
+| `pre-commit` | `git commit`                   | `lint-staged` 가 staged 파일에 `eslint --fix` + `prettier --write` |
+| `commit-msg` | `git commit`                   | `commitlint` 가 위 형식 검사                                       |
+| `pre-push`   | `git push`                     | `refs/heads/main` 또는 `refs/heads/master` 로의 push 거부          |
+| CI on PR     | draft PR 생성 / PR branch push | typecheck + lint + format check + commitlint (PR 의 모든 commit)   |
 
 위 hook 의 어떤 실패도 commit/push 가 차단되어야 한다. 우회 (`--no-verify` 등) 는 위 "절대 금지 명령" 표 참조.
 

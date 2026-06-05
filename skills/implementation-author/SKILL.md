@@ -31,7 +31,8 @@ owner-paths:
 - 구현 후 `npm run quality:fast` 를 실행한다.
 - 하네스·문서·skill·CI 를 만졌다면 `npm run harness:check` 도 실행한다.
 - 검증이 통과하면 의미 있는 작은 단위로 commit 하고 작업 브랜치에 push 한다.
-- PR 생성/머지/main push 는 사용자 명시 지시 없이는 하지 않는다.
+- PR 이 없으면 draft PR 을 생성한다. 이미 있으면 추가 commit push 로 갱신한다.
+- PR ready 전환/머지/main push 는 사용자 명시 지시 없이는 하지 않는다.
 - 리뷰 findings 반영 시, finding 별로 무엇을 고쳤는지 짧게 보고한다.
 
 ## Allowed Decisions
@@ -58,6 +59,6 @@ owner-paths:
 
 1. 바꾼 것.
 2. 실행한 검증 명령과 결과.
-3. commit hash 와 push 한 branch.
+3. draft PR URL, commit hash, push 한 branch.
 4. 계획에서 벗어난 점이 있었는지.
 5. 리뷰어에게 특히 봐달라고 할 점.
