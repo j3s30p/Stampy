@@ -8,6 +8,17 @@
 
 `AGENTS.md` 의 invariants / file ownership / branch / quality gate 는 그대로 적용된다. 본 문서와 충돌 시 **`AGENTS.md` 가 우선**한다.
 
+## 세션 시작 절차 (재진입 시 토큰 절약)
+
+`CLAUDE.md` / `AGENTS.md` / memory 는 Claude Code 가 자동 로드한다. 그 위에 **현재 진행 상태** 만 한 번 가볍게 파악한 뒤 작업.
+
+1. `gh pr list --state open` — 현재 떠 있는 PR 목록. 본인 작업 / 사용자 검토 대기 구분.
+2. `gh issue list --state open --label status/in-progress` — 진행 중 표시된 작업.
+3. `gh milestone list` (또는 `gh api repos/:owner/:repo/milestones --jq '.[] | {n: .number, t: .title, s: .state}'`) — 현재 열린 Stage / 마일스톤 확인.
+4. (필요 시) `gh issue view <N>` 로 작업 컨텍스트 1개 정독.
+
+위 단계만으로 "지금 어디 / 다음 무엇" 이 잡힌다. 채팅 히스토리·과거 PR 본문을 길게 다시 읽지 않는다. 추가 컨텍스트는 `.ai-skills/` / `.ai-background/` 의 _작업 직전_ 로드로 충당한다.
+
 ## Skill 호출 우선순위
 
 작업 종류 → 먼저 읽을 skill:
@@ -48,4 +59,4 @@
 
 ## Stage 진행 규칙 (하네스 부트스트랩 중)
 
-Stage 0 ~ 6 부트스트랩이 끝나기 전에는 **각 stage 종료 시 사용자 확인을 받고** 다음으로 진행한다. 자율로 다음 stage 로 건너뛰지 않는다.
+Stage 0 ~ 6 부트스트랩이 끝나기 전에는 **각 stage 종료 시 사용자 확인을 받고** 다음으로 진행한다. 자율로 다음 stage 로 건너뛰지 않는다. 현재까지의 Stage 완료 상태는 **GitHub Milestones** (closed = 완료) 가 정본.

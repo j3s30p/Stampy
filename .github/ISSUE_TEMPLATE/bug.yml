@@ -1,0 +1,63 @@
+name: '🐛 Bug — 버그 리포트'
+description: '잘못 동작하는 것 보고'
+title: '[bug] '
+labels: ['type/fix', 'status/ready']
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: '어느 영역인가요?'
+      options:
+        - 'stamp'
+        - 'map'
+        - 'tour'
+        - 'core'
+        - 'shared'
+        - 'app'
+        - 'harness'
+        - 'docs'
+        - 'deps'
+    validations:
+      required: true
+  - type: textarea
+    id: what-happens
+    attributes:
+      label: '현재 동작 (실제)'
+      description: '관찰한 것. 에러 메시지·스크린샷·로그 포함.'
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: '기대 동작'
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: '재현 단계'
+      placeholder: |
+        1. 홈에서 도장 탭 진입
+        2. ...
+        3. 에러 발생
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: '환경'
+      description: 'iOS/Android/Web, 시뮬레이터 vs 실기기, Expo SDK 버전 등'
+      placeholder: 'iOS Sim iPhone 17 Pro, Expo SDK 52'
+  - type: dropdown
+    id: invariant-impact
+    attributes:
+      label: 'AGENTS.md invariant 에 영향 있나요?'
+      options:
+        - '없음'
+        - '도장 인증 반경 100m'
+        - 'branded coordinate types'
+        - 'Kakao WebView only'
+        - 'TourAPI 정규화 경계'
+        - 'ESLint suppress'
+    validations:
+      required: true

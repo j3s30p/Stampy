@@ -85,3 +85,12 @@ ESLint 룰 ID 또는 tsc TS코드 → `.ai-skills/static-analysis-guide.md` 의 
 
 - **호출형 skill** — 작업 직전에 매칭되는 파일만 읽고 따른다. 인덱스: `.ai-skills/README.md`.
 - **그라운딩 문서** — 새 영역을 처음 만질 때 1회 통독. 위치: `.ai-background/`.
+
+## Work tracking — 진행 상태 / 다음 할 일
+
+세션이 끊겨도 / 다른 모델로 바꿔도 / 팀원이 git pull 해도 같은 컨텍스트로 재진입할 수 있도록 **GitHub 의 Issues + Milestones + Labels** 가 단일 사실 출처다. 별도 ROADMAP/STATUS 파일은 의도적으로 두지 않는다 (drift 방지).
+
+- **Milestones** — Stage 0~6 + 추가 작업. closed = 완료, open = 진행/예정.
+- **Issues** — 개별 작업 / 버그 / TODO. 라벨: `area/<slug>` × `type/<feat|fix|chore|…>` × `priority/<p0|p1|p2|p3>` × `status/<ready|in-progress|blocked|needs-review>`.
+- **Pull Requests** — 진행 중인 변경. **모든 PR 은 본문 footer 에 `Closes #<issue>` 또는 `Refs #<issue>` 명시**. issue 없는 PR 은 사후 추적 불가 → 가급적 issue 부터 만든다 (단, 명백한 작은 chore 는 PR 만 OK).
+- 새 PR 의 area 슬러그 (branch / commit scope) 는 issue 의 `area/*` 라벨과 일치해야 한다.
