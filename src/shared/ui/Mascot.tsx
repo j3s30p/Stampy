@@ -1,5 +1,6 @@
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
+import { Circle, Ellipse, Path, Rect, Svg } from 'react-native-svg';
 import { colors } from './tokens';
 
 type MascotMood = 'happy' | 'sad' | 'sleeping';
@@ -11,138 +12,113 @@ interface MascotProps {
 }
 
 export function Mascot({ size = 64, mood = 'happy', style }: MascotProps) {
-  const bodyRadius = size * 0.28; // ~18 at size 64
-  const eyeSize = size * 0.047; // ~3 at size 64
-  const eyeRadius = eyeSize / 2;
-  const eyeTop = size * 0.25;
-  const leftEyeLeft = size * 0.27;
-  const rightEyeLeft = size * 0.63;
-
-  // Sleeping eyes: 2px-tall lines
-  const sleepingEyeHeight = 2;
-
-  // Mouth container
-  const mouthWidth = size * 0.22; // ~14 at size 64
-  const mouthHeight = size * 0.11; // ~7 at size 64
-  const mouthTop = size * 0.55;
-  const mouthLeft = (size - mouthWidth) / 2;
-
   return (
-    <View
-      style={[
-        {
-          width: size,
-          height: size,
-          borderRadius: bodyRadius,
-          backgroundColor: colors.brand,
-        },
-        style,
-      ]}
-    >
-      {/* Left eye */}
-      <View
-        style={[
-          styles.eye,
-          {
-            width: eyeSize,
-            height: mood === 'sleeping' ? sleepingEyeHeight : eyeSize,
-            borderRadius: mood === 'sleeping' ? 1 : eyeRadius,
-            top: mood === 'sleeping' ? eyeTop + eyeSize / 2 : eyeTop,
-            left: leftEyeLeft,
-          },
-        ]}
-      />
-      {/* Right eye */}
-      <View
-        style={[
-          styles.eye,
-          {
-            width: eyeSize,
-            height: mood === 'sleeping' ? sleepingEyeHeight : eyeSize,
-            borderRadius: mood === 'sleeping' ? 1 : eyeRadius,
-            top: mood === 'sleeping' ? eyeTop + eyeSize / 2 : eyeTop,
-            left: rightEyeLeft,
-          },
-        ]}
-      />
+    <View style={style}>
+      <Svg width={size} height={size} viewBox="0 0 64 64">
+        {/* Body — rounded rectangle filled with brand red */}
+        <Rect x={4} y={4} width={56} height={56} rx={18} ry={18} fill={colors.brand} />
 
-      {/* Mouth */}
-      {mood === 'happy' && (
-        <View
-          style={[
-            styles.mouthHappy,
-            {
-              width: mouthWidth,
-              height: mouthHeight,
-              top: mouthTop,
-              left: mouthLeft,
-            },
-          ]}
+        {/* Inner highlight — soft inset stroke for "glossy ceramic" feel */}
+        <Rect
+          x={6}
+          y={6}
+          width={52}
+          height={52}
+          rx={16}
+          ry={16}
+          fill="none"
+          stroke="rgba(255,255,255,0.18)"
+          strokeWidth={2}
         />
-      )}
-      {mood === 'sad' && (
-        <View
-          style={[
-            styles.mouthSad,
-            {
-              width: mouthWidth,
-              height: mouthHeight,
-              top: mouthTop + mouthHeight * 0.3,
-              left: mouthLeft,
-            },
-          ]}
-        />
-      )}
-      {mood === 'sleeping' && (
-        <View
-          style={[
-            styles.mouthSleeping,
-            {
-              width: mouthWidth * 0.7,
-              top: mouthTop,
-              left: mouthLeft + mouthWidth * 0.15,
-            },
-          ]}
-        />
-      )}
+
+        {/* Top-left gloss reflection */}
+        <Ellipse cx={15} cy={12} rx={4} ry={2} fill="rgba(255,255,255,0.4)" />
+
+        {/* Eyes — vary by mood */}
+        {mood === 'happy' && (
+          <>
+            <Circle cx={22} cy={26} r={2.5} fill={colors.ink} />
+            <Circle cx={42} cy={26} r={2.5} fill={colors.ink} />
+          </>
+        )}
+        {mood === 'sad' && (
+          <>
+            <Circle cx={22} cy={26} r={2} fill={colors.ink} />
+            <Circle cx={42} cy={26} r={2} fill={colors.ink} />
+            {/* Sad under-eye curved lines */}
+            <Path
+              d="M19 30 Q22 28 25 30"
+              stroke={colors.ink}
+              strokeWidth={1.5}
+              strokeLinecap="round"
+              fill="none"
+            />
+            <Path
+              d="M39 30 Q42 28 45 30"
+              stroke={colors.ink}
+              strokeWidth={1.5}
+              strokeLinecap="round"
+              fill="none"
+            />
+          </>
+        )}
+        {mood === 'sleeping' && (
+          <>
+            {/* Closed eyes as horizontal bars */}
+            <Rect x={18} y={25} width={8} height={2} rx={1} fill={colors.ink} />
+            <Rect x={38} y={25} width={8} height={2} rx={1} fill={colors.ink} />
+          </>
+        )}
+
+        {/* Mouth — vary by mood */}
+        {mood === 'happy' && (
+          <Path
+            d="M22 40 Q32 48 42 40"
+            stroke={colors.ink}
+            strokeWidth={2.2}
+            strokeLinecap="round"
+            fill="none"
+          />
+        )}
+        {mood === 'sad' && (
+          <Path
+            d="M22 44 Q32 36 42 44"
+            stroke={colors.ink}
+            strokeWidth={2.2}
+            strokeLinecap="round"
+            fill="none"
+          />
+        )}
+        {mood === 'sleeping' && (
+          <>
+            {/* Small "Z" near top-right for sleeping */}
+            <Path
+              d="M44 14 L50 14 L44 20 L50 20"
+              stroke={colors.ink}
+              strokeWidth={1.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+            {/* Neutral small mouth */}
+            <Path
+              d="M26 42 Q32 44 38 42"
+              stroke={colors.ink}
+              strokeWidth={2.2}
+              strokeLinecap="round"
+              fill="none"
+            />
+          </>
+        )}
+
+        {/* Cheeks — only for happy mood */}
+        {mood === 'happy' && (
+          <>
+            <Circle cx={18} cy={36} r={2.2} fill="rgba(255,200,200,0.7)" />
+            <Circle cx={46} cy={36} r={2.2} fill="rgba(255,200,200,0.7)" />
+          </>
+        )}
+      </Svg>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  eye: {
-    position: 'absolute',
-    backgroundColor: '#0A0A0A',
-  },
-  // Smile: bottom half of a circle using bottom border-radius trick
-  mouthHappy: {
-    position: 'absolute',
-    borderBottomLeftRadius: 999,
-    borderBottomRightRadius: 999,
-    borderBottomWidth: 2,
-    borderLeftWidth: 0,
-    borderRightWidth: 0,
-    borderTopWidth: 0,
-    borderColor: '#0A0A0A',
-    backgroundColor: 'transparent',
-  },
-  // Sad: top half of a circle (flipped smile)
-  mouthSad: {
-    position: 'absolute',
-    borderTopLeftRadius: 999,
-    borderTopRightRadius: 999,
-    borderTopWidth: 2,
-    borderLeftWidth: 0,
-    borderRightWidth: 0,
-    borderBottomWidth: 0,
-    borderColor: '#0A0A0A',
-    backgroundColor: 'transparent',
-  },
-  // Sleeping: small straight line
-  mouthSleeping: {
-    position: 'absolute',
-    height: 2,
-    backgroundColor: '#0A0A0A',
-    borderRadius: 1,
-  },
-});
