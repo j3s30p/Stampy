@@ -1,17 +1,27 @@
+import { tourSpotFixtures } from '@shared/mocks';
 import type { Coordinates } from '@shared/types';
 import type { TourSpot } from '../model';
 import type { TourRepository } from './TourRepository';
 
 export class MockTourRepository implements TourRepository {
   async searchNearby(_center: Coordinates, _radiusMeters: number): Promise<TourSpot[]> {
-    return [];
+    return tourSpotFixtures.map(toTourSpot);
   }
 
   async byId(_contentId: string): Promise<TourSpot | null> {
-    return null;
+    return tourSpotFixtures.find((spot) => spot.contentId === _contentId) ?? null;
   }
 
   async search(_query: string): Promise<TourSpot[]> {
-    return [];
+    return tourSpotFixtures.map(toTourSpot);
   }
 }
+
+const toTourSpot = (spot: (typeof tourSpotFixtures)[number]): TourSpot => ({
+  contentId: spot.contentId,
+  title: spot.title,
+  address: spot.address,
+  location: spot.location,
+  thumbnailUrl: spot.thumbnailUrl,
+  contentTypeId: spot.contentTypeId,
+});
