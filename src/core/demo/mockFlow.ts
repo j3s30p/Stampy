@@ -1,10 +1,11 @@
+import { distanceMetersBetween } from '@core/location';
 import { MockStampRepository } from '@features/stamp/api';
 import type { Stamp } from '@features/stamp/model';
 import type { MyStampSummary, RankingEntry, StampCandidate } from '@features/stamp/ui';
 import { MockTourRepository } from '@features/tour/api';
 import type { HomeTourSpot } from '@features/tour/ui';
 import { STAMP_RADIUS_METERS } from '@shared/config';
-import { asLatitude, asLongitude } from '@shared/types';
+import { asLatitude, asLongitude, type Coordinates } from '@shared/types';
 
 const userId = 'mock-user-1';
 
@@ -30,9 +31,10 @@ const notifyListeners = () => {
   });
 };
 
-export async function getMockFlow() {
+export async function getMockFlow(currentLocation: Coordinates | null = null) {
+  const locationForDistance = currentLocation ?? mockCenter;
   const [spots, stamps] = await Promise.all([
-    tourRepository.searchNearby(mockCenter, STAMP_RADIUS_METERS),
+    tourRepository.searchNearby(locationForDistance, STAMP_RADIUS_METERS),
     loadCollectedStamps(),
   ]);
   const collectedSpotIds = new Set(stamps.map((stamp) => stamp.spotId));
@@ -42,12 +44,16 @@ export async function getMockFlow() {
     title: spot.title,
     address: spot.address,
     theme: index === 0 ? '궁궐 산책' : index === 1 ? '골목 여행' : '도심 휴식',
-    distanceMeters: index === 0 ? 86 : index === 1 ? 92 : 760,
+    distanceMeters: distanceMetersBetween(locationForDistance, spot.location),
     collected: collectedSpotIds.has(spot.contentId),
   }));
 
   const candidate: StampCandidate | null =
-    spotCards.find((spot) => !spot.collected) ?? spotCards[0] ?? null;
+    [...spotCards]
+      .filter((spot) => !spot.collected)
+      .sort((a, b) => a.distanceMeters - b.distanceMeters)[0] ??
+    [...spotCards].sort((a, b) => a.distanceMeters - b.distanceMeters)[0] ??
+    null;
 
   const myStamps: MyStampSummary[] = spotCards.map((spot) => {
     const collectedStamp = stamps.find((stamp) => stamp.spotId === spot.contentId);
@@ -75,15 +81,19 @@ export async function getMockFlow() {
   };
 }
 
-export async function collectMockCandidate() {
-  const flow = await getMockFlow();
+export async function collectMockCandidate(currentLocation: Coordinates | null) {
+  if (!currentLocation) {
+    return getMockFlow();
+  }
+
+  const flow = await getMockFlow(currentLocation);
   const candidate = flow.candidate;
 
   if (!candidate || candidate.collected || candidate.distanceMeters > STAMP_RADIUS_METERS) {
     return flow;
   }
 
-  const spots = await tourRepository.searchNearby(mockCenter, STAMP_RADIUS_METERS);
+  const spots = await tourRepository.searchNearby(currentLocation, STAMP_RADIUS_METERS);
   const spot = spots.find((nextSpot) => nextSpot.contentId === candidate.contentId);
 
   if (!spot) {
@@ -99,13 +109,13 @@ export async function collectMockCandidate() {
 
   const nextStamp = await stampRepository.collect(userId, {
     spotId: spot.contentId,
-    location: spot.location,
+    location: currentLocation,
   });
 
   collectedStamps = [...stamps, nextStamp];
   notifyListeners();
 
-  return getMockFlow();
+  return getMockFlow(currentLocation);
 }
 
 export function subscribeMockFlow(listener: () => void) {

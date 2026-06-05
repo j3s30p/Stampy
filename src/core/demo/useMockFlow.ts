@@ -1,20 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useCurrentLocation } from '@core/location';
 import { collectMockCandidate, getMockFlow, subscribeMockFlow } from './mockFlow';
 
 export type MockFlow = Awaited<ReturnType<typeof getMockFlow>>;
 
 export function useMockFlow() {
   const [flow, setFlow] = useState<MockFlow | null>(null);
+  const currentLocation = useCurrentLocation();
 
   const refresh = useCallback(async () => {
-    setFlow(await getMockFlow());
-  }, []);
+    setFlow(await getMockFlow(currentLocation.location));
+  }, [currentLocation.location]);
 
   useEffect(() => {
     let mounted = true;
 
     const refreshIfMounted = () => {
-      void getMockFlow().then((nextFlow) => {
+      void getMockFlow(currentLocation.location).then((nextFlow) => {
         if (mounted) {
           setFlow(nextFlow);
         }
@@ -28,11 +30,16 @@ export function useMockFlow() {
       mounted = false;
       unsubscribe();
     };
-  }, [refresh]);
+  }, [currentLocation.location, refresh]);
 
   const collectCandidate = useCallback(async () => {
-    setFlow(await collectMockCandidate());
-  }, []);
+    setFlow(await collectMockCandidate(currentLocation.location));
+  }, [currentLocation.location]);
 
-  return { flow, collectCandidate };
+  return {
+    flow,
+    collectCandidate,
+    locationAvailable: currentLocation.status === 'granted' && currentLocation.location !== null,
+    locationStatus: currentLocation.status,
+  };
 }

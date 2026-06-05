@@ -17,7 +17,7 @@ interface HomeViewProps {
 }
 
 export function HomeView({ spots, collectedCount }: HomeViewProps) {
-  const nearest = spots[0];
+  const nearest = [...spots].sort((a, b) => a.distanceMeters - b.distanceMeters)[0];
 
   return (
     <SafeAreaView style={styles.root}>

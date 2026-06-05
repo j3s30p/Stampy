@@ -10,18 +10,30 @@ export interface StampCandidate {
   readonly collected: boolean;
 }
 
+export type StampLocationStatus = 'loading' | 'granted' | 'denied' | 'unavailable';
+
 interface StampViewProps {
   readonly candidate: StampCandidate | null;
   readonly collectedCount: number;
   readonly totalCount: number;
+  readonly locationAvailable: boolean;
+  readonly locationStatus: StampLocationStatus;
   readonly onCollect?: () => void;
 }
 
-export function StampView({ candidate, collectedCount, totalCount, onCollect }: StampViewProps) {
+export function StampView({
+  candidate,
+  collectedCount,
+  totalCount,
+  locationAvailable,
+  locationStatus,
+  onCollect,
+}: StampViewProps) {
   const canVerify = candidate
-    ? candidate.distanceMeters <= STAMP_RADIUS_METERS && !candidate.collected
+    ? locationAvailable && candidate.distanceMeters <= STAMP_RADIUS_METERS && !candidate.collected
     : false;
   const progressPercent = totalCount > 0 ? Math.round((collectedCount / totalCount) * 100) : 0;
+  const ctaLabel = getCtaLabel({ candidate, canVerify, locationAvailable, locationStatus });
 
   return (
     <SafeAreaView style={styles.root}>
@@ -68,11 +80,7 @@ export function StampView({ candidate, collectedCount, totalCount, onCollect }: 
               <Text
                 style={[styles.ctaText, canVerify ? styles.ctaReadyText : styles.ctaBlockedText]}
               >
-                {candidate.collected
-                  ? '이미 수집한 도장입니다'
-                  : canVerify
-                    ? '도장 받기'
-                    : `${STAMP_RADIUS_METERS}m 안으로 이동하면 인증 가능`}
+                {ctaLabel}
               </Text>
             </Pressable>
           </View>
@@ -85,6 +93,36 @@ export function StampView({ candidate, collectedCount, totalCount, onCollect }: 
     </SafeAreaView>
   );
 }
+
+const getCtaLabel = ({
+  candidate,
+  canVerify,
+  locationAvailable,
+  locationStatus,
+}: {
+  readonly candidate: StampCandidate | null;
+  readonly canVerify: boolean;
+  readonly locationAvailable: boolean;
+  readonly locationStatus: StampLocationStatus;
+}) => {
+  if (!candidate) {
+    return '추천 스팟 없음';
+  }
+
+  if (candidate.collected) {
+    return '이미 수집한 도장입니다';
+  }
+
+  if (canVerify) {
+    return '도장 받기';
+  }
+
+  if (!locationAvailable) {
+    return locationStatus === 'denied' ? '위치 권한을 허용하면 인증 가능' : '현재 위치 확인 중';
+  }
+
+  return `${STAMP_RADIUS_METERS}m 안으로 이동하면 인증 가능`;
+};
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#FFF8EC' },
