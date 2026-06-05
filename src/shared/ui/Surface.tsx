@@ -3,8 +3,10 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { colors, radius as radiusTokens, shadow as shadowTokens, spacing } from './tokens';
 import type { Radius, ShadowLevel } from './tokens';
 
+type ElevationProp = ShadowLevel | 'none';
+
 interface SurfaceProps {
-  readonly elevation?: ShadowLevel;
+  readonly elevation?: ElevationProp;
   readonly radius?: Radius;
   readonly padded?: boolean | number;
   readonly style?: StyleProp<ViewStyle>;
@@ -12,13 +14,14 @@ interface SurfaceProps {
 }
 
 export function Surface({
-  elevation = 'e1',
-  radius = 'lg',
+  elevation = 'none',
+  radius = 'md',
   padded = false,
   style,
   children,
 }: SurfaceProps) {
   const paddingValue = padded === true ? spacing.lg : padded === false ? 0 : padded;
+  const shadowStyle = elevation === 'none' ? undefined : shadowTokens[elevation];
 
   return (
     <View
@@ -28,7 +31,7 @@ export function Surface({
           borderRadius: radiusTokens[radius],
           padding: paddingValue,
         },
-        shadowTokens[elevation],
+        shadowStyle,
         style,
       ]}
     >

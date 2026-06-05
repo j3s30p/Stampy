@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from './tokens';
 
-type BadgeTone = 'neutral' | 'success' | 'warning' | 'coral' | 'brand';
+type BadgeTone = 'neutral' | 'brand' | 'reward' | 'ready' | 'done';
 type BadgeSize = 'sm' | 'md';
 
 interface BadgeProps {
@@ -12,10 +12,10 @@ interface BadgeProps {
 
 const toneStyles: Record<BadgeTone, { bg: string; text: string }> = {
   neutral: { bg: colors.surfaceSink, text: colors.inkSoft },
-  success: { bg: colors.successSoft, text: colors.success },
-  warning: { bg: colors.warningSoft, text: colors.warning },
-  coral: { bg: colors.coralSoft, text: colors.coral },
-  brand: { bg: colors.surfaceSink, text: colors.brand },
+  brand: { bg: colors.brandSoft, text: colors.brandInk },
+  reward: { bg: colors.rewardSoft, text: colors.inkSoft },
+  ready: { bg: colors.brand, text: colors.surface },
+  done: { bg: colors.surfaceSink, text: colors.inkSoft },
 };
 
 export function Badge({ tone = 'neutral', size = 'sm', children }: BadgeProps) {
@@ -32,7 +32,7 @@ export function Badge({ tone = 'neutral', size = 'sm', children }: BadgeProps) {
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: radius.pill,
+    borderRadius: radius.full,
     alignSelf: 'flex-start',
   },
   sm: {
