@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { STAMP_RADIUS_METERS } from '@shared/config';
+import { AppText, Gradient, Surface, colors, radius, shadow, spacing } from '@shared/ui';
 
 export interface MapSpotPin {
   readonly contentId: string;
@@ -37,15 +38,19 @@ export function MapView({ spots, onOpenSpotDetail, onOpenStamp }: MapViewProps) 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topbar}>
           <View style={styles.brandBlock}>
-            <Text style={styles.brand}>주변 스탬프 지도</Text>
-            <Text style={styles.brandCaption}>Kakao Map + 관광공사 API</Text>
+            <AppText variant="h1">주변 스탬프 지도</AppText>
+            <AppText variant="caption" tone="inkSoft">
+              Kakao Map + 관광공사 API
+            </AppText>
           </View>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>⌕</Text>
+            <AppText variant="h3" tone="onDark">
+              ⌕
+            </AppText>
           </View>
         </View>
 
-        <View style={styles.mapShell}>
+        <Gradient variant="mapSky" style={styles.mapShell}>
           <View style={styles.gridLineHorizontal} />
           <View style={styles.gridLineVertical} />
           <View style={styles.roadHorizontal} />
@@ -76,30 +81,36 @@ export function MapView({ spots, onOpenSpotDetail, onOpenStamp }: MapViewProps) 
                   { left: `${pinPosition.left}%`, top: `${pinPosition.top}%` },
                 ]}
               >
-                <Text style={styles.pinText}>{getSpotIcon(index)}</Text>
+                <AppText style={styles.pinText}>{getSpotIcon(index)}</AppText>
               </Pressable>
             );
           })}
 
           <View style={styles.currentLocation}>
             <View style={styles.currentDot} />
-            <Text style={styles.currentLocationText}>현재 위치</Text>
+            <AppText variant="micro" tone="onDark">
+              현재 위치
+            </AppText>
           </View>
 
           <View style={styles.mapHint}>
-            <Text style={styles.mapHintText}>도장 가능한 스팟은 노란 핀으로 표시돼요</Text>
+            <AppText variant="micro" style={styles.mapHintText}>
+              도장 가능한 스팟은 노란 핀으로 표시돼요
+            </AppText>
           </View>
-        </View>
+        </Gradient>
 
         {selectedSpot ? (
-          <View style={styles.sheet}>
+          <Surface elevation="e2" radius="lg" style={styles.sheet}>
             <View style={styles.selectedRow}>
               <View style={styles.selectedText}>
-                <Text style={styles.selectedLabel}>선택한 스팟</Text>
-                <Text style={styles.selectedTitle}>{selectedSpot.title}</Text>
-                <Text style={styles.selectedMeta}>
+                <AppText variant="micro" tone="brand">
+                  선택한 스팟
+                </AppText>
+                <AppText variant="h2">{selectedSpot.title}</AppText>
+                <AppText variant="caption" tone="inkSoft">
                   현재 위치에서 {selectedSpot.distanceMeters}m · 반경 {STAMP_RADIUS_METERS}m
-                </Text>
+                </AppText>
               </View>
               <View
                 style={[
@@ -111,18 +122,18 @@ export function MapView({ spots, onOpenSpotDetail, onOpenStamp }: MapViewProps) 
                       : styles.statusPending,
                 ]}
               >
-                <Text
-                  style={[
-                    styles.statusBadgeText,
+                <AppText
+                  variant="micro"
+                  style={
                     getSpotStatus(selectedSpot) === 'collected'
                       ? styles.statusBadgeTextDone
                       : getSpotStatus(selectedSpot) === 'ready'
                         ? styles.statusBadgeTextReady
-                        : styles.statusBadgeTextPending,
-                  ]}
+                        : styles.statusBadgeTextPending
+                  }
                 >
                   {getSpotStatusLabel(selectedSpot)}
-                </Text>
+                </AppText>
               </View>
             </View>
 
@@ -133,7 +144,9 @@ export function MapView({ spots, onOpenSpotDetail, onOpenStamp }: MapViewProps) 
                 onPress={() => onOpenSpotDetail?.(selectedSpot.contentId)}
                 style={({ pressed }) => [styles.secondaryButton, pressed ? styles.pressed : null]}
               >
-                <Text style={styles.secondaryButtonText}>상세 보기</Text>
+                <AppText variant="bodyBold" style={styles.secondaryButtonText}>
+                  상세 보기
+                </AppText>
               </Pressable>
 
               <Pressable
@@ -142,7 +155,9 @@ export function MapView({ spots, onOpenSpotDetail, onOpenStamp }: MapViewProps) 
                 onPress={() => onOpenStamp?.(selectedSpot.contentId)}
                 style={({ pressed }) => [styles.primaryButton, pressed ? styles.pressed : null]}
               >
-                <Text style={styles.primaryButtonText}>도장 탭에서 찍기</Text>
+                <AppText variant="bodyBold" style={styles.primaryButtonText}>
+                  도장 탭에서 찍기
+                </AppText>
               </Pressable>
 
               <Pressable
@@ -151,20 +166,26 @@ export function MapView({ spots, onOpenSpotDetail, onOpenStamp }: MapViewProps) 
                 onPress={() => setDirectionMessage(`${selectedSpot.title} 카카오 길찾기 준비 중`)}
                 style={({ pressed }) => [styles.secondaryButton, pressed ? styles.pressed : null]}
               >
-                <Text style={styles.secondaryButtonText}>카카오 길찾기</Text>
+                <AppText variant="bodyBold" style={styles.secondaryButtonText}>
+                  카카오 길찾기
+                </AppText>
               </Pressable>
             </View>
 
             <View style={styles.feedbackCard}>
-              <Text style={styles.feedbackLabel}>선택 상태</Text>
-              <Text style={styles.feedbackText}>{directionMessage}</Text>
+              <AppText variant="caption" tone="inkSoft">
+                선택 상태
+              </AppText>
+              <AppText variant="bodyBold">{directionMessage}</AppText>
             </View>
-          </View>
+          </Surface>
         ) : null}
 
         <View style={styles.sectionHead}>
-          <Text style={styles.sectionTitle}>스팟 목록</Text>
-          <Text style={styles.sectionMeta}>홈과 도장 탭의 동일한 mock 데이터</Text>
+          <AppText variant="h2">스팟 목록</AppText>
+          <AppText variant="caption" tone="inkSoft">
+            홈과 도장 탭의 동일한 mock 데이터
+          </AppText>
         </View>
 
         <View style={styles.list}>
@@ -180,41 +201,49 @@ export function MapView({ spots, onOpenSpotDetail, onOpenStamp }: MapViewProps) 
                   setSelectedSpotId(spot.contentId);
                   setDirectionMessage(`${spot.title} 선택됨`);
                 }}
-                style={({ pressed }) => [
-                  styles.listItem,
-                  isSelected ? styles.listItemSelected : null,
-                  pressed ? styles.pressed : null,
-                ]}
+                style={({ pressed }) => [pressed ? styles.pressed : null]}
               >
-                <Text style={styles.listIndex}>{index + 1}</Text>
-                <View style={styles.listText}>
-                  <Text style={styles.listTitle}>{spot.title}</Text>
-                  <Text style={styles.listMeta}>{spot.address}</Text>
-                  <Text style={styles.listDistance}>{spot.distanceMeters}m 떨어짐</Text>
-                </View>
-                <View
-                  style={[
-                    styles.listBadge,
-                    getSpotStatus(spot) === 'collected'
-                      ? styles.statusDone
-                      : getSpotStatus(spot) === 'ready'
-                        ? styles.statusReady
-                        : styles.statusPending,
-                  ]}
+                <Surface
+                  elevation="e1"
+                  radius="md"
+                  style={[styles.listItem, isSelected ? styles.listItemSelected : null]}
                 >
-                  <Text
+                  <AppText variant="h3" style={styles.listIndex}>
+                    {index + 1}
+                  </AppText>
+                  <View style={styles.listText}>
+                    <AppText variant="h3">{spot.title}</AppText>
+                    <AppText variant="caption" tone="inkSoft">
+                      {spot.address}
+                    </AppText>
+                    <AppText variant="caption" tone="brand" style={styles.listDistance}>
+                      {spot.distanceMeters}m 떨어짐
+                    </AppText>
+                  </View>
+                  <View
                     style={[
-                      styles.statusBadgeText,
+                      styles.listBadge,
                       getSpotStatus(spot) === 'collected'
-                        ? styles.statusBadgeTextDone
+                        ? styles.statusDone
                         : getSpotStatus(spot) === 'ready'
-                          ? styles.statusBadgeTextReady
-                          : styles.statusBadgeTextPending,
+                          ? styles.statusReady
+                          : styles.statusPending,
                     ]}
                   >
-                    {getSpotStatusLabel(spot)}
-                  </Text>
-                </View>
+                    <AppText
+                      variant="micro"
+                      style={
+                        getSpotStatus(spot) === 'collected'
+                          ? styles.statusBadgeTextDone
+                          : getSpotStatus(spot) === 'ready'
+                            ? styles.statusBadgeTextReady
+                            : styles.statusBadgeTextPending
+                      }
+                    >
+                      {getSpotStatusLabel(spot)}
+                    </AppText>
+                  </View>
+                </Surface>
               </Pressable>
             );
           })}
@@ -263,30 +292,31 @@ const getSpotStatusLabel = (spot: MapSpotPin) => {
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#EEF3F8' },
-  content: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 28, gap: 14 },
+  root: { flex: 1, backgroundColor: colors.surfaceAlt },
+  content: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xxxl,
+    gap: spacing.md,
+  },
   topbar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: spacing.md,
   },
   brandBlock: { flex: 1, minWidth: 0, gap: 2 },
-  brand: { color: '#172033', fontSize: 26, fontWeight: '900', letterSpacing: -0.6 },
-  brandCaption: { color: '#657084', fontSize: 13 },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#173C35',
+    backgroundColor: colors.brandDeep,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: '#FFFFFF', fontSize: 18, fontWeight: '900' },
   mapShell: {
     height: 460,
-    borderRadius: 24,
-    backgroundColor: '#DCEBF3',
+    borderRadius: radius.xl,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#C7D9E4',
@@ -297,7 +327,7 @@ const styles = StyleSheet.create({
     right: 0,
     top: '52%',
     height: 2,
-    backgroundColor: 'rgba(255,255,255,0.68)',
+    backgroundColor: 'rgba(255,255,255,0.76)',
   },
   gridLineVertical: {
     position: 'absolute',
@@ -305,7 +335,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: '48%',
     width: 2,
-    backgroundColor: 'rgba(255,255,255,0.68)',
+    backgroundColor: 'rgba(255,255,255,0.76)',
   },
   roadHorizontal: {
     position: 'absolute',
@@ -313,7 +343,7 @@ const styles = StyleSheet.create({
     right: -24,
     top: '39%',
     height: 20,
-    borderRadius: 999,
+    borderRadius: radius.pill,
     backgroundColor: 'rgba(255,255,255,0.82)',
     transform: [{ rotate: '-16deg' }],
   },
@@ -323,7 +353,7 @@ const styles = StyleSheet.create({
     height: 18,
     left: -18,
     top: '64%',
-    borderRadius: 999,
+    borderRadius: radius.pill,
     backgroundColor: 'rgba(255,255,255,0.82)',
     transform: [{ rotate: '31deg' }],
   },
@@ -333,7 +363,7 @@ const styles = StyleSheet.create({
     height: 16,
     left: 14,
     top: '18%',
-    borderRadius: 999,
+    borderRadius: radius.pill,
     backgroundColor: 'rgba(255,255,255,0.72)',
     transform: [{ rotate: '64deg' }],
   },
@@ -345,29 +375,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#0F172A',
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
+    backgroundColor: colors.surface,
+    ...shadow.e2,
   },
-  pinCollected: { borderColor: '#1D8F7B' },
-  pinReady: { borderColor: '#E0A21A' },
-  pinPending: { borderColor: '#94A3B8' },
-  pinSelected: { backgroundColor: '#FFF4D8' },
-  pinText: { fontSize: 16, transform: [{ rotate: '0deg' }] },
+  pinCollected: { borderColor: colors.success },
+  pinReady: { borderColor: colors.warning },
+  pinPending: { borderColor: colors.inkMuted },
+  pinSelected: { backgroundColor: colors.goldSoft },
+  pinText: { fontSize: 16 },
   currentLocation: {
     position: 'absolute',
     left: 18,
     bottom: 18,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#172033',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    gap: spacing.sm,
+    backgroundColor: colors.ink,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   currentDot: {
     width: 10,
@@ -375,92 +401,76 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: '#6EA8FF',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: colors.surface,
   },
-  currentLocationText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
   mapHint: {
     position: 'absolute',
     top: 16,
     left: 16,
     backgroundColor: 'rgba(255,255,255,0.9)',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
-  mapHintText: { color: '#35526B', fontSize: 11, fontWeight: '800' },
+  mapHintText: { color: colors.inkSoft },
   sheet: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
-    gap: 12,
+    padding: spacing.lg,
+    gap: spacing.md,
   },
-  selectedRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  selectedText: { flex: 1, minWidth: 0, gap: 4 },
-  selectedLabel: { color: '#315D9A', fontSize: 12, fontWeight: '800' },
-  selectedTitle: { color: '#172033', fontSize: 20, fontWeight: '900' },
-  selectedMeta: { color: '#66717F', fontSize: 13, lineHeight: 18 },
+  selectedRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  selectedText: { flex: 1, minWidth: 0, gap: spacing.xs },
   statusBadge: {
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.sm - 2,
   },
-  statusDone: { backgroundColor: '#E6F6EA' },
-  statusReady: { backgroundColor: '#FFF3D5' },
-  statusPending: { backgroundColor: '#E8EEF5' },
-  statusBadgeText: { color: '#207A3C', fontSize: 11, fontWeight: '800' },
-  statusBadgeTextDone: { color: '#207A3C' },
-  statusBadgeTextReady: { color: '#8A6400' },
-  statusBadgeTextPending: { color: '#48607A' },
-  actionRow: { gap: 10 },
+  statusDone: { backgroundColor: colors.successSoft },
+  statusReady: { backgroundColor: colors.warningSoft },
+  statusPending: { backgroundColor: colors.surfaceSink },
+  statusBadgeTextDone: { color: colors.success },
+  statusBadgeTextReady: { color: colors.warning },
+  statusBadgeTextPending: { color: colors.inkSoft },
+  actionRow: { gap: spacing.sm + 2 },
   primaryButton: {
-    backgroundColor: '#173C35',
-    borderRadius: 16,
-    paddingVertical: 14,
+    backgroundColor: colors.brand,
+    borderRadius: radius.lg,
+    height: 52,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  primaryButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '900' },
+  primaryButtonText: { color: colors.surface },
   secondaryButton: {
-    backgroundColor: '#EEF3F8',
-    borderRadius: 16,
-    paddingVertical: 14,
+    backgroundColor: colors.surfaceSink,
+    borderRadius: radius.lg,
+    height: 52,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  secondaryButtonText: { color: '#173C35', fontSize: 15, fontWeight: '900' },
+  secondaryButtonText: { color: colors.brand },
   feedbackCard: {
-    backgroundColor: '#F8FBFD',
-    borderRadius: 14,
-    padding: 12,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.xs,
+    padding: spacing.md,
     borderWidth: 1,
-    borderColor: '#E7EDF4',
+    borderColor: colors.border,
+    gap: spacing.xs,
   },
-  feedbackLabel: { color: '#66717F', fontSize: 12, fontWeight: '800' },
-  feedbackText: { color: '#172033', fontSize: 14, fontWeight: '800', marginTop: 4 },
-  sectionHead: { gap: 4 },
-  sectionTitle: { color: '#172033', fontSize: 18, fontWeight: '900' },
-  sectionMeta: { color: '#66717F', fontSize: 13 },
-  list: { gap: 10 },
+  sectionHead: { gap: spacing.xs },
+  list: { gap: spacing.sm + 2 },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
+    gap: spacing.md,
+    padding: spacing.md,
   },
-  listItemSelected: { borderColor: '#E0A21A', backgroundColor: '#FFFDF7' },
-  listIndex: { width: 28, color: '#315D9A', fontSize: 16, fontWeight: '900', textAlign: 'center' },
-  listText: { flex: 1, minWidth: 0, gap: 4 },
-  listTitle: { color: '#172033', fontSize: 16, fontWeight: '900' },
-  listMeta: { color: '#66717F', fontSize: 13, lineHeight: 18 },
-  listDistance: { color: '#14806F', fontSize: 13, fontWeight: '800' },
+  listItemSelected: { borderColor: colors.warning, backgroundColor: '#FFFDF7' },
+  listIndex: { width: 28, color: colors.brand, textAlign: 'center' },
+  listText: { flex: 1, minWidth: 0, gap: spacing.xs },
+  listDistance: { fontWeight: '800' },
   listBadge: {
-    borderRadius: 999,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.sm + 1,
+    paddingVertical: spacing.xs + 1,
   },
-  pressed: { opacity: 0.82 },
+  pressed: { opacity: 0.85 },
 });

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppText, Gradient, Surface, colors, radius, spacing } from '@shared/ui';
 
 export interface RankingEntry {
   readonly id: string;
@@ -35,26 +36,38 @@ export function RankingView({ entries }: RankingViewProps) {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topbar}>
           <View style={styles.brandBlock}>
-            <Text style={styles.brand}>{getTabLabel(selectedTab)}</Text>
-            <Text style={styles.brandCaption}>{getTabCaption(selectedTab)}</Text>
+            <AppText variant="h1">{getTabLabel(selectedTab)}</AppText>
+            <AppText variant="caption" tone="inkSoft">
+              {getTabCaption(selectedTab)}
+            </AppText>
           </View>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>★</Text>
+            <AppText variant="h3" tone="onDark">
+              ★
+            </AppText>
           </View>
         </View>
 
-        <View style={styles.hero}>
-          <Text style={styles.heroLabel}>내 현재 순위</Text>
-          <Text style={styles.heroTitle}>{getHeroTitle(selectedTab)}</Text>
+        <Gradient variant="coral" style={styles.hero}>
+          <AppText variant="caption" tone="onDark" style={styles.heroLabel}>
+            내 현재 순위
+          </AppText>
+          <AppText variant="display" tone="onDark" style={styles.heroTitle}>
+            {getHeroTitle(selectedTab)}
+          </AppText>
           <View style={styles.heroBadges}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>12 stamps</Text>
+            <View style={styles.heroBadge}>
+              <AppText variant="micro" tone="onDark">
+                12 stamps
+              </AppText>
             </View>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>620 EXP</Text>
+            <View style={styles.heroBadge}>
+              <AppText variant="micro" tone="onDark">
+                620 EXP
+              </AppText>
             </View>
           </View>
-        </View>
+        </Gradient>
 
         <View style={styles.tabs}>
           {rankingTabs.map((tab) => {
@@ -73,9 +86,12 @@ export function RankingView({ entries }: RankingViewProps) {
                   pressed ? styles.pressed : null,
                 ]}
               >
-                <Text style={[styles.tabText, isActive ? styles.tabTextActive : null]}>
+                <AppText
+                  variant="caption"
+                  style={isActive ? styles.tabTextActive : styles.tabTextInactive}
+                >
                   {tab.label}
-                </Text>
+                </AppText>
               </Pressable>
             );
           })}
@@ -83,9 +99,15 @@ export function RankingView({ entries }: RankingViewProps) {
 
         {selectedEntry ? (
           <View style={styles.selectedPanel}>
-            <Text style={styles.selectedLabel}>선택한 참여자</Text>
-            <Text style={styles.selectedTitle}>{selectedEntry.nickname}</Text>
-            <Text style={styles.selectedMeta}>현재 수집 도장 {selectedEntry.stampCount}개</Text>
+            <AppText variant="micro" style={styles.selectedLabel}>
+              선택한 참여자
+            </AppText>
+            <AppText variant="h1" tone="onDark">
+              {selectedEntry.nickname}
+            </AppText>
+            <AppText variant="body" tone="onDark" style={styles.selectedMeta}>
+              현재 수집 도장 {selectedEntry.stampCount}개
+            </AppText>
           </View>
         ) : null}
 
@@ -105,21 +127,29 @@ export function RankingView({ entries }: RankingViewProps) {
               ]}
             >
               <View style={[styles.rankBox, index === 0 ? styles.rankBoxTop : null]}>
-                <Text style={styles.rank}>{index + 1}</Text>
+                <AppText variant="caption" style={styles.rank}>
+                  {index + 1}
+                </AppText>
               </View>
               <View style={styles.member}>
-                <Text style={styles.nickname}>{entry.nickname}</Text>
-                <Text style={styles.meta}>{getRowMeta(selectedTab, entry)}</Text>
+                <AppText variant="h3">{entry.nickname}</AppText>
+                <AppText variant="caption" tone="inkSoft">
+                  {getRowMeta(selectedTab, entry)}
+                </AppText>
               </View>
-              <Text style={styles.score}>{getScoreLabel(index, selectedTab)}</Text>
+              <AppText variant="caption" tone="brand" style={styles.score}>
+                {getScoreLabel(index, selectedTab)}
+              </AppText>
             </Pressable>
           ))}
         </View>
 
-        <View style={styles.missionCard}>
-          <Text style={styles.missionTitle}>오늘의 미션</Text>
-          <Text style={styles.missionBody}>{getMissionText(selectedTab)}</Text>
-        </View>
+        <Surface elevation="e1" radius="lg" style={styles.missionCard}>
+          <AppText variant="h3">오늘의 미션</AppText>
+          <AppText variant="body" tone="inkSoft">
+            {getMissionText(selectedTab)}
+          </AppText>
+        </Surface>
       </ScrollView>
     </SafeAreaView>
   );
@@ -257,109 +287,97 @@ const getMissionText = (tab: RankingTab) => {
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#EEF3F8' },
-  content: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 28, gap: 14 },
+  root: { flex: 1, backgroundColor: colors.surfaceAlt },
+  content: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xxxl,
+    gap: spacing.md,
+  },
   topbar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: spacing.md,
   },
   brandBlock: { flex: 1, minWidth: 0, gap: 2 },
-  brand: { color: '#172033', fontSize: 26, fontWeight: '900', letterSpacing: -0.6 },
-  brandCaption: { color: '#657084', fontSize: 13 },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#173C35',
+    backgroundColor: colors.brandDeep,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: '#FFFFFF', fontSize: 18, fontWeight: '900' },
   hero: {
-    borderRadius: 24,
-    backgroundColor: '#D97706',
-    padding: 18,
-    gap: 10,
+    borderRadius: radius.xl,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.xl,
+    gap: spacing.sm + 2,
   },
-  heroLabel: { color: '#FFF8DF', fontSize: 13, fontWeight: '800' },
+  heroLabel: { opacity: 0.9 },
   heroTitle: {
-    color: '#FFFFFF',
-    fontSize: 25,
-    fontWeight: '900',
-    lineHeight: 34,
-    letterSpacing: -0.6,
+    lineHeight: 36,
   },
-  heroBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  badge: {
-    borderRadius: 999,
+  heroBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm - 2 },
+  heroBadge: {
+    borderRadius: radius.pill,
     backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 9,
-    paddingVertical: 5,
+    paddingHorizontal: spacing.sm + 1,
+    paddingVertical: spacing.xs + 1,
   },
-  badgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '800' },
-  tabs: { flexDirection: 'row', gap: 8 },
+  tabs: { flexDirection: 'row', gap: spacing.sm },
   tab: {
     flex: 1,
-    borderRadius: 999,
+    borderRadius: radius.pill,
     paddingVertical: 11,
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#E7EDF4',
+    borderColor: colors.border,
   },
   tabActive: {
-    backgroundColor: '#173C35',
-    borderColor: '#173C35',
+    backgroundColor: colors.brand,
+    borderColor: colors.brand,
   },
-  tabText: { color: '#657084', fontSize: 12, fontWeight: '800' },
-  tabTextActive: { color: '#FFFFFF' },
-  pressed: { opacity: 0.82 },
+  tabTextInactive: { color: colors.inkSoft },
+  tabTextActive: { color: colors.surface },
+  pressed: { opacity: 0.85 },
   selectedPanel: {
-    backgroundColor: '#172033',
-    borderRadius: 18,
-    padding: 16,
-    gap: 4,
+    backgroundColor: colors.ink,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    gap: spacing.xs,
   },
-  selectedLabel: { color: '#C9B8EA', fontSize: 12, fontWeight: '800' },
-  selectedTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: '900' },
-  selectedMeta: { color: '#E7DDF7', fontSize: 14, lineHeight: 20 },
-  rows: { gap: 10 },
+  selectedLabel: { color: '#C9B8EA', letterSpacing: 0.4 },
+  selectedMeta: { opacity: 0.85 },
+  rows: { gap: spacing.sm + 2 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 14,
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
     borderWidth: 1,
-    borderColor: '#E7EDF4',
+    borderColor: colors.border,
   },
-  meRow: { borderColor: '#14806F', backgroundColor: '#F0FDF9' },
-  rowSelected: { borderColor: '#C4972E' },
+  meRow: { borderColor: colors.brand, backgroundColor: colors.successSoft },
+  rowSelected: { borderColor: colors.gold },
   rankBox: {
     width: 36,
     height: 36,
-    borderRadius: 12,
-    backgroundColor: '#F1F5F9',
+    borderRadius: radius.xs,
+    backgroundColor: colors.surfaceSink,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rankBoxTop: { backgroundColor: '#FFF8DC' },
-  rank: { color: '#334155', fontSize: 14, fontWeight: '900' },
+  rankBoxTop: { backgroundColor: colors.goldSoft },
+  rank: { color: colors.ink },
   member: { flex: 1, minWidth: 0, gap: 3 },
-  nickname: { color: '#172033', fontSize: 16, fontWeight: '900' },
-  meta: { color: '#657084', fontSize: 12, lineHeight: 18 },
-  score: { color: '#14806F', fontSize: 13, fontWeight: '900' },
+  score: { fontWeight: '900' },
   missionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
-    gap: 6,
+    padding: spacing.lg,
+    gap: spacing.sm - 2,
   },
-  missionTitle: { color: '#172033', fontSize: 16, fontWeight: '900' },
-  missionBody: { color: '#657084', fontSize: 13, lineHeight: 20 },
 });

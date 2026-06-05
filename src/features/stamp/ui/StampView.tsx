@@ -1,6 +1,7 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { STAMP_RADIUS_METERS } from '@shared/config';
+import { AppText, Badge, Gradient, Surface, colors, radius, spacing } from '@shared/ui';
 
 export interface StampCandidate {
   readonly contentId: string;
@@ -49,59 +50,73 @@ export function StampView({
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topbar}>
           <View style={styles.brandBlock}>
-            <Text style={styles.brand}>도장 찍기</Text>
-            <Text style={styles.brandCaption}>현장 인증 후 스탬프를 눌러요</Text>
+            <AppText variant="h1">도장 찍기</AppText>
+            <AppText variant="caption" tone="inkSoft">
+              현장 인증 후 스탬프를 눌러요
+            </AppText>
           </View>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>◎</Text>
+            <AppText variant="h3" tone="onDark">
+              ◎
+            </AppText>
           </View>
         </View>
 
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>오늘 루트 수집 현황</Text>
-          <Text style={styles.summaryValue}>
+        <Surface elevation="e1" radius="lg" style={styles.summaryCard}>
+          <AppText variant="caption" tone="inkSoft">
+            오늘 루트 수집 현황
+          </AppText>
+          <AppText variant="h1" style={styles.summaryValue}>
             {collectedCount} / {totalCount}
-          </Text>
+          </AppText>
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
           </View>
-        </View>
+        </Surface>
 
         {candidate ? (
-          <View style={styles.candidateCard}>
+          <Surface elevation="e2" radius="lg" style={styles.candidateCard}>
             <View style={styles.candidateRow}>
               <View style={styles.thumb}>
-                <Text style={styles.thumbText}>🏯</Text>
+                <AppText style={styles.thumbText}>🏯</AppText>
               </View>
               <View style={styles.candidateText}>
-                <Text style={styles.cardLabel}>현재 추천 인증 스팟</Text>
-                <Text style={styles.cardTitle}>{candidate.title}</Text>
-                <Text style={styles.cardAddress}>{candidate.address}</Text>
+                <AppText variant="micro" tone="brand" style={styles.cardLabel}>
+                  현재 추천 인증 스팟
+                </AppText>
+                <AppText variant="h2">{candidate.title}</AppText>
+                <AppText variant="caption" tone="inkSoft">
+                  {candidate.address}
+                </AppText>
               </View>
             </View>
 
             <View style={styles.badgeRow}>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{locationAvailable ? 'GPS 확인' : 'GPS 대기'}</Text>
-              </View>
-              <View style={[styles.badge, styles.badgeAccent]}>
-                <Text style={styles.badgeText}>{candidate.distanceMeters}m</Text>
-              </View>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>중복 없음</Text>
-              </View>
+              <Badge tone="neutral" size="sm">
+                {locationAvailable ? 'GPS 확인' : 'GPS 대기'}
+              </Badge>
+              <Badge tone="warning" size="sm">
+                {candidate.distanceMeters}m
+              </Badge>
+              <Badge tone="neutral" size="sm">
+                중복 없음
+              </Badge>
             </View>
 
             <View style={styles.actionShell}>
               <View style={styles.stampHandle} />
               <View style={styles.stampTarget}>
-                <Text style={styles.stampTargetText}>{candidate.title}</Text>
+                <AppText variant="h3" style={styles.stampTargetText}>
+                  {candidate.title}
+                </AppText>
               </View>
-              <Text style={styles.actionTitle}>스탬프를 꾹 눌러주세요</Text>
-              <Text style={styles.actionBody}>
+              <AppText variant="h2" style={styles.actionTitle}>
+                스탬프를 꾹 눌러주세요
+              </AppText>
+              <AppText variant="body" tone="inkSoft" style={styles.actionBody}>
                 도장은 이 화면에서만 찍을 수 있어요. 지도와 상세 화면에서는 위치와 정보를
                 확인합니다.
-              </Text>
+              </AppText>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`${candidate.title} 도장 찍기`}
@@ -119,67 +134,83 @@ export function StampView({
                   pressed ? styles.pressed : null,
                 ]}
               >
-                <Text
-                  style={[styles.ctaText, canVerify ? styles.ctaReadyText : styles.ctaBlockedText]}
+                <AppText
+                  variant="bodyBold"
+                  style={canVerify ? styles.ctaReadyText : styles.ctaBlockedText}
                 >
                   {ctaLabel}
-                </Text>
+                </AppText>
               </Pressable>
             </View>
-          </View>
+          </Surface>
         ) : (
-          <View style={styles.emptyCard}>
-            <Text style={styles.cardTitle}>추천 스팟이 없습니다</Text>
-          </View>
+          <Surface elevation="e1" radius="lg" style={styles.emptyCard}>
+            <AppText variant="h3">추천 스팟이 없습니다</AppText>
+          </Surface>
         )}
 
         <View style={styles.sectionHead}>
-          <Text style={styles.sectionTitle}>최근 획득 도장</Text>
-          <Text style={styles.sectionMeta}>도장함 보기</Text>
+          <AppText variant="h2">최근 획득 도장</AppText>
+          <AppText variant="caption" tone="brand">
+            도장함 보기
+          </AppText>
         </View>
 
         <View style={styles.miniGrid}>
           {latestStamps.length > 0 ? (
             latestStamps.map((stamp, index) => (
-              <View key={stamp.contentId} style={styles.miniStamp}>
-                <Text style={styles.miniStampIcon}>{getRecentIcon(index)}</Text>
-                <Text style={styles.miniStampTitle}>{stamp.title}</Text>
-              </View>
+              <Surface key={stamp.contentId} elevation="e1" radius="md" style={styles.miniStamp}>
+                <AppText style={styles.miniStampIcon}>{getRecentIcon(index)}</AppText>
+                <AppText variant="micro" tone="inkSoft" style={styles.miniStampTitle}>
+                  {stamp.title}
+                </AppText>
+              </Surface>
             ))
           ) : (
             <>
-              <View style={styles.miniStamp}>
-                <Text style={styles.miniStampIcon}>🏯</Text>
-                <Text style={styles.miniStampTitle}>경복궁</Text>
-              </View>
-              <View style={styles.miniStamp}>
-                <Text style={styles.miniStampIcon}>🎪</Text>
-                <Text style={styles.miniStampTitle}>봄빛 행사</Text>
-              </View>
-              <View style={styles.miniStamp}>
-                <Text style={styles.miniStampIcon}>🌉</Text>
-                <Text style={styles.miniStampTitle}>한강 야경</Text>
-              </View>
+              <Surface elevation="e1" radius="md" style={styles.miniStamp}>
+                <AppText style={styles.miniStampIcon}>🏯</AppText>
+                <AppText variant="micro" tone="inkSoft" style={styles.miniStampTitle}>
+                  경복궁
+                </AppText>
+              </Surface>
+              <Surface elevation="e1" radius="md" style={styles.miniStamp}>
+                <AppText style={styles.miniStampIcon}>🎪</AppText>
+                <AppText variant="micro" tone="inkSoft" style={styles.miniStampTitle}>
+                  봄빛 행사
+                </AppText>
+              </Surface>
+              <Surface elevation="e1" radius="md" style={styles.miniStamp}>
+                <AppText style={styles.miniStampIcon}>🌉</AppText>
+                <AppText variant="micro" tone="inkSoft" style={styles.miniStampTitle}>
+                  한강 야경
+                </AppText>
+              </Surface>
             </>
           )}
         </View>
 
-        <View style={styles.collectionCard}>
-          <Text style={styles.collectionTitle}>서울 5대 궁궐 컬렉션</Text>
+        <Gradient variant="gold" style={styles.collectionCardGradient}>
+          <AppText variant="h3" tone="onDark">
+            서울 5대 궁궐 컬렉션
+          </AppText>
           <View style={styles.progressTrack}>
             <View
-              style={[styles.progressFill, { width: `${Math.min(60 + collectedCount * 6, 100)}%` }]}
+              style={[
+                styles.progressFillWhite,
+                { width: `${Math.min(60 + collectedCount * 6, 100)}%` },
+              ]}
             />
           </View>
           <View style={styles.badgeRow}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{Math.min(collectedCount + 2, 5)} / 5 완료</Text>
-            </View>
-            <View style={[styles.badge, styles.badgeAccent]}>
-              <Text style={styles.badgeText}>완성까지 2개</Text>
-            </View>
+            <Badge tone="neutral" size="sm">
+              {Math.min(collectedCount + 2, 5)} / 5 완료
+            </Badge>
+            <Badge tone="warning" size="sm">
+              완성까지 2개
+            </Badge>
           </View>
-        </View>
+        </Gradient>
       </ScrollView>
     </SafeAreaView>
   );
@@ -228,175 +259,134 @@ const getCtaLabel = ({
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F0FDF9' },
-  content: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 28, gap: 14 },
+  root: { flex: 1, backgroundColor: colors.surfaceAlt },
+  content: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xxxl,
+    gap: spacing.md,
+  },
   topbar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: spacing.md,
   },
   brandBlock: { flex: 1, minWidth: 0, gap: 2 },
-  brand: { color: '#172033', fontSize: 26, fontWeight: '900', letterSpacing: -0.6 },
-  brandCaption: { color: '#657084', fontSize: 13 },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#173C35',
+    backgroundColor: colors.brandDeep,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: '#FFFFFF', fontSize: 18, fontWeight: '900' },
   summaryCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#DDF2EC',
-    gap: 8,
+    padding: spacing.lg,
+    gap: spacing.sm,
   },
-  summaryLabel: { color: '#6A766F', fontSize: 13, fontWeight: '800' },
-  summaryValue: { color: '#172033', fontSize: 24, fontWeight: '900' },
+  summaryValue: { fontSize: 24 },
   progressTrack: {
     height: 8,
-    backgroundColor: '#E8F3EF',
-    borderRadius: 999,
+    backgroundColor: colors.surfaceSink,
+    borderRadius: radius.pill,
     overflow: 'hidden',
   },
-  progressFill: { height: '100%', backgroundColor: '#14806F', borderRadius: 999 },
-  candidateCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#B7EFE5',
-    gap: 14,
-    shadowColor: '#0F766E',
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 2,
+  progressFill: { height: '100%', backgroundColor: colors.gold, borderRadius: radius.pill },
+  progressFillWhite: {
+    height: '100%',
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: radius.pill,
   },
-  candidateRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
+  candidateCard: {
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  candidateRow: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },
   thumb: {
     width: 64,
     height: 64,
-    borderRadius: 18,
-    backgroundColor: '#E6F6EA',
+    borderRadius: radius.sm + 8,
+    backgroundColor: colors.successSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   thumbText: { fontSize: 24 },
-  candidateText: { flex: 1, minWidth: 0, gap: 4 },
-  cardLabel: { color: '#0F766E', fontSize: 12, fontWeight: '800' },
-  cardTitle: { color: '#172033', fontSize: 20, fontWeight: '900' },
-  cardAddress: { color: '#657084', fontSize: 13, lineHeight: 18 },
-  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  badge: {
-    borderRadius: 999,
-    backgroundColor: '#EEF3F8',
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-  },
-  badgeAccent: { backgroundColor: '#FFF3D5' },
-  badgeText: { color: '#465466', fontSize: 11, fontWeight: '800' },
-  statusDoneText: { color: '#207A3C' },
-  statusTodoText: { color: '#8A6400' },
+  candidateText: { flex: 1, minWidth: 0, gap: spacing.xs },
+  cardLabel: { letterSpacing: 0.4 },
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm - 2 },
   actionShell: {
     alignItems: 'center',
-    backgroundColor: '#F6FFFD',
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 16,
+    backgroundColor: colors.successSoft,
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm + 2,
+    paddingBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: '#CFF5EC',
+    borderColor: colors.success,
+    opacity: 0.97,
   },
   stampHandle: {
     width: 86,
     height: 64,
-    borderRadius: 22,
-    backgroundColor: '#0F766E',
+    borderRadius: radius.lg,
+    backgroundColor: colors.brand,
     marginBottom: -16,
   },
   stampTarget: {
     width: 178,
     height: 178,
     borderRadius: 89,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderWidth: 5,
-    borderColor: '#2DD4BF',
+    borderColor: colors.brandSoft,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 14,
+    marginBottom: spacing.md,
   },
   stampTargetText: {
-    color: '#14806F',
-    fontSize: 18,
-    fontWeight: '900',
+    color: colors.brand,
     textAlign: 'center',
   },
-  actionTitle: { color: '#172033', fontSize: 20, fontWeight: '900', textAlign: 'center' },
+  actionTitle: { textAlign: 'center' },
   actionBody: {
-    color: '#657084',
-    fontSize: 13,
-    lineHeight: 20,
     textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 12,
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
   },
   cta: {
     width: '100%',
-    borderRadius: 18,
-    paddingVertical: 15,
+    borderRadius: radius.lg,
+    height: 52,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  ctaReady: { backgroundColor: '#173C35' },
-  ctaBlocked: { backgroundColor: '#E9F0EC' },
-  ctaText: { fontSize: 15, fontWeight: '900' },
-  ctaReadyText: { color: '#FFFFFF' },
-  ctaBlockedText: { color: '#5F6B67' },
-  pressed: { opacity: 0.82 },
+  ctaReady: { backgroundColor: colors.brand },
+  ctaBlocked: { backgroundColor: colors.surfaceSink },
+  ctaReadyText: { color: colors.surface },
+  ctaBlockedText: { color: colors.inkMuted },
+  pressed: { opacity: 0.85 },
   sectionHead: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',
   },
-  sectionTitle: { color: '#172033', fontSize: 18, fontWeight: '900' },
-  sectionMeta: { color: '#0F766E', fontSize: 12, fontWeight: '800' },
-  miniGrid: { flexDirection: 'row', gap: 8 },
+  miniGrid: { flexDirection: 'row', gap: spacing.sm },
   miniStamp: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
+    gap: spacing.xs,
   },
-  miniStampIcon: { fontSize: 22, marginBottom: 4 },
-  miniStampTitle: {
-    color: '#657084',
-    fontSize: 11,
-    fontWeight: '800',
-    textAlign: 'center',
+  miniStampIcon: { fontSize: 22 },
+  miniStampTitle: { textAlign: 'center' },
+  collectionCardGradient: {
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    gap: spacing.sm + 2,
   },
-  collectionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
-    gap: 10,
-  },
-  collectionTitle: { color: '#172033', fontSize: 16, fontWeight: '900' },
   emptyCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
+    padding: spacing.lg,
   },
 });
