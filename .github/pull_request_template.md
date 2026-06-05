@@ -28,7 +28,7 @@ Closes #
 - [ ] `shared` (brand 타입 / 상수 / ui-kit / mocks)
 - [ ] `app` (라우트)
 - [ ] `harness` (ESLint / CI / 문서 / skills)
-- [ ] `docs` (README / AGENTS / CLAUDE / .ai-\*)
+- [ ] `docs` (README / AGENTS / CLAUDE / docs/ / skills/ / .claude/)
 
 ## 무엇을 / 왜?
 
@@ -60,9 +60,9 @@ Closes #
 
 ## 관련 skill / background
 
-작업 직전 읽은 `.ai-skills/*` 또는 `.ai-background/*` 가 있다면 표시:
+작업 직전 읽은 `skills/<name>/SKILL.md` 또는 `docs/*.md` 가 있다면 표시:
 
-- 예: `.ai-skills/location-verification.md`
+- 예: `skills/git-workflow/SKILL.md`
 
 ## 스크린샷 / 영상 (UI 변경 시)
 
