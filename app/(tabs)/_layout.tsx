@@ -1,26 +1,111 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
+import { colors } from '@shared/ui';
 
-const tabIcon = (emoji: string) => {
-  const Icon = () => <Text style={{ fontSize: 18 }}>{emoji}</Text>;
-  Icon.displayName = `TabIcon(${emoji})`;
-  return Icon;
-};
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+
+interface TabIconProps {
+  readonly color: string;
+  readonly focused: boolean;
+  readonly activeIcon: IoniconName;
+  readonly inactiveIcon: IoniconName;
+}
+
+function TabIcon({ color, focused, activeIcon, inactiveIcon }: TabIconProps) {
+  return <Ionicons name={focused ? activeIcon : inactiveIcon} size={22} color={color} />;
+}
 
 export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#14806f',
-        tabBarInactiveTintColor: '#94a3b8',
+        tabBarActiveTintColor: colors.brand,
+        tabBarInactiveTintColor: colors.inkMuted,
+        tabBarStyle: {
+          height: 70,
+          paddingTop: 8,
+          paddingBottom: 14,
+          borderTopWidth: 0,
+          backgroundColor: colors.surface,
+          shadowColor: '#0F1729',
+          shadowOpacity: 0.06,
+          shadowRadius: 16,
+          shadowOffset: { width: 0, height: -4 },
+          elevation: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '700',
+          marginTop: 2,
+        },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: '홈', tabBarIcon: tabIcon('🏠') }} />
-      <Tabs.Screen name="map" options={{ title: '지도', tabBarIcon: tabIcon('🗺️') }} />
-      <Tabs.Screen name="stamp" options={{ title: '도장', tabBarIcon: tabIcon('🎖️') }} />
-      <Tabs.Screen name="ranking" options={{ title: '랭킹', tabBarIcon: tabIcon('🏆') }} />
-      <Tabs.Screen name="my" options={{ title: 'MY', tabBarIcon: tabIcon('👤') }} />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: '홈',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon
+              color={color}
+              focused={focused}
+              activeIcon="home"
+              inactiveIcon="home-outline"
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="map"
+        options={{
+          title: '지도',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon color={color} focused={focused} activeIcon="map" inactiveIcon="map-outline" />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="stamp"
+        options={{
+          title: '도장',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon
+              color={color}
+              focused={focused}
+              activeIcon="ribbon"
+              inactiveIcon="ribbon-outline"
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="ranking"
+        options={{
+          title: '랭킹',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon
+              color={color}
+              focused={focused}
+              activeIcon="trophy"
+              inactiveIcon="trophy-outline"
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="my"
+        options={{
+          title: 'MY',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon
+              color={color}
+              focused={focused}
+              activeIcon="person-circle"
+              inactiveIcon="person-circle-outline"
+            />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

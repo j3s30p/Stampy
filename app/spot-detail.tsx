@@ -1,8 +1,9 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMockFlow } from '@core/demo';
 import { TourSpotDetailView } from '@features/tour/ui';
+import { AppText, colors, spacing } from '@shared/ui';
 
 export default function SpotDetailScreen() {
   const router = useRouter();
@@ -16,22 +17,20 @@ export default function SpotDetailScreen() {
 
   if (!flow) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#EEF3F8' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.surfaceAlt }}>
         <View
           style={{
             flex: 1,
             alignItems: 'center',
             justifyContent: 'center',
-            padding: 24,
-            gap: 12,
+            padding: spacing.xxl,
+            gap: spacing.md,
           }}
         >
-          <Text style={{ color: '#172033', fontSize: 20, fontWeight: '900' }}>
-            관광지 정보를 불러오는 중
-          </Text>
-          <Text style={{ color: '#657084', fontSize: 14, textAlign: 'center', lineHeight: 20 }}>
+          <AppText variant="h1">관광지 정보를 불러오는 중</AppText>
+          <AppText variant="body" tone="inkSoft" style={{ textAlign: 'center' }}>
             현재 위치와 스팟 목록을 확인하고 있어요.
-          </Text>
+          </AppText>
         </View>
       </SafeAreaView>
     );
