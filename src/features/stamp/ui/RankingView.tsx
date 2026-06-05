@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.xs,
   },
-  selectedLabel: { color: '#C9B8EA', letterSpacing: 0.4 },
+  selectedLabel: { color: colors.onDarkMuted, letterSpacing: 0.4 },
   selectedMeta: { opacity: 0.85 },
   rows: { gap: spacing.sm + 2 },
   row: {

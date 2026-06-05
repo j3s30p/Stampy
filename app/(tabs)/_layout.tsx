@@ -28,7 +28,7 @@ export default function TabsLayout() {
           paddingBottom: 14,
           borderTopWidth: 0,
           backgroundColor: colors.surface,
-          shadowColor: '#0F1729',
+          shadowColor: colors.ink,
           shadowOpacity: 0.06,
           shadowRadius: 16,
           shadowOffset: { width: 0, height: -4 },

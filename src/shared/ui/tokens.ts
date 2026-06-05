@@ -18,6 +18,11 @@ export const colors = {
   warning: '#E0A21A',
   warningSoft: '#FFF3D5',
   overlay: 'rgba(15,23,41,0.55)',
+  onDarkMuted: 'rgba(255,255,255,0.7)',
+  mapEdge: '#C7D9E4',
+  locationDot: '#6EA8FF',
+  thumbPeach: '#EFC9A3',
+  thumbPink: '#FFD0DA',
 } as const;
 
 export type Color = keyof typeof colors;
