@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useCurrentLocation } from '@core/location';
-import { collectMockCandidate, getMockFlow, subscribeMockFlow } from './mockFlow';
+import { collectMockCandidate, getMockFlow, selectMockSpot, subscribeMockFlow } from './mockFlow';
 
 export type MockFlow = Awaited<ReturnType<typeof getMockFlow>>;
 
@@ -36,9 +36,14 @@ export function useMockFlow() {
     setFlow(await collectMockCandidate(currentLocation.location));
   }, [currentLocation.location]);
 
+  const selectSpot = useCallback((contentId: string) => {
+    selectMockSpot(contentId);
+  }, []);
+
   return {
     flow,
     collectCandidate,
+    selectSpot,
     locationAvailable: currentLocation.status === 'granted' && currentLocation.location !== null,
     locationStatus: currentLocation.status,
   };

@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { STAMP_RADIUS_METERS } from '@shared/config';
 
@@ -14,9 +14,10 @@ export interface HomeTourSpot {
 interface HomeViewProps {
   readonly spots: readonly HomeTourSpot[];
   readonly collectedCount: number;
+  readonly onSelectSpot?: (contentId: string) => void;
 }
 
-export function HomeView({ spots, collectedCount }: HomeViewProps) {
+export function HomeView({ spots, collectedCount, onSelectSpot }: HomeViewProps) {
   const nearest = [...spots].sort((a, b) => a.distanceMeters - b.distanceMeters)[0];
 
   return (
@@ -31,7 +32,12 @@ export function HomeView({ spots, collectedCount }: HomeViewProps) {
         </View>
 
         {nearest ? (
-          <View style={styles.hero}>
+          <Pressable
+            accessibilityLabel={`${nearest.title} 도장 화면 열기`}
+            accessibilityRole="button"
+            onPress={() => onSelectSpot?.(nearest.contentId)}
+            style={({ pressed }) => [styles.hero, pressed ? styles.pressed : null]}
+          >
             <View>
               <Text style={styles.heroLabel}>가장 가까운 스팟</Text>
               <Text style={styles.heroTitle}>{nearest.title}</Text>
@@ -42,7 +48,7 @@ export function HomeView({ spots, collectedCount }: HomeViewProps) {
             <View style={styles.heroBadge}>
               <Text style={styles.heroBadgeText}>{nearest.collected ? '완료' : '대기'}</Text>
             </View>
-          </View>
+          </Pressable>
         ) : null}
 
         <View style={styles.summaryRow}>
@@ -66,7 +72,13 @@ export function HomeView({ spots, collectedCount }: HomeViewProps) {
         </View>
 
         {spots.map((spot) => (
-          <View key={spot.contentId} style={styles.card}>
+          <Pressable
+            key={spot.contentId}
+            accessibilityLabel={`${spot.title} 도장 화면 열기`}
+            accessibilityRole="button"
+            onPress={() => onSelectSpot?.(spot.contentId)}
+            style={({ pressed }) => [styles.card, pressed ? styles.pressed : null]}
+          >
             <View style={styles.cardTop}>
               <View style={styles.marker}>
                 <Text style={styles.markerText}>{spot.title.slice(0, 1)}</Text>
@@ -81,7 +93,7 @@ export function HomeView({ spots, collectedCount }: HomeViewProps) {
             </View>
             <Text style={styles.address}>{spot.address}</Text>
             <Text style={styles.distance}>현재 위치에서 {spot.distanceMeters}m</Text>
-          </View>
+          </Pressable>
         ))}
       </ScrollView>
     </SafeAreaView>
@@ -114,6 +126,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   heroBadgeText: { color: '#2A2100', fontSize: 13, fontWeight: '800' },
+  pressed: { opacity: 0.78 },
   summaryRow: { flexDirection: 'row', gap: 10 },
   summaryItem: {
     flex: 1,

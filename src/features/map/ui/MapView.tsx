@@ -1,4 +1,5 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export interface MapSpotPin {
@@ -11,9 +12,13 @@ export interface MapSpotPin {
 
 interface MapViewProps {
   readonly spots: readonly MapSpotPin[];
+  readonly onSelectSpot?: (contentId: string) => void;
 }
 
-export function MapView({ spots }: MapViewProps) {
+export function MapView({ spots, onSelectSpot }: MapViewProps) {
+  const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
+  const selectedSpot = spots.find((spot) => spot.contentId === selectedSpotId) ?? spots[0] ?? null;
+
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -29,21 +34,43 @@ export function MapView({ spots }: MapViewProps) {
           <View style={styles.gridLineHorizontal} />
           <View style={styles.gridLineVertical} />
           {spots.map((spot, index) => (
-            <View
+            <Pressable
               key={spot.contentId}
+              accessibilityLabel={`${spot.title} 지도 핀 선택`}
+              accessibilityRole="button"
+              onPress={() => setSelectedSpotId(spot.contentId)}
               style={[
                 styles.pin,
                 index === 0 ? styles.pinPrimary : null,
+                spot.contentId === selectedSpot?.contentId ? styles.pinSelected : null,
                 { left: `${18 + index * 26}%`, top: `${28 + (index % 2) * 26}%` },
               ]}
             >
               <Text style={styles.pinText}>{index + 1}</Text>
-            </View>
+            </Pressable>
           ))}
           <View style={styles.currentLocation}>
             <Text style={styles.currentLocationText}>현재 위치</Text>
           </View>
         </View>
+
+        {selectedSpot ? (
+          <View style={styles.selectedPanel}>
+            <View style={styles.selectedText}>
+              <Text style={styles.selectedLabel}>선택한 스팟</Text>
+              <Text style={styles.selectedTitle}>{selectedSpot.title}</Text>
+              <Text style={styles.selectedMeta}>{selectedSpot.distanceMeters}m 떨어짐</Text>
+            </View>
+            <Pressable
+              accessibilityLabel={`${selectedSpot.title} 인증 화면 열기`}
+              accessibilityRole="button"
+              onPress={() => onSelectSpot?.(selectedSpot.contentId)}
+              style={({ pressed }) => [styles.selectedAction, pressed ? styles.pressed : null]}
+            >
+              <Text style={styles.selectedActionText}>인증하기</Text>
+            </Pressable>
+          </View>
+        ) : null}
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>스팟 목록</Text>
@@ -51,7 +78,17 @@ export function MapView({ spots }: MapViewProps) {
         </View>
 
         {spots.map((spot, index) => (
-          <View key={spot.contentId} style={styles.card}>
+          <Pressable
+            key={spot.contentId}
+            accessibilityLabel={`${spot.title} 지도 목록 선택`}
+            accessibilityRole="button"
+            onPress={() => setSelectedSpotId(spot.contentId)}
+            style={({ pressed }) => [
+              styles.card,
+              spot.contentId === selectedSpot?.contentId ? styles.cardSelected : null,
+              pressed ? styles.pressed : null,
+            ]}
+          >
             <Text style={styles.cardIndex}>{index + 1}</Text>
             <View style={styles.cardText}>
               <Text style={styles.cardTitle}>{spot.title}</Text>
@@ -68,7 +105,7 @@ export function MapView({ spots }: MapViewProps) {
                 {spot.collected ? '완료' : '대기'}
               </Text>
             </View>
-          </View>
+          </Pressable>
         ))}
       </ScrollView>
     </SafeAreaView>
@@ -118,6 +155,7 @@ const styles = StyleSheet.create({
     borderColor: '#315D9A',
   },
   pinPrimary: { borderColor: '#14806F', backgroundColor: '#E1F1ED' },
+  pinSelected: { borderColor: '#E0A21A', backgroundColor: '#FFF4D8' },
   pinText: { color: '#18202A', fontSize: 14, fontWeight: '900' },
   currentLocation: {
     position: 'absolute',
@@ -129,6 +167,27 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   currentLocationText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
+  selectedPanel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#C5D5D0',
+  },
+  selectedText: { flex: 1, minWidth: 0, gap: 3 },
+  selectedLabel: { color: '#315D9A', fontSize: 12, fontWeight: '800' },
+  selectedTitle: { color: '#18202A', fontSize: 18, fontWeight: '900' },
+  selectedMeta: { color: '#66717F', fontSize: 13 },
+  selectedAction: {
+    backgroundColor: '#173C35',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+  },
+  selectedActionText: { color: '#FFFFFF', fontSize: 13, fontWeight: '900' },
   sectionHeader: { gap: 4 },
   sectionTitle: { color: '#18202A', fontSize: 20, fontWeight: '800' },
   sectionMeta: { color: '#66717F', fontSize: 13 },
@@ -142,6 +201,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E1E7EA',
   },
+  cardSelected: { borderColor: '#E0A21A', backgroundColor: '#FFFDF7' },
+  pressed: { opacity: 0.78 },
   cardIndex: { width: 26, color: '#315D9A', fontSize: 16, fontWeight: '900', textAlign: 'center' },
   cardText: { flex: 1, minWidth: 0, gap: 3 },
   cardTitle: { color: '#18202A', fontSize: 16, fontWeight: '800' },

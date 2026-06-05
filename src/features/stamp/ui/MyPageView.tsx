@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export interface MyStampSummary {
@@ -11,9 +11,10 @@ export interface MyStampSummary {
 interface MyPageViewProps {
   readonly stamps: readonly MyStampSummary[];
   readonly nickname: string;
+  readonly onSelectStamp?: (contentId: string) => void;
 }
 
-export function MyPageView({ stamps, nickname }: MyPageViewProps) {
+export function MyPageView({ stamps, nickname, onSelectStamp }: MyPageViewProps) {
   const collectedCount = stamps.filter((stamp) => stamp.collected).length;
 
   return (
@@ -47,7 +48,13 @@ export function MyPageView({ stamps, nickname }: MyPageViewProps) {
         </View>
 
         {stamps.map((stamp) => (
-          <View key={stamp.contentId} style={styles.stampCard}>
+          <Pressable
+            key={stamp.contentId}
+            accessibilityLabel={`${stamp.title} 도장 상세 열기`}
+            accessibilityRole="button"
+            onPress={() => onSelectStamp?.(stamp.contentId)}
+            style={({ pressed }) => [styles.stampCard, pressed ? styles.pressed : null]}
+          >
             <View
               style={[
                 styles.stampSeal,
@@ -69,7 +76,7 @@ export function MyPageView({ stamps, nickname }: MyPageViewProps) {
                 {stamp.collected ? `수집 완료 · ${formatDate(stamp.collectedAt)}` : '아직 방문 전'}
               </Text>
             </View>
-          </View>
+          </Pressable>
         ))}
       </ScrollView>
     </SafeAreaView>
@@ -124,6 +131,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E0D9',
   },
+  pressed: { opacity: 0.78 },
   stampSeal: {
     width: 46,
     height: 46,
