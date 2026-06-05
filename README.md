@@ -36,6 +36,37 @@ npm install
 npm start
 ```
 
+## First time on this repo?
+
+처음 클론한 사람·AI 가 "지금 뭐가 돌아가는지" 5분 안에 파악하기 위한 진입점.
+
+### 인간 (팀원 첫날)
+
+1. 이 README — 스택 / 레이아웃 / Documentation map 훑기.
+2. [`AGENTS.md`](./AGENTS.md) — invariants + Phase 1 분담 + commit/branch 규약. **여기가 핵심 계약.**
+3. [Milestones](https://github.com/j3s30p/Stampy/milestones) — Stage 별 진행 상태. 닫혀 있으면 완료, 열려 있으면 진행 중/예정.
+4. [Issues (open)](https://github.com/j3s30p/Stampy/issues) — 현재 할당된/대기 중인 작업. 본인 영역 라벨 (`area/<slug>`) 로 필터.
+5. [Pull Requests (open)](https://github.com/j3s30p/Stampy/pulls) — 머지 대기 중인 변경.
+6. 본인이 만질 영역의 [`.ai-background/`](./.ai-background/) 문서 해당 1개 — _결정 배경_.
+
+### AI 에이전트 (세션 시작 시)
+
+1. `CLAUDE.md` / `AGENTS.md` 정본 자동 로드 (Claude Code/Codex/Cursor 가 알아서).
+2. 작업 직전에만 매칭되는 `.ai-skills/<name>.md` 1개 정독.
+3. 처음 영역 진입 시 `.ai-background/` 의 해당 주제 1회.
+4. 현재 진행 상태는 `gh issue list` / `gh pr list` / `gh milestone list` 로 (`.ai-skills/git-workflow.md` 참조).
+
+## Work tracking
+
+| 무엇이                            | 어디서                                                    |
+| --------------------------------- | --------------------------------------------------------- |
+| 큰 단위 진행 상태 (Stage 0~6, UI) | [Milestones](https://github.com/j3s30p/Stampy/milestones) |
+| 개별 작업 / TODO / 버그           | [Issues](https://github.com/j3s30p/Stampy/issues)         |
+| 진행 중 변경                      | [Pull Requests](https://github.com/j3s30p/Stampy/pulls)   |
+| 영역 / 타입 / 우선순위 / 상태     | Labels (`area/*`, `type/*`, `priority/*`, `status/*`)     |
+
+**모든 PR 은 관련 issue 를 닫는다** (`Closes #N` 본문 footer). issue 없는 PR 은 인플라이트 작업 추적 안 됨 → 가급적 먼저 issue 생성.
+
 ## Documentation map
 
 ### 정본 (편집 대상)

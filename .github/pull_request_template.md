@@ -1,8 +1,21 @@
 <!--
 이 템플릿은 모든 PR 에 강제로 적용됩니다.
 빈 칸을 채우지 않은 PR 은 머지 불가 (검토자 차단).
-관련 규약: AGENTS.md → "File ownership" / "Branch / commit convention".
+관련 규약: AGENTS.md → "File ownership" / "Branch / commit convention" / "Work tracking".
 -->
+
+## 관련 issue
+
+<!--
+가능하면 항상 issue 를 먼저 만들고 PR 에서 닫는다. issue 없는 PR 은 사후 추적 어려움.
+
+  Closes #<번호>     ← 머지 시 issue 자동 close
+  Refs #<번호>       ← 부분 진행 (close 안 함)
+
+명백한 작은 chore (포맷 수정 등) 는 issue 생략 가능 — "issue 없음" 명시.
+-->
+
+Closes #
 
 ## 어느 영역?
 

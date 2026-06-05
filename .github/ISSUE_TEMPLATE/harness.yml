@@ -1,0 +1,39 @@
+name: '🔧 Harness — 인프라/도구 작업'
+description: 'ESLint 룰, CI, scripts, Husky, 정본 문서 등 가드레일 자체 변경'
+title: '[harness] '
+labels: ['area/harness', 'type/chore', 'status/ready']
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: '무엇을 / 왜?'
+      description: '가드레일이 현재 잡지 못하는 케이스, 또는 개선 의도.'
+    validations:
+      required: true
+  - type: dropdown
+    id: layer
+    attributes:
+      label: '어느 계층?'
+      options:
+        - 'ESLint 룰 (커스텀 또는 설정)'
+        - 'Prettier / format'
+        - 'commitlint / commit-msg hook'
+        - 'pre-commit / pre-push hook'
+        - 'GitHub Actions CI'
+        - 'sync-harness-docs 스크립트'
+        - '정본 문서 (README/AGENTS/CLAUDE)'
+        - 'skill (.ai-skills/)'
+        - 'background (.ai-background/)'
+        - '기타'
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: '완료 조건'
+      placeholder: |
+        - [ ] 새 룰/도구가 동작
+        - [ ] smoke test 로 위반 케이스 거부 확인
+        - [ ] `.ai-skills/static-analysis-guide.md` 갱신
+    validations:
+      required: true

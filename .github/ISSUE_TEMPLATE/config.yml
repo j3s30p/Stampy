@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: '문서 먼저 확인'
+    url: https://github.com/j3s30p/Stampy#documentation-map
+    about: '이슈 만들기 전에 AGENTS.md, .ai-skills/, .ai-background/ 에 답이 있는지 확인'
+  - name: '진행 중인 작업 확인'
+    url: https://github.com/j3s30p/Stampy/milestones
+    about: 'Stage 별 마일스톤에 이미 같은 작업이 있는지 확인'
