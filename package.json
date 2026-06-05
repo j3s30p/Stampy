@@ -18,6 +18,7 @@
     "quality:full": "npm-run-all -s typecheck lint format:check sync:docs:check",
     "sync:docs": "node scripts/sync-harness-docs.mjs",
     "sync:docs:check": "node scripts/sync-harness-docs.mjs --check",
+    "session": "node scripts/session-state.mjs",
     "prepare": "husky"
   },
   "dependencies": {
