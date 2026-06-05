@@ -1,16 +1,21 @@
+import { collectedStampFixtures } from '@shared/mocks';
 import type { Stamp } from '../model';
 import type { StampRepository } from './StampRepository';
 
 export class MockStampRepository implements StampRepository {
   async listCollected(_userId: string): Promise<Stamp[]> {
-    return [];
+    return [...collectedStampFixtures];
   }
 
   async collect(_userId: string, _stamp: Omit<Stamp, 'id' | 'collectedAt'>): Promise<Stamp> {
-    throw new Error('MockStampRepository.collect: Stage 2 에서 본문 채움');
+    return {
+      ..._stamp,
+      id: `stamp-${_stamp.spotId}`,
+      collectedAt: new Date().toISOString(),
+    };
   }
 
   async hasCollected(_userId: string, _spotId: string): Promise<boolean> {
-    return false;
+    return collectedStampFixtures.some((stamp) => stamp.spotId === _spotId);
   }
 }

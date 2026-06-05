@@ -1,18 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useMockFlow } from '@core/demo';
+import { MyPageView } from '@features/stamp/ui';
 
 export default function MyScreen() {
-  return (
-    <SafeAreaView style={styles.root}>
-      <View style={styles.content}>
-        <Text style={styles.title}>마이페이지</Text>
-      </View>
-    </SafeAreaView>
-  );
+  const { flow } = useMockFlow();
+  return <MyPageView nickname="스탬피 테스터" stamps={flow?.myStamps ?? []} />;
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#FFFFFF' },
-  content: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 32, fontWeight: '700', color: '#111111' },
-});
