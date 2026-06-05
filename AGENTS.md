@@ -71,6 +71,27 @@
 
 ESLint 룰 ID 또는 tsc TS 코드 → [`skills/static-analysis-guide/SKILL.md`](./skills/static-analysis-guide/SKILL.md) 의 표에서 _권장 수정_ 와 _관련 skill_ 확인. suppress 가 정당한 경우 규약(`eslint-disable-next-line <id> -- <근거>`) 따라 작성.
 
+## AI delivery loop — 작성 후 PR 전 필수 절차
+
+AI 가 코드를 작성하는 작업은 아래 루프를 완료하기 전에는 PR 생성/갱신을 완료로 보고하지 않는다.
+
+| 단계       | 권장 모델 | 책임                                                                    | 산출물                                  |
+| ---------- | --------- | ----------------------------------------------------------------------- | --------------------------------------- |
+| 제안자     | 5.5       | 목표, 범위, 위험, 완료 조건을 고정                                      | 짧은 implementation plan                |
+| 작성자     | mini      | 승인된 범위만 코드로 구현하고 `quality:fast` 실행                       | commit 가능한 diff                      |
+| 리뷰어     | 5.5       | 파일을 수정하지 않고 버그·회귀·경계 위반·테스트 누락을 severity 로 지적 | review findings 또는 "중대한 문제 없음" |
+| 최종판단자 | 5.5       | 리뷰 findings 반영 여부와 draft PR 가능 여부 판단                       | PR 진행/보류 판단                       |
+| 최종결정자 | 사용자    | PR ready/merge/폐기 판단                                                | 명시 승인 또는 추가 지시                |
+
+### PR 전 체크
+
+- 작성자는 구현 직후 바로 PR 을 완료하지 않는다. 먼저 [`skills/code-review/SKILL.md`](./skills/code-review/SKILL.md) 기준의 독립 리뷰를 거친다.
+- 리뷰 findings 가 있으면 작성자 역할로 돌아가 반영하고, `quality:fast` 를 재실행한다. 하네스·문서·skill·CI 변경이면 `harness:check` 도 재실행한다.
+- 리뷰어가 "중대한 문제 없음" 또는 findings 반영 완료를 확인한 뒤, 최종판단자가 남은 리스크와 검증 결과를 보고 PR 진행/보류를 판단한다.
+- 최종판단자가 PR 진행을 판단한 뒤에만 commit + push + draft PR 생성/갱신을 한다.
+- PR 본문 또는 최종 보고에는 실행한 검증 명령, 수동 검증 결과, 리뷰 결과 요약을 포함한다.
+- PR ready 전환 / merge 는 사용자 명시 지시 없이는 하지 않는다.
+
 ## How to find domain rules
 
 - **호출형 skill** — 작업 직전에 매칭되는 1개만 읽는다. 인덱스: [`skills/README.md`](./skills/README.md).

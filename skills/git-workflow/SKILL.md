@@ -20,15 +20,21 @@ owner-paths:
 
 ```
 1. git checkout -b <area>/<slug>        # 브랜치 생성 (네이밍은 아래 표 참조)
-2. (변경 작업)
-3. git add <specific files>             # git add -A / git add . 지양
-4. git commit -m "<type>(<scope>): ..." # hook 자동 적용
-5. git push -u origin <area>/<slug>     # 작업 브랜치만 push
-6. gh pr create --draft ...             # PR 이 없으면 draft 로 생성
-7. PR URL / commit hash / 검증 결과 보고 # ← AI 작성자의 기본 종착점
+2. 제안자 → 작성자 루프로 변경 작업
+3. `npm run quality:fast` 및 필요한 추가 검증
+4. 리뷰어 역할로 독립 코드리뷰 수행
+5. findings 반영 후 필요한 검증 재실행
+6. 최종판단자 역할로 PR 진행/보류 판단
+7. git add <specific files>             # git add -A / git add . 지양
+8. git commit -m "<type>(<scope>): ..." # hook 자동 적용
+9. git push -u origin <area>/<slug>     # 작업 브랜치만 push
+10. gh pr create --draft ...            # PR 이 없으면 draft 로 생성
+11. PR URL / commit hash / 검증·리뷰 결과 보고 # ← AI 작성자의 기본 종착점
 ```
 
 PR 이 이미 있으면 새 commit push 로 PR 을 갱신한다. PR ready 전환 / PR 머지 / 코멘트 응답은 사용자가 지시할 때만 한다. AI 는 기본적으로 검증된 작업 단위를 commit + push + draft PR 로 남기고, PR URL / commit hash / branch / 검증 결과를 보고한다.
+
+단, "검증된 작업 단위" 는 기계 검사 통과만 의미하지 않는다. [`AGENTS.md`](../../AGENTS.md) 의 **AI delivery loop** 에 따라 독립 코드리뷰와 최종 판단 단계를 거친 diff 만 commit/push 대상이다.
 
 ## 절대 금지 명령
 
