@@ -8,6 +8,7 @@
 | Skill                                                        | Triggers (요약)                           | Owner paths |
 | ------------------------------------------------------------ | ----------------------------------------- | ----------- |
 | [`implementation-plan/`](./implementation-plan/SKILL.md)     | 구현 전 범위·위험·완료 조건 정리          | 전 영역     |
+| [`implementation-author/`](./implementation-author/SKILL.md) | 승인된 계획을 코드로 구현·수정            | 전 영역     |
 | [`code-review/`](./code-review/SKILL.md)                     | 수정 없는 PR/diff 코드리뷰                | 전 영역     |
 | [`git-workflow/`](./git-workflow/SKILL.md)                   | git/gh 명령 (commit·push·PR·branch·merge) | 전 영역     |
 | [`static-analysis-guide/`](./static-analysis-guide/SKILL.md) | ESLint/tsc 에러 해석, 룰 ID 추적          | 전 영역     |

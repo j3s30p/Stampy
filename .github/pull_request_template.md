@@ -55,9 +55,9 @@ Closes #
 
 ## AI workflow
 
-- [ ] 제안자 검토 (`skills/implementation-plan/SKILL.md`)
-- [ ] 작성자 구현 완료
-- [ ] 리뷰어 검토 (`skills/code-review/SKILL.md`, 수정 없이 findings 확인)
+- [ ] 제안자 검토 — 5.5 권장 (`skills/implementation-plan/SKILL.md`)
+- [ ] 작성자 구현 — mini 권장 (`skills/implementation-author/SKILL.md`)
+- [ ] 리뷰어 검토 — 5.5 권장 (`skills/code-review/SKILL.md`, 수정 없이 findings 확인)
 - [ ] 사용자 최종 판단 대기
 
 ## Phase 1 분담 확인

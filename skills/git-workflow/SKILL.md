@@ -1,6 +1,6 @@
 ---
 name: git-workflow
-description: 브랜치 생성·commit·push·PR 까지 모든 git/gh 명령에 적용되는 절차와 금지 사항. AI 는 main 직접 변경 / PR 자체 머지 / hook 우회 어떤 형태로든 하지 않는다.
+description: 브랜치 생성·commit·push·PR 까지 모든 git/gh 명령에 적용되는 절차와 금지 사항. AI 는 작업 브랜치 push 까지 기본 수행하되 main 직접 변경 / PR 자체 머지 / hook 우회 어떤 형태로든 하지 않는다.
 triggers:
   - git commit / git push / git merge / git rebase / git reset / git revert
   - gh pr create / gh pr merge / gh pr close
@@ -14,7 +14,7 @@ owner-paths:
 
 ## Intent
 
-본 프로젝트는 솔로 + 팀원 1 단계라 branch protection 의 `required_approving_review_count` 가 0 이다. 즉 _기술적으로는_ AI 가 만든 PR 을 AI 토큰으로 그대로 머지할 수 있다. 본 skill 은 그렇게 하지 않도록 절차와 금지 명령을 박제한다. 또 commit/branch 명명 규약을 한 곳에 모은다.
+본 프로젝트는 솔로 + 팀원 1 단계라 branch protection 의 `required_approving_review_count` 가 0 이다. 즉 _기술적으로는_ AI 가 만든 PR 을 AI 토큰으로 그대로 머지할 수 있다. 본 skill 은 그렇게 하지 않도록 절차와 금지 명령을 박제한다. 또 검증된 작은 작업 단위마다 commit + 작업 브랜치 push 를 남겨 세션이 끊겨도 이어받을 수 있게 한다.
 
 ## 허용되는 흐름 (이것만)
 
@@ -24,11 +24,11 @@ owner-paths:
 3. git add <specific files>             # git add -A / git add . 지양
 4. git commit -m "<type>(<scope>): ..." # hook 자동 적용
 5. git push -u origin <area>/<slug>     # 작업 브랜치만 push
-6. gh pr create --title ... --body ...  # 템플릿 자동 채워짐
-7. PR URL 을 사용자에게 보고하고 멈춤   # ← AI 의 종착점
+6. commit hash / branch / 검증 결과 보고 # ← AI 작성자의 기본 종착점
+7. gh pr create --title ... --body ...  # 사용자 요청 시에만
 ```
 
-PR 머지 / 코멘트 응답은 사용자가 한다. AI 는 CI 결과 보고·실패 시 추가 commit·리뷰 코멘트 응답 까지만.
+PR 생성 / PR 머지 / 코멘트 응답은 사용자가 지시할 때만 한다. AI 는 기본적으로 검증된 작업 단위를 commit + push 하고, commit hash / branch / 검증 결과를 보고한다.
 
 ## 절대 금지 명령
 
@@ -110,12 +110,12 @@ Feat(stamp): ...                # type 대문자
 
 ## Hook 자동 강제 지점
 
-| Hook         | 시점                             | 동작                                                               |
-| ------------ | -------------------------------- | ------------------------------------------------------------------ |
-| `pre-commit` | `git commit`                     | `lint-staged` 가 staged 파일에 `eslint --fix` + `prettier --write` |
-| `commit-msg` | `git commit`                     | `commitlint` 가 위 형식 검사                                       |
-| `pre-push`   | `git push`                       | `refs/heads/main` 또는 `refs/heads/master` 로의 push 거부          |
-| CI on PR     | `gh pr create`/push to PR branch | typecheck + lint + format check + commitlint (PR 의 모든 commit)   |
+| Hook         | 시점                     | 동작                                                               |
+| ------------ | ------------------------ | ------------------------------------------------------------------ |
+| `pre-commit` | `git commit`             | `lint-staged` 가 staged 파일에 `eslint --fix` + `prettier --write` |
+| `commit-msg` | `git commit`             | `commitlint` 가 위 형식 검사                                       |
+| `pre-push`   | `git push`               | `refs/heads/main` 또는 `refs/heads/master` 로의 push 거부          |
+| CI on PR     | PR 생성 / PR branch push | typecheck + lint + format check + commitlint (PR 의 모든 commit)   |
 
 위 hook 의 어떤 실패도 commit/push 가 차단되어야 한다. 우회 (`--no-verify` 등) 는 위 "절대 금지 명령" 표 참조.
 
