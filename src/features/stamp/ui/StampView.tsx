@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { STAMP_RADIUS_METERS } from '@shared/config';
 
@@ -14,12 +14,14 @@ interface StampViewProps {
   readonly candidate: StampCandidate | null;
   readonly collectedCount: number;
   readonly totalCount: number;
+  readonly onCollect?: () => void;
 }
 
-export function StampView({ candidate, collectedCount, totalCount }: StampViewProps) {
+export function StampView({ candidate, collectedCount, totalCount, onCollect }: StampViewProps) {
   const canVerify = candidate
     ? candidate.distanceMeters <= STAMP_RADIUS_METERS && !candidate.collected
     : false;
+  const progressPercent = totalCount > 0 ? Math.round((collectedCount / totalCount) * 100) : 0;
 
   return (
     <SafeAreaView style={styles.root}>
@@ -38,12 +40,7 @@ export function StampView({ candidate, collectedCount, totalCount }: StampViewPr
           </Text>
           <Text style={styles.progressLabel}>오늘 루트 수집 현황</Text>
           <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${Math.round((collectedCount / totalCount) * 100)}%` },
-              ]}
-            />
+            <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
           </View>
         </View>
 
@@ -58,17 +55,26 @@ export function StampView({ candidate, collectedCount, totalCount }: StampViewPr
               <Text style={styles.distanceLabel}>현재 위치와의 거리</Text>
             </View>
 
-            <View style={[styles.cta, canVerify ? styles.ctaReady : styles.ctaBlocked]}>
+            <Pressable
+              accessibilityRole="button"
+              disabled={!canVerify}
+              onPress={onCollect}
+              style={({ pressed }) => [
+                styles.cta,
+                canVerify ? styles.ctaReady : styles.ctaBlocked,
+                pressed ? styles.ctaPressed : null,
+              ]}
+            >
               <Text
                 style={[styles.ctaText, canVerify ? styles.ctaReadyText : styles.ctaBlockedText]}
               >
                 {candidate.collected
                   ? '이미 수집한 도장입니다'
                   : canVerify
-                    ? '도장 받기 준비 완료'
+                    ? '도장 받기'
                     : `${STAMP_RADIUS_METERS}m 안으로 이동하면 인증 가능`}
               </Text>
-            </View>
+            </Pressable>
           </View>
         ) : (
           <View style={styles.emptyCard}>
@@ -122,6 +128,7 @@ const styles = StyleSheet.create({
   cta: { borderRadius: 8, padding: 16, alignItems: 'center' },
   ctaReady: { backgroundColor: '#173C35' },
   ctaBlocked: { backgroundColor: '#F3F0E8' },
+  ctaPressed: { opacity: 0.82 },
   ctaText: { fontSize: 15, fontWeight: '900' },
   ctaReadyText: { color: '#FFFFFF' },
   ctaBlockedText: { color: '#5F574B' },

@@ -1,24 +1,38 @@
-import { useEffect, useState } from 'react';
-import { getMockFlow } from './mockFlow';
+import { useCallback, useEffect, useState } from 'react';
+import { collectMockCandidate, getMockFlow, subscribeMockFlow } from './mockFlow';
 
 export type MockFlow = Awaited<ReturnType<typeof getMockFlow>>;
 
 export function useMockFlow() {
   const [flow, setFlow] = useState<MockFlow | null>(null);
 
+  const refresh = useCallback(async () => {
+    setFlow(await getMockFlow());
+  }, []);
+
   useEffect(() => {
     let mounted = true;
 
-    void getMockFlow().then((nextFlow) => {
-      if (mounted) {
-        setFlow(nextFlow);
-      }
-    });
+    const refreshIfMounted = () => {
+      void getMockFlow().then((nextFlow) => {
+        if (mounted) {
+          setFlow(nextFlow);
+        }
+      });
+    };
+
+    refreshIfMounted();
+    const unsubscribe = subscribeMockFlow(refresh);
 
     return () => {
       mounted = false;
+      unsubscribe();
     };
+  }, [refresh]);
+
+  const collectCandidate = useCallback(async () => {
+    setFlow(await collectMockCandidate());
   }, []);
 
-  return flow;
+  return { flow, collectCandidate };
 }

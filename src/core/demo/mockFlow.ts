@@ -1,4 +1,5 @@
 import { MockStampRepository } from '@features/stamp/api';
+import type { Stamp } from '@features/stamp/model';
 import type { MyStampSummary, RankingEntry, StampCandidate } from '@features/stamp/ui';
 import { MockTourRepository } from '@features/tour/api';
 import type { HomeTourSpot } from '@features/tour/ui';
@@ -15,10 +16,24 @@ const mockCenter = {
   longitude: asLongitude(126.977),
 };
 
+let collectedStamps: Stamp[] | null = null;
+const listeners = new Set<() => void>();
+
+const loadCollectedStamps = async () => {
+  collectedStamps ??= await stampRepository.listCollected(userId);
+  return collectedStamps;
+};
+
+const notifyListeners = () => {
+  listeners.forEach((listener) => {
+    listener();
+  });
+};
+
 export async function getMockFlow() {
   const [spots, stamps] = await Promise.all([
     tourRepository.searchNearby(mockCenter, STAMP_RADIUS_METERS),
-    stampRepository.listCollected(userId),
+    loadCollectedStamps(),
   ]);
   const collectedSpotIds = new Set(stamps.map((stamp) => stamp.spotId));
 
@@ -27,7 +42,7 @@ export async function getMockFlow() {
     title: spot.title,
     address: spot.address,
     theme: index === 0 ? '궁궐 산책' : index === 1 ? '골목 여행' : '도심 휴식',
-    distanceMeters: index === 0 ? 86 : index === 1 ? 420 : 760,
+    distanceMeters: index === 0 ? 86 : index === 1 ? 92 : 760,
     collected: collectedSpotIds.has(spot.contentId),
   }));
 
@@ -57,5 +72,46 @@ export async function getMockFlow() {
     collectedCount,
     myStamps,
     rankingEntries,
+  };
+}
+
+export async function collectMockCandidate() {
+  const flow = await getMockFlow();
+  const candidate = flow.candidate;
+
+  if (!candidate || candidate.collected || candidate.distanceMeters > STAMP_RADIUS_METERS) {
+    return flow;
+  }
+
+  const spots = await tourRepository.searchNearby(mockCenter, STAMP_RADIUS_METERS);
+  const spot = spots.find((nextSpot) => nextSpot.contentId === candidate.contentId);
+
+  if (!spot) {
+    return flow;
+  }
+
+  const stamps = await loadCollectedStamps();
+  const alreadyCollected = stamps.some((stamp) => stamp.spotId === spot.contentId);
+
+  if (alreadyCollected) {
+    return flow;
+  }
+
+  const nextStamp = await stampRepository.collect(userId, {
+    spotId: spot.contentId,
+    location: spot.location,
+  });
+
+  collectedStamps = [...stamps, nextStamp];
+  notifyListeners();
+
+  return getMockFlow();
+}
+
+export function subscribeMockFlow(listener: () => void) {
+  listeners.add(listener);
+
+  return () => {
+    listeners.delete(listener);
   };
 }
