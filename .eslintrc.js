@@ -1,5 +1,5 @@
 // https://docs.expo.dev/guides/using-eslint/
-// 룰 ID → 의도 → 수정 방안 매핑은 `.ai-skills/static-analysis-guide.md` 참조.
+// 룰 ID → 의도 → 수정 방안 매핑은 `skills/static-analysis-guide/SKILL.md` 참조.
 // 변경 시 AGENTS.md 의 invariants 와 동기 유지.
 module.exports = {
   root: true,
@@ -14,9 +14,6 @@ module.exports = {
     '/web-build/*',
     '/repo/*',
     'expo-env.d.ts',
-    // Auto-generated mirror docs (sync-harness-docs.mjs). 정본 수정 후 npm run sync:docs.
-    '/.cursor/**',
-    '/.github/copilot-instructions.md',
   ],
   settings: {
     'import/resolver': {
@@ -43,7 +40,7 @@ module.exports = {
     ],
 
     // AGENTS.md invariant: features 간 cross-import 금지 (ADR-004).
-    // 위반 시 .ai-skills/static-analysis-guide.md 의 "stampy/no-cross-feature" 섹션 참조.
+    // 위반 시 skills/static-analysis-guide/SKILL.md 참조.
     'import/no-restricted-paths': [
       'error',
       {
@@ -58,7 +55,7 @@ module.exports = {
       },
     ],
 
-    // AGENTS.md invariant: shared/mocks 는 Mock*Repository / shared/mocks 내부 에서만 사용.
+    // AGENTS.md invariant: shared/mocks 는 Mock*Repository / shared/mocks 내부에서만 사용.
     // (override 에서 예외 처리)
     'no-restricted-imports': [
       'error',
@@ -67,7 +64,7 @@ module.exports = {
           {
             group: ['@shared/mocks', '@shared/mocks/*', '**/shared/mocks', '**/shared/mocks/*'],
             message:
-              '@shared/mocks 는 Mock*Repository 에서만 import 허용. 위반 시 .ai-skills/mock-data-strategy.md 참조.',
+              '@shared/mocks 는 Mock*Repository 에서만 import 허용. AGENTS.md invariant #5 참조.',
           },
         ],
       },

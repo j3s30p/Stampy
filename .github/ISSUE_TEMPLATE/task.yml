@@ -16,7 +16,7 @@ body:
         - 'shared (brand types, mocks, ui-kit)'
         - 'app (라우트)'
         - 'harness (ESLint/CI/scripts)'
-        - 'docs (README/AGENTS/CLAUDE/.ai-*)'
+        - 'docs (README/AGENTS/CLAUDE/docs/skills)'
         - 'deps (의존성)'
     validations:
       required: true
@@ -43,11 +43,11 @@ body:
     id: related-skill
     attributes:
       label: '관련 skill (선택)'
-      description: '.ai-skills/ 의 파일 이름. 작업 직전에 해당 skill 1회 정독.'
-      placeholder: 'location-verification'
+      description: 'skills/<name>/SKILL.md 의 폴더명. 작업 직전 1회 정독.'
+      placeholder: 'git-workflow'
   - type: input
     id: related-adr
     attributes:
       label: '관련 ADR (선택)'
-      description: '.ai-background/02-architecture-decisions.md 의 ADR 번호'
+      description: 'docs/02-architecture-decisions.md 의 ADR 번호'
       placeholder: 'ADR-006'
