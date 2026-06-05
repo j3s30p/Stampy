@@ -52,19 +52,20 @@
 
 ### 명령
 
-| 명령                   | 검사                                             | 언제 실행               |
-| ---------------------- | ------------------------------------------------ | ----------------------- |
-| `npm run quality:fast` | `tsc --noEmit` + ESLint + Prettier check         | 커밋 전·PR 올리기 전·CI |
-| `npm run lint:fix`     | ESLint 자동 수정 (import/order, type-imports 등) | 위반 시 1차 시도        |
-| `npm run format`       | Prettier 자동 수정                               | 포맷 위반 시            |
-| `npm run session`      | 현재 진행 상태 스냅샷                            | 세션 시작 / 막힐 때     |
+| 명령                    | 검사                                                  | 언제 실행               |
+| ----------------------- | ----------------------------------------------------- | ----------------------- |
+| `npm run quality:fast`  | `tsc --noEmit` + ESLint + Prettier check              | 커밋 전·PR 올리기 전·CI |
+| `npm run lint:fix`      | ESLint 자동 수정 (import/order, type-imports 등)      | 위반 시 1차 시도        |
+| `npm run format`        | Prettier 자동 수정                                    | 포맷 위반 시            |
+| `npm run harness:check` | 하네스 문서·링크·CODEOWNERS·핵심 invariant drift 검사 | 하네스 변경 시·CI       |
+| `npm run session`       | 현재 진행 상태 스냅샷                                 | 세션 시작 / 막힐 때     |
 
 ### 자동 강제 지점
 
 - **pre-commit hook** (Husky) — `lint-staged` 가 변경된 파일만 `eslint --fix` + `prettier --write`. 실패 시 commit 차단.
 - **commit-msg hook** — `commitlint` 가 Conventional Commits + scope 강제 (`feat(stamp): …`). 실패 시 commit 차단.
 - **pre-push hook** — main / master 로의 직접 push 차단.
-- **GitHub Actions CI** (`.github/workflows/ci.yml`) — PR 단위로 `quality:fast` + commit 메시지 lint + session smoke. 실패 시 머지 차단.
+- **GitHub Actions CI** (`.github/workflows/ci.yml`) — PR 단위로 `quality:fast` + `harness:check` + commit 메시지 lint + session smoke. 실패 시 머지 차단.
 
 ### 위반 시 어디서 찾나
 

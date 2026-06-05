@@ -48,9 +48,17 @@ Closes #
 ## 테스트 / 검증
 
 - [ ] `npm run quality:fast` 통과
+- [ ] `npm run harness:check` 통과
 - [ ] 로컬에서 iOS 시뮬레이터로 영향 화면 띄워봄
 - [ ] (해당 시) 단위/통합 테스트 추가·갱신
 - [ ] (해당 시) Mock fixture 추가·갱신
+
+## AI workflow
+
+- [ ] 제안자 검토 — 5.5 권장 (`skills/implementation-plan/SKILL.md`)
+- [ ] 작성자 구현 — mini 권장 (`skills/implementation-author/SKILL.md`)
+- [ ] 리뷰어 검토 — 5.5 권장 (`skills/code-review/SKILL.md`, 수정 없이 findings 확인)
+- [ ] 사용자 최종 판단 대기
 
 ## Phase 1 분담 확인
 

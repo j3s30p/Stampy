@@ -20,10 +20,10 @@ body:
         - 'commitlint / commit-msg hook'
         - 'pre-commit / pre-push hook'
         - 'GitHub Actions CI'
-        - 'sync-harness-docs 스크립트'
+        - 'harness verifier 스크립트'
         - '정본 문서 (README/AGENTS/CLAUDE)'
-        - 'skill (.ai-skills/)'
-        - 'background (.ai-background/)'
+        - 'skill (skills/)'
+        - 'background (docs/)'
         - '기타'
     validations:
       required: true
@@ -34,6 +34,6 @@ body:
       placeholder: |
         - [ ] 새 룰/도구가 동작
         - [ ] smoke test 로 위반 케이스 거부 확인
-        - [ ] `.ai-skills/static-analysis-guide.md` 갱신
+        - [ ] `skills/static-analysis-guide/SKILL.md` 갱신
     validations:
       required: true

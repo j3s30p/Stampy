@@ -14,6 +14,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "harness:check": "node scripts/harness-check.mjs",
     "quality:fast": "npm-run-all -s typecheck lint format:check",
     "session": "node scripts/session-state.mjs",
     "prepare": "husky"

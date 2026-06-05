@@ -14,7 +14,7 @@ module.exports = {
         'shared', // src/shared/*
         'app', // app/ 라우트
         'harness', // ESLint·CI·문서·skills 등 인프라
-        'docs', // README/AGENTS/CLAUDE/.ai-* 본문 수정
+        'docs', // README/AGENTS/CLAUDE/docs/skills 본문 수정
         'deps', // 의존성 bump
       ],
     ],
