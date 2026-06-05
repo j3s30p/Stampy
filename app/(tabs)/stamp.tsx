@@ -9,6 +9,7 @@ export default function StampScreen() {
       collectedCount={flow?.collectedCount ?? 0}
       locationAvailable={locationAvailable}
       locationStatus={locationStatus}
+      recentStamps={flow?.myStamps ?? []}
       totalCount={flow?.spots.length ?? 0}
       onCollect={collectCandidate}
     />

@@ -18,6 +18,7 @@ const mockCenter = {
 };
 
 let collectedStamps: Stamp[] | null = null;
+let selectedSpotId: string | null = null;
 const listeners = new Set<() => void>();
 
 const loadCollectedStamps = async () => {
@@ -48,7 +49,9 @@ export async function getMockFlow(currentLocation: Coordinates | null = null) {
     collected: collectedSpotIds.has(spot.contentId),
   }));
 
+  const selectedSpot = spotCards.find((spot) => spot.contentId === selectedSpotId) ?? null;
   const candidate: StampCandidate | null =
+    selectedSpot ??
     [...spotCards]
       .filter((spot) => !spot.collected)
       .sort((a, b) => a.distanceMeters - b.distanceMeters)[0] ??
@@ -78,6 +81,8 @@ export async function getMockFlow(currentLocation: Coordinates | null = null) {
     collectedCount,
     myStamps,
     rankingEntries,
+    selectedSpot,
+    selectedSpotId,
   };
 }
 
@@ -113,9 +118,15 @@ export async function collectMockCandidate(currentLocation: Coordinates | null) 
   });
 
   collectedStamps = [...stamps, nextStamp];
+  selectedSpotId = null;
   notifyListeners();
 
   return getMockFlow(currentLocation);
+}
+
+export function selectMockSpot(contentId: string) {
+  selectedSpotId = contentId;
+  notifyListeners();
 }
 
 export function subscribeMockFlow(listener: () => void) {
