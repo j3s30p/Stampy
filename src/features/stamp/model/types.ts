@@ -11,5 +11,4 @@ export interface StampSpot {
   readonly id: string;
   readonly title: string;
   readonly location: Coordinates;
-  readonly radiusMeters: number;
 }

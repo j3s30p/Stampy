@@ -1,9 +1,9 @@
 # CODEOWNERS — Phase 1 분담 자동 리뷰어 매핑
 # AGENTS.md 의 "File ownership" 표와 동기 유지.
-# TODO: j3s30p 와 <BACKEND_HANDLE> 를 실제 GitHub 사용자명으로 교체.
+# 백엔드 담당자 GitHub 핸들이 확정되면 Backend teammate / Harness 영역에 추가한다.
 
-# 기본값 — 둘 다 리뷰어
-*                                            @j3s30p @<BACKEND_HANDLE>
+# 기본값
+*                                            @j3s30p
 
 # Frontend (Phase 1) — interface/Mock/UI/도메인
 /app/                                        @j3s30p
@@ -18,24 +18,26 @@
 /src/core/*/AuthRepository.ts                @j3s30p
 
 # Backend teammate (Phase 1) — real impl 만
-/src/core/network/                           @<BACKEND_HANDLE>
-/src/features/tour/api/Http*Repository.ts    @<BACKEND_HANDLE>
-/src/core/storage/AsyncStorage*Repository.ts @<BACKEND_HANDLE>
-/src/core/auth/Http*Repository.ts            @<BACKEND_HANDLE>
+/src/core/network/                           @j3s30p
+/src/features/tour/api/Http*Repository.ts    @j3s30p
+/src/core/storage/AsyncStorage*Repository.ts @j3s30p
+/src/core/auth/Http*Repository.ts            @j3s30p
 
-# Harness / 인프라 — 둘 다 리뷰 (영향 큰 영역)
-/.github/                                    @j3s30p @<BACKEND_HANDLE>
-/.husky/                                     @j3s30p @<BACKEND_HANDLE>
-/.eslintrc.js                                @j3s30p @<BACKEND_HANDLE>
-/.prettierrc.js                              @j3s30p @<BACKEND_HANDLE>
-/commitlint.config.js                        @j3s30p @<BACKEND_HANDLE>
-/package.json                                @j3s30p @<BACKEND_HANDLE>
-/tsconfig.json                               @j3s30p @<BACKEND_HANDLE>
-/app.json                                    @j3s30p @<BACKEND_HANDLE>
+# Harness / 인프라 — 영향 큰 영역
+/.github/                                    @j3s30p
+/.husky/                                     @j3s30p
+/.eslintrc.js                                @j3s30p
+/.prettierrc.js                              @j3s30p
+/commitlint.config.js                        @j3s30p
+/package.json                                @j3s30p
+/tsconfig.json                               @j3s30p
+/app.json                                    @j3s30p
+/scripts/                                    @j3s30p
 
 # 정본 문서
-/README.md                                   @j3s30p @<BACKEND_HANDLE>
-/AGENTS.md                                   @j3s30p @<BACKEND_HANDLE>
+/README.md                                   @j3s30p
+/AGENTS.md                                   @j3s30p
 /CLAUDE.md                                   @j3s30p
-/.ai-skills/                                 @j3s30p @<BACKEND_HANDLE>
-/.ai-background/                             @j3s30p @<BACKEND_HANDLE>
+/docs/                                       @j3s30p
+/skills/                                     @j3s30p
+/.claude/                                    @j3s30p
