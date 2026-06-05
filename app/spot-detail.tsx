@@ -17,7 +17,7 @@ export default function SpotDetailScreen() {
 
   if (!flow) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.surfaceAlt }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.canvas }}>
         <View
           style={{
             flex: 1,

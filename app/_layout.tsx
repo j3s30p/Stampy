@@ -13,7 +13,7 @@ export default function RootLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: colors.surfaceAlt },
+          contentStyle: { backgroundColor: colors.canvas },
         }}
       />
       <SplashGate />
