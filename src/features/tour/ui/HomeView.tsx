@@ -18,159 +18,267 @@ interface HomeViewProps {
 }
 
 export function HomeView({ spots, collectedCount, onSelectSpot }: HomeViewProps) {
-  const nearest = [...spots].sort((a, b) => a.distanceMeters - b.distanceMeters)[0];
+  const topSpots = spots.slice(0, 2);
+  const level = 3;
+  const exp = 620;
+  const nextExp = 1000;
 
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.eyebrow}>오늘의 스탬피 루트</Text>
-          <Text style={styles.title}>가까운 관광지를 돌며 도장을 모아보세요</Text>
-          <Text style={styles.subtitle}>
-            같은 mock 데이터가 홈, 지도, 도장, MY 화면에 이어집니다.
+        <View style={styles.topbar}>
+          <View style={styles.brandBlock}>
+            <Text style={styles.brand}>스탬피</Text>
+            <Text style={styles.brandCaption}>오늘은 어디서 스탬프를 찍어볼까요?</Text>
+          </View>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>J</Text>
+          </View>
+        </View>
+
+        <View style={styles.hero}>
+          <Text style={styles.heroLabel}>Lv.{level} 지역 탐험가</Text>
+          <Text style={styles.heroTitle}>이번 주 2개만 더 찍으면{'\n'}서울 컬렉션 완성!</Text>
+
+          <View style={styles.progressBlock}>
+            <View style={styles.progressRow}>
+              <Text style={styles.progressText}>
+                EXP {exp} / {nextExp}
+              </Text>
+              <Text style={styles.progressText}>{Math.round((exp / nextExp) * 100)}%</Text>
+            </View>
+            <View style={styles.progressTrack}>
+              <View style={styles.progressFill} />
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.sectionHead}>
+          <Text style={styles.sectionTitle}>근처에서 찍을 수 있어요</Text>
+          <Text style={styles.sectionAction}>지도 보기</Text>
+        </View>
+
+        <View style={styles.nearbyList}>
+          {topSpots.map((spot, index) => (
+            <Pressable
+              key={spot.contentId}
+              accessibilityRole="button"
+              accessibilityLabel={`${spot.title} 상세 보기`}
+              onPress={() => onSelectSpot?.(spot.contentId)}
+              style={({ pressed }) => [styles.spotCard, pressed ? styles.pressed : null]}
+            >
+              <View style={[styles.thumb, getThumbStyle(index)]}>
+                <Text style={styles.thumbText}>{getSpotIcon(index)}</Text>
+              </View>
+              <View style={styles.spotCopy}>
+                <Text style={styles.spotTitle}>{spot.title}</Text>
+                <Text style={styles.spotMeta}>
+                  {spot.address} · 현재 위치에서 {spot.distanceMeters}m
+                </Text>
+                <View style={styles.badgeRow}>
+                  <View style={[styles.badge, getStatusBadgeStyle(spot)]}>
+                    <Text style={styles.badgeText}>{getStatusLabel(spot)}</Text>
+                  </View>
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{spot.theme}</Text>
+                  </View>
+                </View>
+              </View>
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={styles.sectionHead}>
+          <Text style={styles.sectionTitle}>추천 컬렉션</Text>
+          <Text style={styles.sectionAction}>전체</Text>
+        </View>
+
+        <View style={styles.collectionCard}>
+          <Text style={styles.collectionTitle}>서울 5대 궁궐 컬렉션</Text>
+          <View style={styles.collectionTrack}>
+            <View style={styles.collectionFill} />
+          </View>
+          <View style={styles.collectionBadges}>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{Math.min(collectedCount + 2, 5)} / 5 완료</Text>
+            </View>
+            <View style={[styles.badge, styles.badgeReady]}>
+              <Text style={styles.badgeText}>보상 +50EXP</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.sectionHead}>
+          <Text style={styles.sectionTitle}>오늘의 목표</Text>
+          <Text style={styles.sectionAction}>{STAMP_RADIUS_METERS}m 반경</Text>
+        </View>
+
+        <View style={styles.goalCard}>
+          <Text style={styles.goalTitle}>근처 관광지 2곳에서 도장 수집</Text>
+          <Text style={styles.goalMeta}>
+            홈에서 스팟을 열고, 상세에서 도장 화면으로 이어가 보세요.
           </Text>
         </View>
-
-        {nearest ? (
-          <Pressable
-            accessibilityLabel={`${nearest.title} 도장 화면 열기`}
-            accessibilityRole="button"
-            onPress={() => onSelectSpot?.(nearest.contentId)}
-            style={({ pressed }) => [styles.hero, pressed ? styles.pressed : null]}
-          >
-            <View>
-              <Text style={styles.heroLabel}>가장 가까운 스팟</Text>
-              <Text style={styles.heroTitle}>{nearest.title}</Text>
-              <Text style={styles.heroMeta}>
-                현재 위치에서 {nearest.distanceMeters}m · 인증 반경 {STAMP_RADIUS_METERS}m
-              </Text>
-            </View>
-            <View style={styles.heroBadge}>
-              <Text style={styles.heroBadgeText}>{nearest.collected ? '완료' : '대기'}</Text>
-            </View>
-          </Pressable>
-        ) : null}
-
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryValue}>{spots.length}</Text>
-            <Text style={styles.summaryLabel}>추천 스팟</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryValue}>{collectedCount}</Text>
-            <Text style={styles.summaryLabel}>수집 완료</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryValue}>{STAMP_RADIUS_METERS}m</Text>
-            <Text style={styles.summaryLabel}>인증 반경</Text>
-          </View>
-        </View>
-
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>추천 관광지</Text>
-          <Text style={styles.sectionMeta}>지도와 도장 탭에서 같은 순서로 표시됩니다</Text>
-        </View>
-
-        {spots.map((spot) => (
-          <Pressable
-            key={spot.contentId}
-            accessibilityLabel={`${spot.title} 도장 화면 열기`}
-            accessibilityRole="button"
-            onPress={() => onSelectSpot?.(spot.contentId)}
-            style={({ pressed }) => [styles.card, pressed ? styles.pressed : null]}
-          >
-            <View style={styles.cardTop}>
-              <View style={styles.marker}>
-                <Text style={styles.markerText}>{spot.title.slice(0, 1)}</Text>
-              </View>
-              <View style={styles.cardText}>
-                <Text style={styles.cardTitle}>{spot.title}</Text>
-                <Text style={styles.cardMeta}>{spot.theme}</Text>
-              </View>
-              <Text style={[styles.status, spot.collected ? styles.statusDone : styles.statusTodo]}>
-                {spot.collected ? '수집됨' : '방문 전'}
-              </Text>
-            </View>
-            <Text style={styles.address}>{spot.address}</Text>
-            <Text style={styles.distance}>현재 위치에서 {spot.distanceMeters}m</Text>
-          </Pressable>
-        ))}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+const getThumbStyle = (index: number) => {
+  if (index === 0) {
+    return styles.thumbPalace;
+  }
+
+  return styles.thumbEvent;
+};
+
+const getSpotIcon = (index: number) => {
+  if (index === 0) {
+    return '🏯';
+  }
+
+  return '🎪';
+};
+
+const getStatusLabel = (spot: HomeTourSpot) => {
+  if (spot.collected) {
+    return '수집 완료';
+  }
+
+  if (spot.distanceMeters <= STAMP_RADIUS_METERS) {
+    return '도장 가능';
+  }
+
+  return '방문 전';
+};
+
+const getStatusBadgeStyle = (spot: HomeTourSpot) => {
+  if (spot.collected) {
+    return styles.badgeDone;
+  }
+
+  if (spot.distanceMeters <= STAMP_RADIUS_METERS) {
+    return styles.badgeReady;
+  }
+
+  return styles.badgePending;
+};
+
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F6F8F5' },
-  content: { padding: 20, paddingBottom: 32, gap: 16 },
-  header: { gap: 8, paddingTop: 8 },
-  eyebrow: { color: '#14806F', fontSize: 13, fontWeight: '700' },
-  title: { color: '#17211F', fontSize: 28, fontWeight: '800', lineHeight: 36 },
-  subtitle: { color: '#66736F', fontSize: 15, lineHeight: 22 },
-  hero: {
-    backgroundColor: '#173C35',
-    borderRadius: 8,
-    padding: 18,
+  root: { flex: 1, backgroundColor: '#EEF3F8' },
+  content: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 28, gap: 14 },
+  topbar: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 16,
+    gap: 12,
   },
-  heroLabel: { color: '#A6D8CE', fontSize: 13, fontWeight: '700' },
-  heroTitle: { color: '#FFFFFF', fontSize: 24, fontWeight: '800', marginTop: 6 },
-  heroMeta: { color: '#D8EFE9', fontSize: 14, marginTop: 8 },
-  heroBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#F0C95A',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
-  heroBadgeText: { color: '#2A2100', fontSize: 13, fontWeight: '800' },
-  pressed: { opacity: 0.78 },
-  summaryRow: { flexDirection: 'row', gap: 10 },
-  summaryItem: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8E5',
-  },
-  summaryValue: { color: '#17211F', fontSize: 22, fontWeight: '800' },
-  summaryLabel: { color: '#69736F', fontSize: 12, marginTop: 4 },
-  sectionHeader: { gap: 4, marginTop: 2 },
-  sectionTitle: { color: '#17211F', fontSize: 20, fontWeight: '800' },
-  sectionMeta: { color: '#7A8580', fontSize: 13 },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8E5',
-    gap: 10,
-  },
-  cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  marker: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: '#E1F1ED',
+  brandBlock: { flex: 1, minWidth: 0, gap: 2 },
+  brand: { color: '#172033', fontSize: 28, fontWeight: '900', letterSpacing: -0.6 },
+  brandCaption: { color: '#657084', fontSize: 13 },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#173C35',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  markerText: { color: '#14806F', fontSize: 18, fontWeight: '800' },
-  cardText: { flex: 1, minWidth: 0 },
-  cardTitle: { color: '#17211F', fontSize: 17, fontWeight: '800' },
-  cardMeta: { color: '#66736F', fontSize: 13, marginTop: 3 },
-  status: {
+  avatarText: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
+  hero: {
+    borderRadius: 24,
+    backgroundColor: '#173C35',
+    padding: 18,
+    overflow: 'hidden',
+  },
+  heroLabel: { color: '#A7D8CF', fontSize: 13, fontWeight: '800' },
+  heroTitle: {
+    color: '#FFFFFF',
+    fontSize: 25,
+    fontWeight: '900',
+    lineHeight: 34,
+    marginTop: 8,
+    letterSpacing: -0.6,
+  },
+  progressBlock: { marginTop: 14, gap: 8 },
+  progressRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  progressText: { color: '#E8F4F0', fontSize: 12, fontWeight: '700' },
+  progressTrack: {
+    height: 8,
     borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    overflow: 'hidden',
+  },
+  progressFill: { width: '62%', height: '100%', backgroundColor: '#F0C95A', borderRadius: 999 },
+  sectionHead: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    marginTop: 2,
+  },
+  sectionTitle: { color: '#172033', fontSize: 18, fontWeight: '900' },
+  sectionAction: { color: '#14806F', fontSize: 12, fontWeight: '800' },
+  nearbyList: { gap: 10 },
+  spotCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E7EDF4',
+  },
+  pressed: { opacity: 0.82 },
+  thumb: {
+    width: 64,
+    height: 64,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  thumbPalace: { backgroundColor: '#EFC9A3' },
+  thumbEvent: { backgroundColor: '#FFD0DA' },
+  thumbText: { fontSize: 24 },
+  spotCopy: { flex: 1, minWidth: 0, gap: 4 },
+  spotTitle: { color: '#172033', fontSize: 16, fontWeight: '900' },
+  spotMeta: { color: '#657084', fontSize: 13, lineHeight: 18 },
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
+  badge: {
+    borderRadius: 999,
+    backgroundColor: '#EEF3F8',
     paddingHorizontal: 9,
     paddingVertical: 5,
-    fontSize: 12,
-    fontWeight: '800',
   },
-  statusDone: { backgroundColor: '#E6F6EA', color: '#207A3C' },
-  statusTodo: { backgroundColor: '#FFF3D5', color: '#8A6400' },
-  address: { color: '#4D5A56', fontSize: 14, lineHeight: 20 },
-  distance: { color: '#14806F', fontSize: 13, fontWeight: '700' },
+  badgeReady: { backgroundColor: '#FFF3D5' },
+  badgeDone: { backgroundColor: '#E6F6EA' },
+  badgePending: { backgroundColor: '#E8EEF5' },
+  badgeText: { color: '#465466', fontSize: 11, fontWeight: '800' },
+  collectionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E7EDF4',
+    gap: 10,
+  },
+  collectionTitle: { color: '#172033', fontSize: 16, fontWeight: '900' },
+  collectionTrack: {
+    height: 8,
+    backgroundColor: '#EDF3F8',
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  collectionFill: { width: '60%', height: '100%', backgroundColor: '#14806F', borderRadius: 999 },
+  collectionBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  goalCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E7EDF4',
+    gap: 6,
+  },
+  goalTitle: { color: '#172033', fontSize: 15, fontWeight: '900' },
+  goalMeta: { color: '#657084', fontSize: 13, lineHeight: 18 },
 });

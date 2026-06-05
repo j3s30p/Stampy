@@ -81,6 +81,7 @@ export async function getMockFlow(currentLocation: Coordinates | null = null) {
     collectedCount,
     myStamps,
     rankingEntries,
+    selectedSpot,
     selectedSpotId,
   };
 }

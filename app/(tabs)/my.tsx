@@ -6,12 +6,12 @@ export default function MyScreen() {
   const router = useRouter();
   const { flow, selectSpot } = useMockFlow();
 
-  const openStamp = (contentId: string) => {
+  const openDetail = (contentId: string) => {
     selectSpot(contentId);
-    router.push('/stamp');
+    router.push({ pathname: '/spot-detail', params: { contentId } });
   };
 
   return (
-    <MyPageView nickname="스탬피 테스터" stamps={flow?.myStamps ?? []} onSelectStamp={openStamp} />
+    <MyPageView nickname="스탬피 테스터" stamps={flow?.myStamps ?? []} onSelectStamp={openDetail} />
   );
 }

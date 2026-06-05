@@ -6,16 +6,16 @@ export default function HomeScreen() {
   const router = useRouter();
   const { flow, selectSpot } = useMockFlow();
 
-  const openStamp = (contentId: string) => {
+  const openDetail = (contentId: string) => {
     selectSpot(contentId);
-    router.push('/stamp');
+    router.push({ pathname: '/spot-detail', params: { contentId } });
   };
 
   return (
     <HomeView
       spots={flow?.spots ?? []}
       collectedCount={flow?.collectedCount ?? 0}
-      onSelectSpot={openStamp}
+      onSelectSpot={openDetail}
     />
   );
 }
