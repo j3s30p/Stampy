@@ -57,7 +57,7 @@ export function StampView({
           </View>
           <View style={styles.avatar}>
             <AppText variant="h3" tone="onDark">
-              ◎
+              스
             </AppText>
           </View>
         </View>
@@ -317,28 +317,27 @@ const styles = StyleSheet.create({
   badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm - 2 },
   actionShell: {
     alignItems: 'center',
-    backgroundColor: colors.successSoft,
+    backgroundColor: colors.mintSoft,
     borderRadius: radius.lg,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm + 2,
     paddingBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: colors.success,
-    opacity: 0.97,
+    borderColor: colors.border,
   },
   stampHandle: {
-    width: 86,
-    height: 64,
-    borderRadius: radius.lg,
+    width: 56,
+    height: 36,
+    borderRadius: 12,
     backgroundColor: colors.brand,
-    marginBottom: -16,
+    marginBottom: -12,
   },
   stampTarget: {
     width: 178,
     height: 178,
     borderRadius: 89,
     backgroundColor: colors.surface,
-    borderWidth: 5,
+    borderWidth: 3,
     borderColor: colors.brandSoft,
     alignItems: 'center',
     justifyContent: 'center',

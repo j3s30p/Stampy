@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: colors.brand,
+    backgroundColor: colors.goldSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },

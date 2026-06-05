@@ -9,6 +9,7 @@ export const colors = {
   surfaceAlt: '#F6F8FB',
   surfaceSink: '#EEF1F6',
   border: '#E6EAF1',
+  mintSoft: '#F3FBF8',
   gold: '#F0B33A',
   goldSoft: '#FFF1CF',
   coral: '#FF7A59',

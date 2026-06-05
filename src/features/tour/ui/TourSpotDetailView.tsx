@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { STAMP_RADIUS_METERS } from '@shared/config';
-import { AppText, Badge, Gradient, Surface, colors, radius, spacing } from '@shared/ui';
+import { AppText, Badge, Gradient, Surface, colors, radius, shadow, spacing } from '@shared/ui';
 import type { GradientVariant } from '@shared/ui';
 import type { HomeTourSpot } from './HomeView';
 
@@ -89,9 +89,6 @@ export function TourSpotDetailView({
           <View style={styles.badgeRow}>
             <Badge tone="neutral" size="md">
               {spot.theme}
-            </Badge>
-            <Badge tone={getStatusTone(spot)} size="md">
-              {getSpotStatusLabel(spot)}
             </Badge>
           </View>
         </Surface>
@@ -233,18 +230,6 @@ const getSpotStatusLabel = (spot: HomeTourSpot) => {
   return '가까이 이동 필요';
 };
 
-const getStatusTone = (spot: HomeTourSpot): 'success' | 'warning' | 'neutral' => {
-  if (spot.collected) {
-    return 'success';
-  }
-
-  if (spot.distanceMeters <= STAMP_RADIUS_METERS) {
-    return 'warning';
-  }
-
-  return 'neutral';
-};
-
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.surfaceAlt },
   content: { paddingBottom: spacing.xxl },
@@ -275,8 +260,6 @@ const styles = StyleSheet.create({
     marginTop: 30,
     flex: 1,
     borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
     backgroundColor: 'rgba(255,255,255,0.08)',
     overflow: 'hidden',
     alignItems: 'center',
@@ -302,14 +285,16 @@ const styles = StyleSheet.create({
   heroArtworkMeta: { opacity: 0.86, marginTop: 6 },
   titleCard: {
     marginTop: -20,
+    marginHorizontal: spacing.lg,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    paddingHorizontal: spacing.xxl,
+    borderBottomLeftRadius: radius.lg,
+    borderBottomRightRadius: radius.lg,
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl,
     paddingBottom: spacing.md,
     gap: spacing.sm + 2,
+    ...shadow.e2,
   },
   badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   infoGrid: {

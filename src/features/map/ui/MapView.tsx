@@ -45,7 +45,7 @@ export function MapView({ spots, onOpenSpotDetail, onOpenStamp }: MapViewProps) 
           </View>
           <View style={styles.avatar}>
             <AppText variant="h3" tone="onDark">
-              ⌕
+              스
             </AppText>
           </View>
         </View>

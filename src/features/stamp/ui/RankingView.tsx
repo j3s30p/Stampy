@@ -43,7 +43,7 @@ export function RankingView({ entries }: RankingViewProps) {
           </View>
           <View style={styles.avatar}>
             <AppText variant="h3" tone="onDark">
-              ★
+              스
             </AppText>
           </View>
         </View>
@@ -52,7 +52,7 @@ export function RankingView({ entries }: RankingViewProps) {
           <AppText variant="caption" tone="onDark" style={styles.heroLabel}>
             내 현재 순위
           </AppText>
-          <AppText variant="display" tone="onDark" style={styles.heroTitle}>
+          <AppText variant="h1" tone="onDark" style={styles.heroTitle}>
             {getHeroTitle(selectedTab)}
           </AppText>
           <View style={styles.heroBadges}>
@@ -127,7 +127,10 @@ export function RankingView({ entries }: RankingViewProps) {
               ]}
             >
               <View style={[styles.rankBox, index === 0 ? styles.rankBoxTop : null]}>
-                <AppText variant="caption" style={styles.rank}>
+                <AppText
+                  variant="caption"
+                  style={[styles.rank, index === 0 ? styles.rankTop : null]}
+                >
                   {index + 1}
                 </AppText>
               </View>
@@ -316,9 +319,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm + 2,
   },
   heroLabel: { opacity: 0.9 },
-  heroTitle: {
-    lineHeight: 36,
-  },
+  heroTitle: {},
   heroBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm - 2 },
   heroBadge: {
     borderRadius: radius.pill,
@@ -372,8 +373,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rankBoxTop: { backgroundColor: colors.goldSoft },
+  rankBoxTop: { backgroundColor: colors.gold },
   rank: { color: colors.ink },
+  rankTop: { color: colors.surface },
   member: { flex: 1, minWidth: 0, gap: 3 },
   score: { fontWeight: '900' },
   missionCard: {

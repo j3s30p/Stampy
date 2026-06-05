@@ -38,7 +38,7 @@ export function HomeView({ spots, collectedCount, onSelectSpot }: HomeViewProps)
           </View>
           <View style={styles.avatar}>
             <AppText variant="h3" tone="onDark">
-              J
+              스
             </AppText>
           </View>
         </View>
@@ -56,7 +56,11 @@ export function HomeView({ spots, collectedCount, onSelectSpot }: HomeViewProps)
               <AppText variant="caption" tone="onDark" style={styles.progressText}>
                 EXP {exp} / {nextExp}
               </AppText>
-              <AppText variant="caption" tone="onDark" style={styles.progressText}>
+              <AppText
+                variant="caption"
+                tone="onDark"
+                style={[styles.progressText, { color: colors.gold }]}
+              >
                 {Math.round((exp / nextExp) * 100)}%
               </AppText>
             </View>
