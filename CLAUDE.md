@@ -10,14 +10,15 @@
 
 ## 세션 시작 절차 (재진입 시 토큰 절약)
 
-`CLAUDE.md` / `AGENTS.md` / memory 는 Claude Code 가 자동 로드한다. 그 위에 **현재 진행 상태** 만 한 번 가볍게 파악한 뒤 작업.
+`CLAUDE.md` / `AGENTS.md` / memory 는 Claude Code 가 자동 로드한다. 그 위에 **한 줄** 로 현재 진행 상태 스냅샷.
 
-1. `gh pr list --state open` — 현재 떠 있는 PR 목록. 본인 작업 / 사용자 검토 대기 구분.
-2. `gh issue list --state open --label status/in-progress` — 진행 중 표시된 작업.
-3. `gh milestone list` (또는 `gh api repos/:owner/:repo/milestones --jq '.[] | {n: .number, t: .title, s: .state}'`) — 현재 열린 Stage / 마일스톤 확인.
-4. (필요 시) `gh issue view <N>` 로 작업 컨텍스트 1개 정독.
+```sh
+npm run session
+```
 
-위 단계만으로 "지금 어디 / 다음 무엇" 이 잡힌다. 채팅 히스토리·과거 PR 본문을 길게 다시 읽지 않는다. 추가 컨텍스트는 `.ai-skills/` / `.ai-background/` 의 _작업 직전_ 로드로 충당한다.
+출력 형식과 의도는 `scripts/session-state.mjs` 주석 참조. 추가 deep-dive 필요 시 `gh pr view <N>` / `gh issue view <N>`. 채팅 히스토리·과거 PR 본문을 길게 다시 읽지 않는다 — 토큰 낭비.
+
+스크립트는 CI 의 smoke test 로 항상 살아있음이 보장된다 (`.github/workflows/ci.yml`).
 
 ## Skill 호출 우선순위
 
