@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
 import { colors } from '@shared/ui';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -11,8 +12,17 @@ interface TabIconProps {
   readonly inactiveIcon: IoniconName;
 }
 
+function ActiveDot() {
+  return <View style={styles.dot} />;
+}
+
 function TabIcon({ color, focused, activeIcon, inactiveIcon }: TabIconProps) {
-  return <Ionicons name={focused ? activeIcon : inactiveIcon} size={22} color={color} />;
+  return (
+    <View style={styles.iconWrapper}>
+      {focused ? <ActiveDot /> : <View style={styles.dotPlaceholder} />}
+      <Ionicons name={focused ? activeIcon : inactiveIcon} size={22} color={color} />
+    </View>
+  );
 }
 
 export default function TabsLayout() {
@@ -26,18 +36,13 @@ export default function TabsLayout() {
           height: 76,
           paddingTop: 10,
           paddingBottom: 12,
-          borderTopWidth: 0,
-          backgroundColor: colors.surface,
-          shadowColor: colors.ink,
-          shadowOpacity: 0.06,
-          shadowRadius: 16,
-          shadowOffset: { width: 0, height: -4 },
-          elevation: 8,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          backgroundColor: colors.canvas,
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '700',
-          marginTop: 2,
         },
       }}
     >
@@ -109,3 +114,20 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  iconWrapper: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.brand,
+  },
+  dotPlaceholder: {
+    width: 4,
+    height: 4,
+  },
+});
