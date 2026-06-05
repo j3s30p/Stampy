@@ -1,5 +1,5 @@
+import { useMockFlow } from '@core/demo';
 import { MyPageView } from '@features/stamp/ui';
-import { useMockFlow } from './useMockFlow';
 
 export default function MyScreen() {
   const flow = useMockFlow();

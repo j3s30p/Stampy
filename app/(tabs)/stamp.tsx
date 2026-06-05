@@ -1,5 +1,5 @@
+import { useMockFlow } from '@core/demo';
 import { StampView } from '@features/stamp/ui';
-import { useMockFlow } from './useMockFlow';
 
 export default function StampScreen() {
   const flow = useMockFlow();

@@ -1,5 +1,5 @@
+import { useMockFlow } from '@core/demo';
 import { HomeView } from '@features/tour/ui';
-import { useMockFlow } from './useMockFlow';
 
 export default function HomeScreen() {
   const flow = useMockFlow();

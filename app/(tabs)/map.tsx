@@ -1,5 +1,5 @@
+import { useMockFlow } from '@core/demo';
 import { MapView } from '@features/map/ui';
-import { useMockFlow } from './useMockFlow';
 
 export default function MapScreen() {
   const flow = useMockFlow();
