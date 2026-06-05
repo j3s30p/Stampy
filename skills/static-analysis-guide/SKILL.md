@@ -5,41 +5,28 @@ triggers:
   - ESLint 위반 메시지 / no-* 룰 ID
   - tsc TSxxxx 에러 코드
   - eslint-disable / @ts-expect-error 작성 직전
-  - quality:fast / quality:full 실패 시
+  - quality:fast 실패 시
 owner-paths:
   - '*'
-status: active
-filled-in-stage: 3
 ---
 
 ## Intent
 
 "룰을 끄는 게 쉽기 때문에 끈다" 가 시작되면 정적 분석은 무력화된다. 본 skill 은 모든 suppress 가 (1) 룰 ID 를 명시하고 (2) 근거를 한 줄로 남기며 (3) 가능한 가장 작은 범위로만 적용되도록 강제한다.
 
-## 룰 ID → 의도 → 수정 방안 → 관련 skill
+## 룰 ID → 의도 → 수정 방안
 
 `.eslintrc.js` 의 실 룰 목록 기준. 룰을 추가/제거할 때 본 표도 같은 PR 에 갱신.
 
-| Rule ID                                      | 강제하는 invariant                                                                        | 위반 사례                                                               | 권장 수정                                                                                                              | 관련 skill           |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| `import/no-restricted-paths`                 | AGENTS.md #4 (FSD 경계) — `features/A` 가 `features/B` 를 import 하지 못한다 (ADR-004)    | `src/features/stamp/ui/X.tsx` 에서 `import {…} from '@features/tour/…'` | 공유 필요한 타입/함수는 `src/shared/` 또는 `src/core/` 로 끌어올린 뒤 양쪽에서 import. cross-feature 직접 import 금지. | `naming-conventions` |
-| `no-restricted-imports`                      | AGENTS.md #5 — `@shared/mocks` 는 `Mock*Repository.ts` 와 `shared/mocks/` 내부에서만 사용 | `app/(tabs)/index.tsx` 에서 `import { tourSpots } from '@shared/mocks'` | UI 는 repository 를 통해서만 데이터 받는다. 직접 fixture 를 import 하지 말 것.                                         | `mock-data-strategy` |
-| `import/order`                               | import 가지런히 정렬되어 diff 노이즈 감소                                                 | builtin 뒤에 external 이 섞임 / `@shared` 와 `@core` 가 순서 뒤바뀜     | `npm run lint:fix` — 자동 수정 됨                                                                                      | —                    |
-| `@typescript-eslint/consistent-type-imports` | 타입만 쓰는 import 는 `import type` 으로 분리 — 런타임 dead code 방지                     | `import { TourSpot } from '@features/tour/model'` (타입만 사용 시)      | `import type { TourSpot } from '@features/tour/model'` 또는 inline `import { type TourSpot } from …`                   | —                    |
-| `prettier/prettier`                          | 포맷 일관성 (`.prettierrc.js` 와 정확히 일치)                                             | 줄바꿈/들여쓰기/따옴표 다름                                             | `npm run format` 한 줄                                                                                                 | —                    |
-| `react-hooks/rules-of-hooks`                 | React 훅 호출 순서 보장                                                                   | 조건문 / 루프 안에서 `useState` / `useEffect` 호출                      | 훅을 함수 본문 최상위로 이동. 조건 분기는 effect 내부에서 처리.                                                        | —                    |
-| `react-hooks/exhaustive-deps`                | 의존성 배열 누락 방지                                                                     | `useEffect(() => { setX(props.y); }, [])` ← `props.y` 누락              | 누락된 deps 추가, 의도적으로 한 번만 실행이면 별도 헬퍼로 분리 + suppress 주석 + 근거                                  | —                    |
-
-## 향후 추가 예정 룰 (Stage 5 이후)
-
-`AGENTS.md` 의 invariant 중 현재 ESLint 로는 표현이 어려워 verifier (Stage 5) 또는 커스텀 플러그인 (별도 stage) 으로 다룰 것:
-
-- `stampy/no-raw-latlon` — 객체 리터럴 `{ latitude: 37.5, longitude: 126.9 }` 처럼 raw `number` 가 좌표로 직접 박힌 케이스 검출. `asLatitude`/`asLongitude` 강제. → `location-verification`
-- `stampy/no-raw-tour-dto` — `features/tour/api/Http*Repository.ts` 바깥에서 snake_case 필드(`mapx`, `mapy`, `contenttypeid` 등)가 등장하면 차단. → `tour-api-normalization`
-- `stampy/stamp-radius-must-be-constant` — 코드/문서에서 `100` 이라는 숫자가 거리/반경 맥락으로 등장하면 `STAMP_RADIUS_METERS` 사용 강제.
-- `stampy/skill-frontmatter-shape` — `.ai-skills/*.md` 의 frontmatter 가 표준 키를 가지는지 verifier 가 검사. → 본 skill
-
-추가 시 본 표 상단으로 옮기고 `Rule ID` / `관련 skill` 컬럼을 채운다.
+| Rule ID                                      | 강제하는 invariant                                                                        | 위반 사례                                                               | 권장 수정                                                                                                              |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `import/no-restricted-paths`                 | AGENTS.md #4 (FSD 경계) — `features/A` 가 `features/B` 를 import 하지 못한다 (ADR-004)    | `src/features/stamp/ui/X.tsx` 에서 `import {…} from '@features/tour/…'` | 공유 필요한 타입/함수는 `src/shared/` 또는 `src/core/` 로 끌어올린 뒤 양쪽에서 import. cross-feature 직접 import 금지. |
+| `no-restricted-imports`                      | AGENTS.md #5 — `@shared/mocks` 는 `Mock*Repository.ts` 와 `shared/mocks/` 내부에서만 사용 | `app/(tabs)/index.tsx` 에서 `import { tourSpots } from '@shared/mocks'` | UI 는 repository 를 통해서만 데이터 받는다. 직접 fixture 를 import 하지 말 것.                                         |
+| `import/order`                               | import 가지런히 정렬되어 diff 노이즈 감소                                                 | builtin 뒤에 external 이 섞임 / `@shared` 와 `@core` 가 순서 뒤바뀜     | `npm run lint:fix` — 자동 수정 됨                                                                                      |
+| `@typescript-eslint/consistent-type-imports` | 타입만 쓰는 import 는 `import type` 으로 분리 — 런타임 dead code 방지                     | `import { TourSpot } from '@features/tour/model'` (타입만 사용 시)      | `import type { TourSpot } from '@features/tour/model'` 또는 inline `import { type TourSpot } from …`                   |
+| `prettier/prettier`                          | 포맷 일관성 (`.prettierrc.js` 와 정확히 일치)                                             | 줄바꿈/들여쓰기/따옴표 다름                                             | `npm run format` 한 줄                                                                                                 |
+| `react-hooks/rules-of-hooks`                 | React 훅 호출 순서 보장                                                                   | 조건문 / 루프 안에서 `useState` / `useEffect` 호출                      | 훅을 함수 본문 최상위로 이동. 조건 분기는 effect 내부에서 처리.                                                        |
+| `react-hooks/exhaustive-deps`                | 의존성 배열 누락 방지                                                                     | `useEffect(() => { setX(props.y); }, [])` ← `props.y` 누락              | 누락된 deps 추가, 의도적으로 한 번만 실행이면 별도 헬퍼로 분리 + suppress 주석 + 근거                                  |
 
 ## TypeScript 에러 코드 처리
 
@@ -74,8 +61,14 @@ import { tourSpots } from '@shared/mocks';
 2. 출력의 첫 줄에 룰 ID 가 있다. 본 표에서 해당 행을 찾는다.
 3. 표의 "권장 수정" 대로 처리. 자동 수정 가능하면 `npm run lint:fix` / `npm run format`.
 4. 자동 수정 불가하고 위반이 _의도된_ 경우 → suppress 규약 따라 룰 ID + 근거 명시.
-5. "관련 skill" 컬럼이 비어있지 않다면 해당 skill 을 다시 읽고 시작.
 
-## Quality gate 와의 관계
+## 새 룰을 추가할 때
 
-본 skill 은 `npm run quality:fast` 가 실패할 때 1순위로 읽는다. 본 skill 에서 답이 안 나오면 `.ai-skills/static-analysis-guide.md` 의 "향후 추가 예정 룰" 섹션과 `AGENTS.md` 의 invariant 표를 cross-check.
+도메인 invariant 가 ESLint 표준 룰로 잡히지 않으면 _작업하면서 그때_ 커스텀 룰을 추가한다. **speculation 으로 미리 만들지 않는다** (사용자 피드백 `harness_focus`).
+
+룰 추가 시:
+
+1. `.eslintrc.js` 또는 ESLint 플러그인에 추가
+2. 본 SKILL.md 의 위 표에 row 추가 (Rule ID / invariant / 위반 사례 / 수정)
+3. AGENTS.md 의 invariant 와 cross-link
+4. smoke test 1개로 위반 케이스 거부 확인
