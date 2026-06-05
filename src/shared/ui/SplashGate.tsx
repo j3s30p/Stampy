@@ -1,101 +1,97 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, StyleSheet, View } from 'react-native';
-import { Gradient } from './Gradient';
+import { Mascot } from './Mascot';
 import { AppText } from './Text';
-import { colors, shadow, spacing } from './tokens';
+import { colors, spacing } from './tokens';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Animated values are created once per component mount via lazy useState.
-// This avoids the react-hooks/refs lint rule which forbids accessing
-// useRef().current during render.
 const mkValue = (v: number) => new Animated.Value(v);
 
 export function SplashGate() {
   const [visible, setVisible] = useState(true);
 
-  // Lazy-initialized Animated.Value instances — stable across renders.
-  const [stampScale] = useState(() => mkValue(0.6));
-  const [stampOpacity] = useState(() => mkValue(0));
+  // Mascot entrance
+  const [mascotTranslateY] = useState(() => mkValue(-300));
+  const [mascotScale] = useState(() => mkValue(1.2));
+
+  // Ink splash (brand-red circle behind mascot)
+  const [splashScale] = useState(() => mkValue(0));
+  const [splashOpacity] = useState(() => mkValue(0));
+
+  // Wordmark
   const [wordmarkOpacity] = useState(() => mkValue(0));
-  const [wordmarkTranslateY] = useState(() => mkValue(8));
+  const [wordmarkTranslateY] = useState(() => mkValue(12));
+
+  // Tagline
   const [taglineOpacity] = useState(() => mkValue(0));
-  const [taglineTranslateY] = useState(() => mkValue(8));
-  const [dot0] = useState(() => mkValue(0.4));
-  const [dot1] = useState(() => mkValue(0.4));
-  const [dot2] = useState(() => mkValue(0.4));
+
+  // Overlay fade-out
   const [overlayOpacity] = useState(() => mkValue(1));
 
-  const pulseDot = (anim: Animated.Value, delay: number): Animated.CompositeAnimation =>
-    Animated.loop(
-      Animated.sequence([
-        Animated.delay(delay),
-        Animated.timing(anim, { toValue: 1.0, duration: 350, useNativeDriver: true }),
-        Animated.timing(anim, { toValue: 0.4, duration: 350, useNativeDriver: true }),
-      ]),
-    );
+  // Stable ref for the ready timer so cleanup works reliably
+  const readyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    // Stamp mark entrance at 0ms
+    // Mascot: spring drop from top + scale 1.2 → 1
     Animated.parallel([
-      Animated.spring(stampScale, {
-        toValue: 1,
-        tension: 60,
-        friction: 8,
+      Animated.spring(mascotTranslateY, {
+        toValue: 0,
+        mass: 1,
+        damping: 12,
+        stiffness: 120,
         useNativeDriver: true,
       }),
-      Animated.timing(stampOpacity, {
+      Animated.timing(mascotScale, {
         toValue: 1,
-        duration: 450,
+        duration: 500,
         useNativeDriver: true,
       }),
     ]).start();
 
-    // Wordmark at 200ms
+    // Ink splash at 100ms — brand-red circle scales 0 → 4, opacity fades 0.18 → 0
     Animated.sequence([
-      Animated.delay(200),
+      Animated.delay(100),
       Animated.parallel([
-        Animated.timing(wordmarkOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
-        Animated.timing(wordmarkTranslateY, { toValue: 0, duration: 350, useNativeDriver: true }),
+        Animated.timing(splashOpacity, { toValue: 0.18, duration: 60, useNativeDriver: true }),
+        Animated.timing(splashScale, { toValue: 4, duration: 450, useNativeDriver: true }),
+      ]),
+      Animated.timing(splashOpacity, { toValue: 0, duration: 250, useNativeDriver: true }),
+    ]).start();
+
+    // Wordmark at 500ms
+    Animated.sequence([
+      Animated.delay(500),
+      Animated.parallel([
+        Animated.timing(wordmarkOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+        Animated.timing(wordmarkTranslateY, { toValue: 0, duration: 300, useNativeDriver: true }),
       ]),
     ]).start();
 
-    // Tagline at 350ms
+    // Tagline at 700ms
     Animated.sequence([
-      Animated.delay(350),
-      Animated.parallel([
-        Animated.timing(taglineOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
-        Animated.timing(taglineTranslateY, { toValue: 0, duration: 350, useNativeDriver: true }),
-      ]),
+      Animated.delay(700),
+      Animated.timing(taglineOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
     ]).start();
 
-    // Loader dots pulse
-    const d0 = pulseDot(dot0, 0);
-    const d1 = pulseDot(dot1, 200);
-    const d2 = pulseDot(dot2, 400);
-    d0.start();
-    d1.start();
-    d2.start();
-
-    // Ready after 1100ms
-    const readyTimer = setTimeout(() => {
+    // Ready after 1300ms minimum, then fade out 300ms
+    readyTimerRef.current = setTimeout(() => {
       SplashScreen.hideAsync().catch(() => undefined);
       Animated.timing(overlayOpacity, {
         toValue: 0,
-        duration: 350,
+        duration: 300,
         useNativeDriver: true,
       }).start(() => {
-        d0.stop();
-        d1.stop();
-        d2.stop();
         setVisible(false);
       });
-    }, 1100);
+    }, 1300);
 
     return () => {
-      clearTimeout(readyTimer);
+      if (readyTimerRef.current !== null) {
+        clearTimeout(readyTimerRef.current);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Animated values from lazy useState are stable; deps would cause re-animation on every render
   }, []);
@@ -110,50 +106,51 @@ export function SplashGate() {
       accessibilityLabel="앱 시작 중"
       style={[styles.overlay, { opacity: overlayOpacity }]}
     >
-      <Gradient variant="splash" style={styles.fill}>
+      <View style={styles.canvas}>
         <View style={styles.center}>
-          {/* Stamp mark */}
+          {/* Ink splash behind mascot */}
           <Animated.View
             style={[
-              styles.stampMark,
-              shadow.e2,
-              { opacity: stampOpacity, transform: [{ scale: stampScale }] },
+              styles.splash,
+              {
+                opacity: splashOpacity,
+                transform: [{ scale: splashScale }],
+              },
             ]}
+          />
+
+          {/* Mascot: 도장이 drop */}
+          <Animated.View
+            style={{
+              transform: [{ translateY: mascotTranslateY }, { scale: mascotScale }],
+            }}
           >
-            <View style={styles.stampInner}>
-              <Ionicons name="leaf" size={36} color={colors.surface} style={styles.leafRotated} />
-            </View>
+            <Mascot size={96} mood="happy" />
           </Animated.View>
 
           {/* Wordmark */}
           <Animated.View
             style={[
               styles.wordmarkBlock,
-              { opacity: wordmarkOpacity, transform: [{ translateY: wordmarkTranslateY }] },
+              {
+                opacity: wordmarkOpacity,
+                transform: [{ translateY: wordmarkTranslateY }],
+              },
             ]}
           >
-            <AppText variant="display" tone="onDark">
+            <AppText variant="title" tone="ink">
               스탬피
             </AppText>
           </Animated.View>
 
           {/* Tagline */}
-          <Animated.View
-            style={{ opacity: taglineOpacity, transform: [{ translateY: taglineTranslateY }] }}
-          >
-            <AppText variant="caption" tone="onDark" style={styles.tagline}>
+          <Animated.View style={{ opacity: taglineOpacity }}>
+            <AppText variant="caption" tone="inkMuted" style={styles.tagline}>
               오늘의 도장을 찾아서
             </AppText>
           </Animated.View>
-
-          {/* Loader dots */}
-          <View style={styles.dots}>
-            <Animated.View style={[styles.dot, { opacity: dot0 }]} />
-            <Animated.View style={[styles.dot, { opacity: dot1 }]} />
-            <Animated.View style={[styles.dot, { opacity: dot2 }]} />
-          </View>
         </View>
-      </Gradient>
+      </View>
     </Animated.View>
   );
 }
@@ -167,8 +164,9 @@ const styles = StyleSheet.create({
     height: SCREEN_HEIGHT,
     zIndex: 9999,
   },
-  fill: {
+  canvas: {
     flex: 1,
+    backgroundColor: colors.canvas,
   },
   center: {
     flex: 1,
@@ -176,42 +174,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.lg,
   },
-  stampMark: {
+  splash: {
+    position: 'absolute',
     width: 96,
     height: 96,
     borderRadius: 48,
-    borderWidth: 4,
-    borderColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
-  },
-  stampInner: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  leafRotated: {
-    transform: [{ rotate: '-15deg' }],
+    backgroundColor: colors.brand,
   },
   wordmarkBlock: {
     alignItems: 'center',
   },
   tagline: {
-    opacity: 0.85,
-  },
-  dots: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.surface,
+    textAlign: 'center',
   },
 });
