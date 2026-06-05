@@ -1,9 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { STAMP_RADIUS_METERS } from '@shared/config';
-import { AppText, Badge, Gradient, Surface, colors, radius, shadow, spacing } from '@shared/ui';
-import type { GradientVariant } from '@shared/ui';
+import { AppText, Badge, Button, Mascot, Surface, colors, radius, spacing } from '@shared/ui';
 import type { HomeTourSpot } from './HomeView';
 
 interface TourSpotDetailViewProps {
@@ -21,114 +20,116 @@ export function TourSpotDetailView({
 }: TourSpotDetailViewProps) {
   const [message, setMessage] = useState('카카오 길찾기 준비 중');
 
-  const gradientVariant = useMemo(() => getGradientVariant(spot?.theme), [spot?.theme]);
-
-  const artColors = useMemo(() => getArtColors(spot?.theme), [spot?.theme]);
-
   if (!spot) {
     return (
       <SafeAreaView style={styles.root}>
         <View style={styles.emptyState}>
-          <AppText variant="h1">선택된 관광지가 없습니다</AppText>
-          <AppText variant="body" tone="inkSoft" style={styles.emptySubtitle}>
+          <Mascot size={80} mood="sad" style={styles.emptyMascot} />
+          <AppText variant="h1">선택된 관광지가 없어요</AppText>
+          <AppText variant="body" tone="inkMuted" style={styles.emptySubtitle}>
             홈, 지도, MY 화면의 카드에서 관광지를 골라보세요.
           </AppText>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="이전 화면으로 이동"
+          <Button
+            variant="secondary"
+            size="md"
             onPress={onBack}
-            style={({ pressed }) => [styles.secondaryButton, pressed ? styles.pressed : null]}
+            accessibilityLabel="이전 화면으로 이동"
           >
-            <AppText variant="bodyBold" style={styles.secondaryButtonText}>
-              뒤로 가기
-            </AppText>
-          </Pressable>
+            뒤로 가기
+          </Button>
         </View>
       </SafeAreaView>
     );
   }
 
   const intro = getIntroText(spot.title, spot.theme);
+  const statusLabel = getSpotStatusLabel(spot);
 
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Gradient variant={gradientVariant} style={styles.hero}>
-          <View style={styles.heroTopRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="이전 화면으로 이동"
-              onPress={onBack}
-              style={({ pressed }) => [styles.backButton, pressed ? styles.pressed : null]}
-            >
-              <AppText variant="h1" style={styles.backButtonText}>
-                ‹
-              </AppText>
-            </Pressable>
-            <View style={styles.heroBadge}>
-              <AppText variant="caption" style={styles.heroBadgeText}>
-                {getSpotStatusLabel(spot)}
-              </AppText>
-            </View>
-          </View>
-
-          <View style={styles.heroArtwork}>
-            <View style={[styles.artCircle, { backgroundColor: artColors.primary }]} />
-            <View style={[styles.artCircleSmall, { backgroundColor: artColors.secondary }]} />
-            <AppText variant="display" tone="onDark" style={styles.heroArtworkLabel}>
-              {spot.title}
+        {/* Back + status row */}
+        <View style={styles.heroTopRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="이전 화면으로 이동"
+            onPress={onBack}
+            style={({ pressed }) => [styles.backButton, pressed ? styles.pressed : null]}
+          >
+            <AppText variant="h2" style={styles.backButtonText}>
+              ‹
             </AppText>
-            <AppText variant="body" tone="onDark" style={styles.heroArtworkMeta}>
-              {spot.theme}
-            </AppText>
-          </View>
-        </Gradient>
+          </Pressable>
+          <Badge tone={getStatusTone(spot)} size="md">
+            {statusLabel}
+          </Badge>
+        </View>
 
-        <Surface elevation="e1" style={styles.titleCard}>
-          <AppText variant="display">{spot.title}</AppText>
-          <View style={styles.badgeRow}>
-            <Badge tone="neutral" size="md">
-              {spot.theme}
-            </Badge>
-          </View>
-        </Surface>
+        {/* Typographic hero — no gradient */}
+        <View style={styles.heroBlock}>
+          <AppText variant="display" tone="ink">
+            {spot.title}
+          </AppText>
+          <AppText variant="body" tone="inkMuted">
+            {spot.theme} · {spot.address}
+          </AppText>
+        </View>
 
+        {/* Stamp preview circle */}
+        <View style={styles.stampPreviewWrapper}>
+          <View style={styles.stampPreview}>
+            {spot.collected ? (
+              <View style={styles.stampCollectedIcon}>
+                <AppText variant="display" tone="onDark">
+                  ✓
+                </AppText>
+              </View>
+            ) : (
+              <Mascot size={80} mood="happy" />
+            )}
+          </View>
+          <AppText variant="caption" tone="inkMuted" style={styles.stampPreviewLabel}>
+            {spot.collected ? '수집 완료된 스탬프' : '도장 찍기 전'}
+          </AppText>
+        </View>
+
+        {/* Info grid */}
         <View style={styles.infoGrid}>
           <Surface elevation="e1" radius="sm" style={styles.infoBox}>
             <AppText variant="h2">{spot.distanceMeters}m</AppText>
-            <AppText variant="caption" tone="inkSoft">
+            <AppText variant="caption" tone="inkMuted">
               현재 거리
             </AppText>
           </Surface>
           <Surface elevation="e1" radius="sm" style={styles.infoBox}>
             <AppText variant="h2">+10</AppText>
-            <AppText variant="caption" tone="inkSoft">
+            <AppText variant="caption" tone="inkMuted">
               획득 EXP
             </AppText>
           </Surface>
           <Surface elevation="e1" radius="sm" style={styles.infoBox}>
             <AppText variant="h2">1회</AppText>
-            <AppText variant="caption" tone="inkSoft">
+            <AppText variant="caption" tone="inkMuted">
               획득 제한
             </AppText>
           </Surface>
         </View>
 
-        <Surface elevation="e1" radius="xs" style={styles.card}>
+        <Surface elevation="e1" radius="md" style={styles.card}>
           <AppText variant="h3">관광지 소개</AppText>
           <AppText variant="body" tone="inkSoft">
             {intro}
           </AppText>
         </Surface>
 
-        <Surface elevation="e1" radius="xs" style={styles.card}>
+        <Surface elevation="e1" radius="md" style={styles.card}>
           <AppText variant="h3">주소</AppText>
           <AppText variant="body" tone="inkSoft">
             {spot.address}
           </AppText>
         </Surface>
 
-        <View style={styles.noticeCard}>
+        <Surface elevation="none" radius="md" style={styles.noticeCard}>
           <AppText variant="h3" style={styles.noticeTitle}>
             도장 인증 안내
           </AppText>
@@ -136,35 +137,34 @@ export function TourSpotDetailView({
             실제 도장은 하단 가운데 도장 탭에서만 진행됩니다. 관광지 반경 {STAMP_RADIUS_METERS}m
             이내에서 도장 화면을 열면 인증할 수 있어요.
           </AppText>
-        </View>
+        </Surface>
 
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${spot.title} 도장 화면으로 이동`}
+        {/* Primary CTA: brand red for stamp-related action */}
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth
           onPress={onOpenStamp}
-          style={({ pressed }) => [styles.primaryButton, pressed ? styles.pressed : null]}
+          accessibilityLabel={`${spot.title} 도장 화면으로 이동`}
         >
-          <AppText variant="bodyBold" style={styles.primaryButtonText}>
-            도장 화면으로 이동
-          </AppText>
-        </Pressable>
+          도장 화면으로 이동
+        </Button>
 
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${spot.title} 카카오맵으로 길찾기`}
+        <Button
+          variant="secondary"
+          size="lg"
+          fullWidth
           onPress={() => {
             setMessage(`${spot.title} 길찾기 준비 중`);
             onOpenDirections?.();
           }}
-          style={({ pressed }) => [styles.secondaryButton, pressed ? styles.pressed : null]}
+          accessibilityLabel={`${spot.title} 카카오맵으로 길찾기`}
         >
-          <AppText variant="bodyBold" style={styles.secondaryButtonText}>
-            카카오맵으로 길찾기
-          </AppText>
-        </Pressable>
+          카카오맵으로 길찾기
+        </Button>
 
-        <Surface elevation="e1" radius="xs" style={styles.feedbackCard}>
-          <AppText variant="caption" tone="inkSoft">
+        <Surface elevation="none" radius="sm" style={styles.feedbackCard}>
+          <AppText variant="caption" tone="inkMuted">
             선택 상태
           </AppText>
           <AppText variant="bodyBold">{message}</AppText>
@@ -187,37 +187,6 @@ const getIntroText = (title: string, theme: string) => {
   return introByTheme[theme] ?? `${title}는 여행 중 잠시 멈춰 보기 좋은 관광지입니다.`;
 };
 
-const getGradientVariant = (theme?: string): GradientVariant => {
-  switch (theme) {
-    case '궁궐 산책':
-      return 'gold';
-    case '골목 여행':
-      return 'indigo';
-    default:
-      return 'brand';
-  }
-};
-
-const getArtColors = (theme?: string) => {
-  switch (theme) {
-    case '궁궐 산책':
-      return {
-        primary: 'rgba(255, 255, 255, 0.16)',
-        secondary: 'rgba(255, 255, 255, 0.28)',
-      };
-    case '골목 여행':
-      return {
-        primary: 'rgba(255, 255, 255, 0.18)',
-        secondary: 'rgba(255, 221, 170, 0.28)',
-      };
-    default:
-      return {
-        primary: 'rgba(255, 255, 255, 0.14)',
-        secondary: 'rgba(145, 232, 218, 0.3)',
-      };
-  }
-};
-
 const getSpotStatusLabel = (spot: HomeTourSpot) => {
   if (spot.collected) {
     return '수집 완료';
@@ -230,78 +199,72 @@ const getSpotStatusLabel = (spot: HomeTourSpot) => {
   return '가까이 이동 필요';
 };
 
+const getStatusTone = (spot: HomeTourSpot): 'done' | 'ready' | 'neutral' => {
+  if (spot.collected) {
+    return 'done';
+  }
+
+  if (spot.distanceMeters <= STAMP_RADIUS_METERS) {
+    return 'ready';
+  }
+
+  return 'neutral';
+};
+
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.surfaceAlt },
-  content: { paddingBottom: spacing.xxl },
-  hero: {
-    height: 290,
-    paddingHorizontal: spacing.xxl,
+  root: { flex: 1, backgroundColor: colors.canvas },
+  content: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xxl,
+    gap: spacing.lg,
     paddingTop: spacing.md,
-    paddingBottom: spacing.xl,
   },
-  heroTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  heroTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: colors.surfaceSink,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   backButtonText: { color: colors.ink, marginTop: -3 },
-  heroBadge: {
-    backgroundColor: 'rgba(255,255,255,0.88)',
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+  heroBlock: {
+    gap: spacing.sm,
   },
-  heroBadgeText: { color: colors.ink },
-  heroArtwork: {
-    marginTop: 30,
-    flex: 1,
-    borderRadius: radius.xl,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    overflow: 'hidden',
+  stampPreviewWrapper: {
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.lg,
   },
-  artCircle: {
-    position: 'absolute',
+  stampPreview: {
     width: 160,
     height: 160,
     borderRadius: 80,
-    top: -28,
-    right: -18,
+    borderWidth: 3,
+    borderColor: colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.canvas,
   },
-  artCircleSmall: {
-    position: 'absolute',
-    width: 106,
-    height: 106,
-    borderRadius: 53,
-    bottom: -12,
-    left: -10,
+  stampCollectedIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  heroArtworkLabel: { letterSpacing: -0.6 },
-  heroArtworkMeta: { opacity: 0.86, marginTop: 6 },
-  titleCard: {
-    marginTop: -20,
-    marginHorizontal: spacing.lg,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    borderBottomLeftRadius: radius.lg,
-    borderBottomRightRadius: radius.lg,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.md,
-    gap: spacing.sm + 2,
-    ...shadow.e2,
-  },
-  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  stampPreviewLabel: { textAlign: 'center' },
   infoGrid: {
-    paddingHorizontal: spacing.xxl,
     flexDirection: 'row',
     gap: spacing.sm + 2,
-    marginBottom: spacing.md,
   },
   infoBox: {
     flex: 1,
@@ -311,49 +274,22 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   card: {
-    marginHorizontal: spacing.xxl,
     padding: spacing.lg,
-    marginBottom: spacing.md,
     gap: spacing.sm,
   },
   noticeCard: {
-    backgroundColor: colors.successSoft,
-    marginHorizontal: spacing.xxl,
-    borderRadius: radius.xs,
-    borderWidth: 1,
-    borderColor: colors.success,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-    gap: spacing.sm,
-  },
-  noticeTitle: { color: colors.success },
-  primaryButton: {
-    marginHorizontal: spacing.xxl,
-    borderRadius: radius.lg,
-    backgroundColor: colors.brand,
-    height: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  primaryButtonText: { color: colors.surface },
-  secondaryButton: {
-    marginHorizontal: spacing.xxl,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    height: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: colors.brandSoft,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.brand,
-    marginTop: spacing.sm + 2,
+    padding: spacing.lg,
+    gap: spacing.sm,
   },
-  secondaryButtonText: { color: colors.brand },
+  noticeTitle: { color: colors.brandInk },
   feedbackCard: {
-    marginHorizontal: spacing.xxl,
-    marginTop: spacing.md,
     padding: spacing.md,
     gap: spacing.xs,
+    backgroundColor: colors.surfaceSink,
   },
   emptyState: {
     flex: 1,
@@ -361,6 +297,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing.xxl,
     gap: spacing.md,
+  },
+  emptyMascot: {
+    transform: [{ rotate: '-8deg' }],
   },
   emptySubtitle: { textAlign: 'center' },
   pressed: { opacity: 0.85 },

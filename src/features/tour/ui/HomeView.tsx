@@ -1,7 +1,9 @@
+import { useEffect, useRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { STAMP_RADIUS_METERS } from '@shared/config';
-import { AppText, Badge, Gradient, Surface, colors, radius, shadow, spacing } from '@shared/ui';
+import { AppText, Badge, Mascot, Progress, Surface, colors, radius, spacing } from '@shared/ui';
 
 export interface HomeTourSpot {
   readonly contentId: string;
@@ -23,52 +25,61 @@ export function HomeView({ spots, collectedCount, onSelectSpot }: HomeViewProps)
   const level = 3;
   const exp = 620;
   const nextExp = 1000;
+  const progressPercent = Math.round((exp / nextExp) * 100);
+
+  // Hero entrance animation
+  const heroOpacity = useSharedValue(0);
+  const heroTranslateY = useSharedValue(8);
+  // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for animation in useEffect
+  const heroOpacityRef = useRef(heroOpacity);
+  // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for animation in useEffect
+  const heroTranslateYRef = useRef(heroTranslateY);
+
+  const heroAnimStyle = useAnimatedStyle(() => ({
+    opacity: heroOpacityRef.current.value,
+    transform: [{ translateY: heroTranslateYRef.current.value }],
+  }));
+
+  useEffect(() => {
+    heroOpacityRef.current.value = withTiming(1, { duration: 350 });
+    heroTranslateYRef.current.value = withTiming(0, { duration: 350 });
+  }, []);
 
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topbar}>
           <View style={styles.brandBlock}>
-            <AppText variant="display" style={styles.brand}>
+            <AppText variant="h2" tone="ink">
               스탬피
             </AppText>
-            <AppText variant="caption" tone="inkSoft">
+            <AppText variant="caption" tone="inkMuted">
               오늘은 어디서 스탬프를 찍어볼까요?
             </AppText>
           </View>
           <View style={styles.avatar}>
-            <AppText variant="h3" tone="onDark">
-              스
-            </AppText>
+            <Mascot size={40} mood="happy" />
           </View>
         </View>
 
-        <Gradient variant="brand" style={styles.hero}>
-          <AppText variant="caption" tone="onDark" style={styles.heroLabel}>
-            Lv.{level} 지역 탐험가
+        {/* Hero block: typography-led, no gradient */}
+        <Animated.View style={[styles.hero, heroAnimStyle]}>
+          <AppText variant="micro" tone="brand">
+            LV.{level} · 지역 탐험가
           </AppText>
-          <AppText variant="display" tone="onDark" style={styles.heroTitle}>
-            이번 주 2개만 더 찍으면{'\n'}서울 컬렉션 완성!
+          <AppText variant="display" tone="ink" style={styles.heroTitle}>
+            이번 주{'\n'}2개만 더
           </AppText>
-
-          <View style={styles.progressBlock}>
-            <View style={styles.progressRow}>
-              <AppText variant="caption" tone="onDark" style={styles.progressText}>
-                EXP {exp} / {nextExp}
-              </AppText>
-              <AppText
-                variant="caption"
-                tone="onDark"
-                style={[styles.progressText, { color: colors.gold }]}
-              >
-                {Math.round((exp / nextExp) * 100)}%
-              </AppText>
-            </View>
-            <View style={styles.progressTrack}>
-              <View style={styles.progressFill} />
-            </View>
+          <Progress value={progressPercent} tone="reward" />
+          <View style={styles.heroFootRow}>
+            <AppText variant="caption" tone="inkMuted">
+              EXP {exp} / {nextExp}
+            </AppText>
+            <AppText variant="captionBold" tone="ink">
+              {progressPercent}%
+            </AppText>
           </View>
-        </Gradient>
+        </Animated.View>
 
         <View style={styles.sectionHead}>
           <AppText variant="h2">근처에서 찍을 수 있어요</AppText>
@@ -92,8 +103,8 @@ export function HomeView({ spots, collectedCount, onSelectSpot }: HomeViewProps)
                 </View>
                 <View style={styles.spotCopy}>
                   <AppText variant="h3">{spot.title}</AppText>
-                  <AppText variant="caption" tone="inkSoft">
-                    {spot.address} · 현재 위치에서 {spot.distanceMeters}m
+                  <AppText variant="caption" tone="inkMuted">
+                    {spot.address} · {spot.distanceMeters}m
                   </AppText>
                   <View style={styles.badgeRow}>
                     <Badge tone={getStatusTone(spot)} size="sm">
@@ -118,14 +129,12 @@ export function HomeView({ spots, collectedCount, onSelectSpot }: HomeViewProps)
 
         <Surface elevation="e1" radius="lg" style={styles.collectionCard}>
           <AppText variant="h3">서울 5대 궁궐 컬렉션</AppText>
-          <View style={styles.collectionTrack}>
-            <View style={styles.collectionFill} />
-          </View>
+          <Progress value={60} tone="reward" />
           <View style={styles.collectionBadges}>
             <Badge tone="neutral" size="sm">
               {Math.min(collectedCount + 2, 5)} / 5 완료
             </Badge>
-            <Badge tone="warning" size="sm">
+            <Badge tone="reward" size="sm">
               보상 +50EXP
             </Badge>
           </View>
@@ -177,20 +186,20 @@ const getStatusLabel = (spot: HomeTourSpot) => {
   return '방문 전';
 };
 
-const getStatusTone = (spot: HomeTourSpot): 'success' | 'warning' | 'neutral' => {
+const getStatusTone = (spot: HomeTourSpot): 'done' | 'ready' | 'neutral' => {
   if (spot.collected) {
-    return 'success';
+    return 'done';
   }
 
   if (spot.distanceMeters <= STAMP_RADIUS_METERS) {
-    return 'warning';
+    return 'ready';
   }
 
   return 'neutral';
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.surfaceAlt },
+  root: { flex: 1, backgroundColor: colors.canvas },
   content: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
@@ -204,41 +213,24 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   brandBlock: { flex: 1, minWidth: 0, gap: 2 },
-  brand: { color: colors.ink },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.brandDeep,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
   hero: {
-    borderRadius: radius.xl,
-    paddingHorizontal: spacing.xxl,
     paddingVertical: spacing.xl,
-    overflow: 'hidden',
-    ...shadow.e2,
+    gap: spacing.sm + 2,
   },
-  heroLabel: { opacity: 0.85 },
   heroTitle: {
-    marginTop: spacing.sm,
-    lineHeight: 36,
+    marginTop: spacing.xs,
   },
-  progressBlock: { marginTop: spacing.md, gap: spacing.sm },
-  progressRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  progressText: { opacity: 0.9 },
-  progressTrack: {
-    height: 8,
-    borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    overflow: 'hidden',
-  },
-  progressFill: {
-    width: '62%',
-    height: '100%',
-    backgroundColor: colors.gold,
-    borderRadius: radius.pill,
+  heroFootRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   sectionHead: {
     flexDirection: 'row',
@@ -257,30 +249,18 @@ const styles = StyleSheet.create({
   thumb: {
     width: 64,
     height: 64,
-    borderRadius: radius.sm + 8,
+    borderRadius: radius.sm + 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  thumbPalace: { backgroundColor: colors.thumbPeach },
-  thumbEvent: { backgroundColor: colors.thumbPink },
+  thumbPalace: { backgroundColor: colors.brandSoft },
+  thumbEvent: { backgroundColor: colors.surfaceSink },
   thumbText: { fontSize: 24 },
   spotCopy: { flex: 1, minWidth: 0, gap: spacing.xs },
   badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm - 2, marginTop: spacing.xs },
   collectionCard: {
     padding: spacing.lg,
     gap: spacing.sm + 2,
-  },
-  collectionTrack: {
-    height: 8,
-    backgroundColor: colors.surfaceSink,
-    borderRadius: radius.pill,
-    overflow: 'hidden',
-  },
-  collectionFill: {
-    width: '60%',
-    height: '100%',
-    backgroundColor: colors.brand,
-    borderRadius: radius.pill,
   },
   collectionBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm - 2 },
   goalCard: {

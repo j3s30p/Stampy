@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppText, Gradient, Surface, colors, radius, spacing } from '@shared/ui';
+import { AppText, Mascot, Surface, colors, radius, spacing } from '@shared/ui';
 
 export interface RankingEntry {
   readonly id: string;
@@ -31,43 +32,65 @@ export function RankingView({ entries }: RankingViewProps) {
     tabRows[0] ??
     null;
 
+  // Hero entrance
+  const heroOpacity = useSharedValue(0);
+  const heroTranslateY = useSharedValue(8);
+  // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for entrance animation
+  const heroOpacityRef = useRef(heroOpacity);
+  // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for entrance animation
+  const heroTranslateYRef = useRef(heroTranslateY);
+
+  const heroAnimStyle = useAnimatedStyle(() => ({
+    opacity: heroOpacityRef.current.value,
+    transform: [{ translateY: heroTranslateYRef.current.value }],
+  }));
+
+  useEffect(() => {
+    heroOpacityRef.current.value = withTiming(1, { duration: 350 });
+    heroTranslateYRef.current.value = withTiming(0, { duration: 350 });
+  }, []);
+
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topbar}>
           <View style={styles.brandBlock}>
             <AppText variant="h1">{getTabLabel(selectedTab)}</AppText>
-            <AppText variant="caption" tone="inkSoft">
+            <AppText variant="caption" tone="inkMuted">
               {getTabCaption(selectedTab)}
-            </AppText>
-          </View>
-          <View style={styles.avatar}>
-            <AppText variant="h3" tone="onDark">
-              스
             </AppText>
           </View>
         </View>
 
-        <Gradient variant="coral" style={styles.hero}>
-          <AppText variant="caption" tone="onDark" style={styles.heroLabel}>
-            내 현재 순위
-          </AppText>
-          <AppText variant="h1" tone="onDark" style={styles.heroTitle}>
-            {getHeroTitle(selectedTab)}
+        {/* Hero block — typographic, no gradient */}
+        <Animated.View style={[styles.hero, heroAnimStyle]}>
+          <View style={styles.heroRankRow}>
+            <Mascot size={40} mood="happy" />
+            <View style={styles.heroRankText}>
+              <AppText variant="micro" tone="inkMuted">
+                내 현재 순위
+              </AppText>
+              <AppText variant="title" tone="ink">
+                {getHeroRank(selectedTab)}
+              </AppText>
+            </View>
+          </View>
+          <AppText variant="body" tone="inkSoft">
+            {getHeroSub(selectedTab)}
           </AppText>
           <View style={styles.heroBadges}>
             <View style={styles.heroBadge}>
-              <AppText variant="micro" tone="onDark">
+              <AppText variant="micro" tone="inkMuted">
                 12 stamps
               </AppText>
             </View>
             <View style={styles.heroBadge}>
-              <AppText variant="micro" tone="onDark">
+              <AppText variant="micro" tone="inkMuted">
                 620 EXP
               </AppText>
             </View>
           </View>
-        </Gradient>
+        </Animated.View>
 
         <View style={styles.tabs}>
           {rankingTabs.map((tab) => {
@@ -87,7 +110,7 @@ export function RankingView({ entries }: RankingViewProps) {
                 ]}
               >
                 <AppText
-                  variant="caption"
+                  variant="captionBold"
                   style={isActive ? styles.tabTextActive : styles.tabTextInactive}
                 >
                   {tab.label}
@@ -98,17 +121,17 @@ export function RankingView({ entries }: RankingViewProps) {
         </View>
 
         {selectedEntry ? (
-          <View style={styles.selectedPanel}>
-            <AppText variant="micro" style={styles.selectedLabel}>
+          <Surface elevation="none" radius="lg" style={styles.selectedPanel}>
+            <AppText variant="micro" tone="inkMuted" style={styles.selectedLabel}>
               선택한 참여자
             </AppText>
-            <AppText variant="h1" tone="onDark">
+            <AppText variant="h1" tone="ink">
               {selectedEntry.nickname}
             </AppText>
-            <AppText variant="body" tone="onDark" style={styles.selectedMeta}>
+            <AppText variant="body" tone="inkSoft">
               현재 수집 도장 {selectedEntry.stampCount}개
             </AppText>
-          </View>
+          </Surface>
         ) : null}
 
         <View style={styles.rows}>
@@ -119,30 +142,35 @@ export function RankingView({ entries }: RankingViewProps) {
               accessibilityLabel={`${entry.nickname} 랭킹 선택`}
               accessibilityState={{ selected: entry.id === selectedEntry?.id }}
               onPress={() => setSelectedEntryId(entry.id)}
-              style={({ pressed }) => [
-                styles.row,
-                entry.isMe ? styles.meRow : null,
-                entry.id === selectedEntry?.id ? styles.rowSelected : null,
-                pressed ? styles.pressed : null,
-              ]}
+              style={({ pressed }) => [pressed ? styles.pressed : null]}
             >
-              <View style={[styles.rankBox, index === 0 ? styles.rankBoxTop : null]}>
-                <AppText
-                  variant="caption"
-                  style={[styles.rank, index === 0 ? styles.rankTop : null]}
-                >
-                  {index + 1}
+              <Surface
+                elevation="none"
+                radius="md"
+                style={[
+                  styles.row,
+                  entry.isMe ? styles.meRow : null,
+                  entry.id === selectedEntry?.id ? styles.rowSelected : null,
+                ]}
+              >
+                <View style={[styles.rankBox, index === 0 ? styles.rankBoxTop : null]}>
+                  <AppText
+                    variant="captionBold"
+                    style={[styles.rank, index === 0 ? styles.rankTop : null]}
+                  >
+                    {index + 1}
+                  </AppText>
+                </View>
+                <View style={styles.member}>
+                  <AppText variant="h3">{entry.nickname}</AppText>
+                  <AppText variant="caption" tone="inkMuted">
+                    {getRowMeta(selectedTab, entry)}
+                  </AppText>
+                </View>
+                <AppText variant="captionBold" tone="brand" style={styles.score}>
+                  {getScoreLabel(index, selectedTab)}
                 </AppText>
-              </View>
-              <View style={styles.member}>
-                <AppText variant="h3">{entry.nickname}</AppText>
-                <AppText variant="caption" tone="inkSoft">
-                  {getRowMeta(selectedTab, entry)}
-                </AppText>
-              </View>
-              <AppText variant="caption" tone="brand" style={styles.score}>
-                {getScoreLabel(index, selectedTab)}
-              </AppText>
+              </Surface>
             </Pressable>
           ))}
         </View>
@@ -241,16 +269,28 @@ const getTabCaption = (tab: RankingTab) => {
   return '이번 주 가장 많이 걸은 여행자';
 };
 
-const getHeroTitle = (tab: RankingTab) => {
+const getHeroRank = (tab: RankingTab) => {
   if (tab === 'region') {
-    return '종로권 4위\n오늘은 지역 랭킹 2칸 상승';
+    return '종로권 4위';
   }
 
   if (tab === 'friends') {
-    return '친구 중 2위\n한 명만 더 찍으면 1위';
+    return '친구 중 2위';
   }
 
-  return `이번 주 8위\n스탬프 2개만 더 찍으면 TOP 5`;
+  return '이번 주 8위';
+};
+
+const getHeroSub = (tab: RankingTab) => {
+  if (tab === 'region') {
+    return '오늘은 지역 랭킹 2칸 상승';
+  }
+
+  if (tab === 'friends') {
+    return '한 명만 더 찍으면 1위';
+  }
+
+  return '스탬프 2개만 더 찍으면 TOP 5';
 };
 
 const getRowMeta = (tab: RankingTab, entry: RankingEntry) => {
@@ -290,7 +330,7 @@ const getMissionText = (tab: RankingTab) => {
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.surfaceAlt },
+  root: { flex: 1, backgroundColor: colors.canvas },
   content: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
@@ -304,33 +344,27 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   brandBlock: { flex: 1, minWidth: 0, gap: 2 },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.brandDeep,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   hero: {
-    borderRadius: radius.xl,
-    paddingHorizontal: spacing.xxl,
     paddingVertical: spacing.xl,
     gap: spacing.sm + 2,
   },
-  heroLabel: { opacity: 0.9 },
-  heroTitle: {},
+  heroRankRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  heroRankText: { gap: 2 },
   heroBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm - 2 },
   heroBadge: {
-    borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceSink,
     paddingHorizontal: spacing.sm + 1,
     paddingVertical: spacing.xs + 1,
   },
   tabs: { flexDirection: 'row', gap: spacing.sm },
   tab: {
     flex: 1,
-    borderRadius: radius.pill,
+    borderRadius: radius.full,
     paddingVertical: 11,
     alignItems: 'center',
     backgroundColor: colors.surface,
@@ -345,26 +379,21 @@ const styles = StyleSheet.create({
   tabTextActive: { color: colors.surface },
   pressed: { opacity: 0.85 },
   selectedPanel: {
-    backgroundColor: colors.ink,
+    backgroundColor: colors.surfaceSink,
     borderRadius: radius.lg,
     padding: spacing.lg,
     gap: spacing.xs,
   },
-  selectedLabel: { color: colors.onDarkMuted, letterSpacing: 0.4 },
-  selectedMeta: { opacity: 0.85 },
+  selectedLabel: { letterSpacing: 0.4 },
   rows: { gap: spacing.sm + 2 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
     padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
-  meRow: { borderColor: colors.brand, backgroundColor: colors.successSoft },
-  rowSelected: { borderColor: colors.gold },
+  meRow: { borderColor: colors.brand, backgroundColor: colors.brandSoft },
+  rowSelected: { borderColor: colors.borderStrong },
   rankBox: {
     width: 36,
     height: 36,
@@ -373,11 +402,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rankBoxTop: { backgroundColor: colors.gold },
+  rankBoxTop: { backgroundColor: colors.reward },
   rank: { color: colors.ink },
-  rankTop: { color: colors.surface },
+  rankTop: { color: colors.ink },
   member: { flex: 1, minWidth: 0, gap: 3 },
-  score: { fontWeight: '900' },
+  score: {},
   missionCard: {
     padding: spacing.lg,
     gap: spacing.sm - 2,

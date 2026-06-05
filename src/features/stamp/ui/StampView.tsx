@@ -1,7 +1,27 @@
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { STAMP_RADIUS_METERS } from '@shared/config';
-import { AppText, Badge, Gradient, Surface, colors, radius, spacing } from '@shared/ui';
+import {
+  AppText,
+  Badge,
+  Button,
+  Mascot,
+  Progress,
+  StampDrop,
+  Surface,
+  colors,
+  radius,
+  spacing,
+} from '@shared/ui';
 
 export interface StampCandidate {
   readonly contentId: string;
@@ -45,37 +65,76 @@ export function StampView({
   const ctaLabel = getCtaLabel({ candidate, canVerify, locationAvailable, locationStatus });
   const latestStamps = recentStamps.filter((stamp) => stamp.collected).slice(0, 3);
 
+  // Mascot pulse animation when CTA is ready
+  const mascotScale = useSharedValue(1);
+  // eslint-disable-next-line react-hooks/immutability -- SharedValue ref for animation in useEffect
+  const mascotScaleRef = useRef(mascotScale);
+
+  const mascotAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: mascotScaleRef.current.value }],
+  }));
+
+  useEffect(() => {
+    if (canVerify) {
+      mascotScaleRef.current.value = withRepeat(
+        withSequence(
+          withTiming(1.03, { duration: 500 }),
+          withTiming(1, { duration: 500 }),
+          withTiming(1, { duration: 1000 }), // pause ~1s
+        ),
+        -1,
+        false,
+      );
+    } else {
+      mascotScaleRef.current.value = withSpring(1);
+    }
+  }, [canVerify]);
+
+  // Hero entrance
+  const heroOpacity = useSharedValue(0);
+  const heroTranslateY = useSharedValue(8);
+  // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for entrance animation
+  const heroOpacityRef = useRef(heroOpacity);
+  // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for entrance animation
+  const heroTranslateYRef = useRef(heroTranslateY);
+
+  const heroAnimStyle = useAnimatedStyle(() => ({
+    opacity: heroOpacityRef.current.value,
+    transform: [{ translateY: heroTranslateYRef.current.value }],
+  }));
+
+  useEffect(() => {
+    heroOpacityRef.current.value = withTiming(1, { duration: 350 });
+    heroTranslateYRef.current.value = withTiming(0, { duration: 350 });
+  }, []);
+
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topbar}>
           <View style={styles.brandBlock}>
             <AppText variant="h1">도장 찍기</AppText>
-            <AppText variant="caption" tone="inkSoft">
+            <AppText variant="caption" tone="inkMuted">
               현장 인증 후 스탬프를 눌러요
-            </AppText>
-          </View>
-          <View style={styles.avatar}>
-            <AppText variant="h3" tone="onDark">
-              스
             </AppText>
           </View>
         </View>
 
-        <Surface elevation="e1" radius="lg" style={styles.summaryCard}>
-          <AppText variant="caption" tone="inkSoft">
-            오늘 루트 수집 현황
-          </AppText>
-          <AppText variant="h1" style={styles.summaryValue}>
-            {collectedCount} / {totalCount}
-          </AppText>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
-          </View>
-        </Surface>
+        {/* Summary card */}
+        <Animated.View style={heroAnimStyle}>
+          <Surface elevation="e1" radius="lg" style={styles.summaryCard}>
+            <AppText variant="caption" tone="inkMuted">
+              오늘 루트 수집 현황
+            </AppText>
+            <AppText variant="h1" style={styles.summaryValue}>
+              {collectedCount} / {totalCount}
+            </AppText>
+            <Progress value={progressPercent} tone="reward" />
+          </Surface>
+        </Animated.View>
 
         {candidate ? (
-          <Surface elevation="e2" radius="lg" style={styles.candidateCard}>
+          <Surface elevation="e1" radius="lg" style={styles.candidateCard}>
             <View style={styles.candidateRow}>
               <View style={styles.thumb}>
                 <AppText style={styles.thumbText}>🏯</AppText>
@@ -85,7 +144,7 @@ export function StampView({
                   현재 추천 인증 스팟
                 </AppText>
                 <AppText variant="h2">{candidate.title}</AppText>
-                <AppText variant="caption" tone="inkSoft">
+                <AppText variant="caption" tone="inkMuted">
                   {candidate.address}
                 </AppText>
               </View>
@@ -95,7 +154,7 @@ export function StampView({
               <Badge tone="neutral" size="sm">
                 {locationAvailable ? 'GPS 확인' : 'GPS 대기'}
               </Badge>
-              <Badge tone="warning" size="sm">
+              <Badge tone="neutral" size="sm">
                 {candidate.distanceMeters}m
               </Badge>
               <Badge tone="neutral" size="sm">
@@ -103,49 +162,52 @@ export function StampView({
               </Badge>
             </View>
 
+            {/* Stamp action shell */}
             <View style={styles.actionShell}>
+              {/* Stamp handle */}
               <View style={styles.stampHandle} />
+
+              {/* Stamp target circle with Mascot inside */}
               <View style={styles.stampTarget}>
-                <AppText variant="h3" style={styles.stampTargetText}>
-                  {candidate.title}
-                </AppText>
+                {canVerify ? (
+                  <StampDrop onComplete={onCollect} />
+                ) : (
+                  <Animated.View style={mascotAnimStyle}>
+                    <Mascot
+                      size={80}
+                      mood={candidate.collected ? 'happy' : locationAvailable ? 'sleeping' : 'sad'}
+                    />
+                  </Animated.View>
+                )}
               </View>
-              <AppText variant="h2" style={styles.actionTitle}>
+
+              <AppText variant="h3" style={styles.actionTitle}>
                 스탬프를 꾹 눌러주세요
               </AppText>
-              <AppText variant="body" tone="inkSoft" style={styles.actionBody}>
+              <AppText variant="body" tone="inkMuted" style={styles.actionBody}>
                 도장은 이 화면에서만 찍을 수 있어요. 지도와 상세 화면에서는 위치와 정보를
                 확인합니다.
               </AppText>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`${candidate.title} 도장 찍기`}
-                accessibilityHint={
-                  canVerify
-                    ? '현재 위치가 인증 조건을 만족하면 도장을 받습니다.'
-                    : '위치와 거리 조건을 충족하면 활성화됩니다.'
-                }
-                accessibilityState={{ disabled: !canVerify }}
+
+              <Button
+                variant="primary"
+                size="lg"
+                fullWidth
                 disabled={!canVerify}
                 onPress={onCollect}
-                style={({ pressed }) => [
-                  styles.cta,
-                  canVerify ? styles.ctaReady : styles.ctaBlocked,
-                  pressed ? styles.pressed : null,
-                ]}
+                accessibilityLabel={`${candidate.title} 도장 찍기`}
               >
-                <AppText
-                  variant="bodyBold"
-                  style={canVerify ? styles.ctaReadyText : styles.ctaBlockedText}
-                >
-                  {ctaLabel}
-                </AppText>
-              </Pressable>
+                {ctaLabel}
+              </Button>
             </View>
           </Surface>
         ) : (
-          <Surface elevation="e1" radius="lg" style={styles.emptyCard}>
-            <AppText variant="h3">추천 스팟이 없습니다</AppText>
+          <Surface elevation="none" radius="lg" style={styles.emptyCard}>
+            <Mascot size={64} mood="sad" style={styles.emptyMascot} />
+            <AppText variant="h3">추천 스팟이 없어요</AppText>
+            <AppText variant="caption" tone="inkMuted">
+              근처 스팟을 찾고 있어요
+            </AppText>
           </Surface>
         )}
 
@@ -161,7 +223,7 @@ export function StampView({
             latestStamps.map((stamp, index) => (
               <Surface key={stamp.contentId} elevation="e1" radius="md" style={styles.miniStamp}>
                 <AppText style={styles.miniStampIcon}>{getRecentIcon(index)}</AppText>
-                <AppText variant="micro" tone="inkSoft" style={styles.miniStampTitle}>
+                <AppText variant="micro" tone="inkMuted" style={styles.miniStampTitle}>
                   {stamp.title}
                 </AppText>
               </Surface>
@@ -170,19 +232,19 @@ export function StampView({
             <>
               <Surface elevation="e1" radius="md" style={styles.miniStamp}>
                 <AppText style={styles.miniStampIcon}>🏯</AppText>
-                <AppText variant="micro" tone="inkSoft" style={styles.miniStampTitle}>
+                <AppText variant="micro" tone="inkMuted" style={styles.miniStampTitle}>
                   경복궁
                 </AppText>
               </Surface>
               <Surface elevation="e1" radius="md" style={styles.miniStamp}>
                 <AppText style={styles.miniStampIcon}>🎪</AppText>
-                <AppText variant="micro" tone="inkSoft" style={styles.miniStampTitle}>
+                <AppText variant="micro" tone="inkMuted" style={styles.miniStampTitle}>
                   봄빛 행사
                 </AppText>
               </Surface>
               <Surface elevation="e1" radius="md" style={styles.miniStamp}>
                 <AppText style={styles.miniStampIcon}>🌉</AppText>
-                <AppText variant="micro" tone="inkSoft" style={styles.miniStampTitle}>
+                <AppText variant="micro" tone="inkMuted" style={styles.miniStampTitle}>
                   한강 야경
                 </AppText>
               </Surface>
@@ -190,27 +252,19 @@ export function StampView({
           )}
         </View>
 
-        <Gradient variant="gold" style={styles.collectionCardGradient}>
-          <AppText variant="h3" tone="onDark">
-            서울 5대 궁궐 컬렉션
-          </AppText>
-          <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFillWhite,
-                { width: `${Math.min(60 + collectedCount * 6, 100)}%` },
-              ]}
-            />
-          </View>
+        {/* Collection card — no gradient */}
+        <Surface elevation="e1" radius="lg" style={styles.collectionCard}>
+          <AppText variant="h3">서울 5대 궁궐 컬렉션</AppText>
+          <Progress value={Math.min(60 + collectedCount * 6, 100)} tone="reward" />
           <View style={styles.badgeRow}>
             <Badge tone="neutral" size="sm">
               {Math.min(collectedCount + 2, 5)} / 5 완료
             </Badge>
-            <Badge tone="warning" size="sm">
+            <Badge tone="reward" size="sm">
               완성까지 2개
             </Badge>
           </View>
-        </Gradient>
+        </Surface>
       </ScrollView>
     </SafeAreaView>
   );
@@ -259,7 +313,7 @@ const getCtaLabel = ({
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.surfaceAlt },
+  root: { flex: 1, backgroundColor: colors.canvas },
   content: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
@@ -273,31 +327,11 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   brandBlock: { flex: 1, minWidth: 0, gap: 2 },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.brandDeep,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   summaryCard: {
     padding: spacing.lg,
     gap: spacing.sm,
   },
   summaryValue: { fontSize: 24 },
-  progressTrack: {
-    height: 8,
-    backgroundColor: colors.surfaceSink,
-    borderRadius: radius.pill,
-    overflow: 'hidden',
-  },
-  progressFill: { height: '100%', backgroundColor: colors.gold, borderRadius: radius.pill },
-  progressFillWhite: {
-    height: '100%',
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderRadius: radius.pill,
-  },
   candidateCard: {
     padding: spacing.lg,
     gap: spacing.md,
@@ -306,24 +340,25 @@ const styles = StyleSheet.create({
   thumb: {
     width: 64,
     height: 64,
-    borderRadius: radius.sm + 8,
-    backgroundColor: colors.successSoft,
+    borderRadius: radius.sm + 4,
+    backgroundColor: colors.brandSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   thumbText: { fontSize: 24 },
   candidateText: { flex: 1, minWidth: 0, gap: spacing.xs },
-  cardLabel: { letterSpacing: 0.4 },
+  cardLabel: { letterSpacing: 0.5 },
   badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm - 2 },
   actionShell: {
     alignItems: 'center',
-    backgroundColor: colors.mintSoft,
+    backgroundColor: colors.canvas,
     borderRadius: radius.lg,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm + 2,
     paddingBottom: spacing.lg,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.border,
+    gap: spacing.md,
   },
   stampHandle: {
     width: 56,
@@ -336,35 +371,24 @@ const styles = StyleSheet.create({
     width: 178,
     height: 178,
     borderRadius: 89,
-    backgroundColor: colors.surface,
-    borderWidth: 3,
-    borderColor: colors.brandSoft,
+    backgroundColor: colors.canvas,
+    borderWidth: 2,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  stampTargetText: {
-    color: colors.brand,
-    textAlign: 'center',
   },
   actionTitle: { textAlign: 'center' },
   actionBody: {
     textAlign: 'center',
-    marginTop: spacing.sm,
-    marginBottom: spacing.md,
   },
-  cta: {
-    width: '100%',
-    borderRadius: radius.lg,
-    height: 52,
+  emptyCard: {
+    padding: spacing.xl,
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: spacing.md,
   },
-  ctaReady: { backgroundColor: colors.brand },
-  ctaBlocked: { backgroundColor: colors.surfaceSink },
-  ctaReadyText: { color: colors.surface },
-  ctaBlockedText: { color: colors.inkMuted },
-  pressed: { opacity: 0.85 },
+  emptyMascot: {
+    transform: [{ rotate: '-8deg' }],
+  },
   sectionHead: {
     flexDirection: 'row',
     alignItems: 'baseline',
@@ -380,12 +404,8 @@ const styles = StyleSheet.create({
   },
   miniStampIcon: { fontSize: 22 },
   miniStampTitle: { textAlign: 'center' },
-  collectionCardGradient: {
-    borderRadius: radius.lg,
+  collectionCard: {
     padding: spacing.lg,
     gap: spacing.sm + 2,
-  },
-  emptyCard: {
-    padding: spacing.lg,
   },
 });
