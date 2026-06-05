@@ -15,6 +15,24 @@ const toneColor: Record<TextTone, string> = {
   reward: colors.reward,
 };
 
+// Maps typography weight tokens to specific Pretendard family files.
+// fontWeight is intentionally omitted when fontFamily is a weighted file
+// because RN ignores fontWeight when a specific family variant is used.
+function pretendardFamily(weight: string): string {
+  switch (weight) {
+    case '800':
+    case '900':
+      return 'Pretendard-ExtraBold';
+    case '700':
+      return 'Pretendard-Bold';
+    case '600':
+      return 'Pretendard-SemiBold';
+    default:
+      // '400' | '500' — Medium file reads well for both
+      return 'Pretendard-Regular';
+  }
+}
+
 interface AppTextProps extends Omit<TextProps, 'style'> {
   readonly variant?: TypographyVariant;
   readonly tone?: TextTone;
@@ -37,7 +55,7 @@ export function AppText({
         {
           fontSize: t.size,
           lineHeight: t.lineHeight,
-          fontWeight: t.weight,
+          fontFamily: pretendardFamily(t.weight),
           letterSpacing: t.letterSpacing,
           color: toneColor[tone],
         },

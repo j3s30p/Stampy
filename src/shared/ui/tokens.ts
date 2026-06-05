@@ -20,8 +20,8 @@ export const colors = {
 export type Color = keyof typeof colors;
 
 export const typography = {
-  display: { size: 44, lineHeight: 52, weight: '800' as const, letterSpacing: -1.0 },
-  title: { size: 28, lineHeight: 36, weight: '800' as const, letterSpacing: -0.6 },
+  display: { size: 44, lineHeight: 52, weight: '800' as const, letterSpacing: -1.2 },
+  title: { size: 28, lineHeight: 36, weight: '800' as const, letterSpacing: -0.8 },
   h1: { size: 22, lineHeight: 30, weight: '700' as const, letterSpacing: -0.3 },
   h2: { size: 18, lineHeight: 26, weight: '700' as const, letterSpacing: -0.2 },
   h3: { size: 16, lineHeight: 22, weight: '700' as const, letterSpacing: -0.1 },

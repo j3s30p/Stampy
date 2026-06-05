@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { colors } from '@shared/ui';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -28,6 +28,15 @@ function TabIcon({ color, focused, activeIcon, inactiveIcon }: TabIconProps) {
 export default function TabsLayout() {
   return (
     <Tabs
+      screenListeners={{
+        tabPress: () => {
+          if (Platform.OS !== 'web') {
+            import('expo-haptics')
+              .then(({ selectionAsync }) => selectionAsync())
+              .catch(() => undefined);
+          }
+        },
+      }}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.brand,
@@ -42,7 +51,7 @@ export default function TabsLayout() {
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '700',
+          fontFamily: 'Pretendard-Bold',
         },
       }}
     >

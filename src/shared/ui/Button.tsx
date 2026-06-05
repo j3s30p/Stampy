@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { colors, radius, spacing } from './tokens';
 
@@ -39,6 +39,15 @@ export function Button({
 
   const isDisabled = disabled || loading;
 
+  const handlePressIn = () => {
+    scaleRef.current.value = withTiming(0.96, { duration: 80 });
+    if (Platform.OS !== 'web') {
+      import('expo-haptics')
+        .then(({ impactAsync, ImpactFeedbackStyle }) => impactAsync(ImpactFeedbackStyle.Light))
+        .catch(() => undefined);
+    }
+  };
+
   return (
     <Animated.View style={[animatedStyle, fullWidth ? styles.fullWidth : null]}>
       <Pressable
@@ -47,9 +56,7 @@ export function Button({
         accessibilityState={{ disabled: isDisabled }}
         disabled={isDisabled}
         onPress={onPress}
-        onPressIn={() => {
-          scaleRef.current.value = withTiming(0.96, { duration: 80 });
-        }}
+        onPressIn={handlePressIn}
         onPressOut={() => {
           scaleRef.current.value = withTiming(1, { duration: 120 });
         }}
@@ -110,7 +117,7 @@ const styles = StyleSheet.create({
   lg: { height: 56, paddingHorizontal: spacing.xxl },
   fullWidth: { width: '100%' },
   content: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  label: { fontSize: 15, lineHeight: 20, fontWeight: '700', letterSpacing: 0 },
+  label: { fontSize: 15, lineHeight: 20, fontFamily: 'Pretendard-Bold', letterSpacing: 0 },
   variantPrimary: { backgroundColor: colors.ink },
   variantSecondary: {
     backgroundColor: colors.surface,

@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm - 2,
   },
   text: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   textSm: {
     fontSize: 11,
