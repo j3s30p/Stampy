@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { STAMP_RADIUS_METERS } from '@shared/config';
-import { AppText, Badge, Mascot, Progress, Surface, colors, radius, spacing } from '@shared/ui';
+import { AppText, Badge, Mascot, Gauge, Surface, colors, radius, spacing } from '@shared/ui';
 
 export interface HomeTourSpot {
   readonly contentId: string;
@@ -75,7 +75,7 @@ export function HomeView({ spots, collectedCount, onSelectSpot }: HomeViewProps)
           <AppText variant="display" tone="ink" style={styles.heroTitle}>
             이번 주{'\n'}2개만 더
           </AppText>
-          <Progress value={progressPercent} tone="reward" />
+          <Gauge value={progressPercent} tone="reward" />
           <View style={styles.heroFootRow}>
             <AppText variant="caption" tone="inkMuted">
               EXP {exp} / {nextExp}
@@ -134,7 +134,7 @@ export function HomeView({ spots, collectedCount, onSelectSpot }: HomeViewProps)
 
         <Surface elevation="e1" radius="lg" style={styles.collectionCard}>
           <AppText variant="h3">서울 5대 궁궐 컬렉션</AppText>
-          <Progress value={60} tone="reward" />
+          <Gauge value={60} tone="reward" />
           <View style={styles.collectionBadges}>
             <Badge tone="neutral" size="sm">
               {Math.min(collectedCount + 2, 5)} / 5 완료

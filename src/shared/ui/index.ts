@@ -5,5 +5,5 @@ export { AppText } from './Text';
 export { Button } from './Button';
 export { Mascot } from './Mascot';
 export { StampDrop } from './StampDrop';
-export { Progress } from './Progress';
+export { Gauge } from './Gauge';
 export { SplashGate } from './SplashGate';

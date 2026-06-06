@@ -3,7 +3,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppText, Mascot, Progress, Surface, colors, spacing } from '@shared/ui';
+import { AppText, Mascot, Gauge, Surface, colors, spacing } from '@shared/ui';
 
 export interface MyStampSummary {
   readonly contentId: string;
@@ -88,7 +88,7 @@ export function MyPageView({ stamps, nickname, onSelectStamp }: MyPageViewProps)
             </View>
           </View>
 
-          <Progress value={expPercent} tone="reward" />
+          <Gauge value={expPercent} tone="reward" />
           <View style={styles.heroFootRow}>
             <AppText variant="caption" tone="inkMuted">
               다음 레벨까지 380 EXP

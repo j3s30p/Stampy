@@ -16,7 +16,7 @@ import {
   Badge,
   Button,
   Mascot,
-  Progress,
+  Gauge,
   StampDrop,
   Surface,
   colors,
@@ -134,7 +134,7 @@ export function StampView({
             <AppText variant="h1" style={styles.summaryValue}>
               {collectedCount} / {totalCount}
             </AppText>
-            <Progress value={progressPercent} tone="reward" />
+            <Gauge value={progressPercent} tone="reward" />
           </Surface>
         </Animated.View>
 
@@ -260,7 +260,7 @@ export function StampView({
         {/* Collection card — no gradient */}
         <Surface elevation="e1" radius="lg" style={styles.collectionCard}>
           <AppText variant="h3">서울 5대 궁궐 컬렉션</AppText>
-          <Progress value={Math.min(60 + collectedCount * 6, 100)} tone="reward" />
+          <Gauge value={Math.min(60 + collectedCount * 6, 100)} tone="reward" />
           <View style={styles.badgeRow}>
             <Badge tone="neutral" size="sm">
               {Math.min(collectedCount + 2, 5)} / 5 완료
