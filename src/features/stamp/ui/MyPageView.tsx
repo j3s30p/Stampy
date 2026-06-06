@@ -1,6 +1,9 @@
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppText, Mascot, Gauge, Surface, colors, spacing } from '@shared/ui';
 
 export interface MyStampSummary {
   readonly contentId: string;
@@ -20,6 +23,7 @@ export function MyPageView({ stamps, nickname, onSelectStamp }: MyPageViewProps)
   const collectedCount = stamps.filter((stamp) => stamp.collected).length;
   const totalCount = stamps.length;
   const remainingCount = totalCount - collectedCount;
+  const expPercent = 62;
   const latestStamp = useMemo(
     () =>
       [...stamps]
@@ -29,63 +33,108 @@ export function MyPageView({ stamps, nickname, onSelectStamp }: MyPageViewProps)
   );
   const currentMonth = '2026.06';
 
+  // Hero entrance
+  const heroOpacity = useSharedValue(0);
+  const heroTranslateY = useSharedValue(8);
+  // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for entrance animation
+  const heroOpacityRef = useRef(heroOpacity);
+  // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for entrance animation
+  const heroTranslateYRef = useRef(heroTranslateY);
+
+  const heroAnimStyle = useAnimatedStyle(() => ({
+    opacity: heroOpacityRef.current.value,
+    transform: [{ translateY: heroTranslateYRef.current.value }],
+  }));
+
+  useFocusEffect(
+    useCallback(() => {
+      heroOpacityRef.current.value = 0;
+      heroTranslateYRef.current.value = 8;
+      heroOpacityRef.current.value = withTiming(1, { duration: 350 });
+      heroTranslateYRef.current.value = withTiming(0, { duration: 350 });
+    }, []),
+  );
+
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topbar}>
           <View style={styles.brandBlock}>
-            <Text style={styles.brand}>마이페이지</Text>
-            <Text style={styles.brandCaption}>내 여행 기록과 성장 정보</Text>
+            <AppText variant="h1">마이페이지</AppText>
+            <AppText variant="caption" tone="inkMuted">
+              내 여행 기록과 성장 정보
+            </AppText>
           </View>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{nickname.slice(0, 1)}</Text>
+            <Mascot size={40} mood="happy" />
           </View>
         </View>
 
-        <View style={styles.hero}>
+        {/* Hero — typographic, white background, no gradient */}
+        <Animated.View style={[styles.hero, heroAnimStyle]}>
           <View style={styles.heroIdentity}>
             <View style={styles.bigAvatar}>
-              <Text style={styles.bigAvatarText}>{nickname.slice(0, 1)}</Text>
+              <AppText variant="h2" tone="onDark">
+                {nickname.slice(0, 1)}
+              </AppText>
             </View>
             <View style={styles.heroText}>
-              <Text style={styles.heroLabel}>스탬피 여행자</Text>
-              <Text style={styles.heroTitle}>Lv.3 지역 탐험가</Text>
+              <AppText variant="micro" tone="inkMuted">
+                스탬피 여행자
+              </AppText>
+              <AppText variant="h1" tone="ink">
+                Lv.3 지역 탐험가
+              </AppText>
             </View>
           </View>
 
-          <View style={styles.progressBlock}>
-            <View style={styles.progressRow}>
-              <Text style={styles.progressText}>다음 레벨까지 380 EXP</Text>
-              <Text style={styles.progressText}>620 / 1000</Text>
-            </View>
-            <View style={styles.progressTrack}>
-              <View style={styles.progressFill} />
-            </View>
+          <Gauge value={expPercent} tone="reward" />
+          <View style={styles.heroFootRow}>
+            <AppText variant="caption" tone="inkMuted">
+              다음 레벨까지 380 EXP
+            </AppText>
+            <AppText variant="captionBold" tone="ink">
+              620 / 1000
+            </AppText>
           </View>
-        </View>
+        </Animated.View>
 
         <View style={styles.sectionHead}>
-          <Text style={styles.sectionTitle}>나의 여행 요약</Text>
-          <Text style={styles.sectionAction}>{currentMonth}</Text>
+          <AppText variant="h2">나의 여행 요약</AppText>
+          <AppText variant="caption" tone="brand">
+            {currentMonth}
+          </AppText>
         </View>
 
         <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{collectedCount}</Text>
-            <Text style={styles.statLabel}>획득 스탬프</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{totalCount}</Text>
-            <Text style={styles.statLabel}>전체 스팟</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{remainingCount}</Text>
-            <Text style={styles.statLabel}>남은 스팟</Text>
-          </View>
+          <Surface elevation="e1" radius="md" style={styles.statCard}>
+            <AppText variant="h1" style={styles.statValue}>
+              {collectedCount}
+            </AppText>
+            <AppText variant="caption" tone="inkMuted">
+              획득 스탬프
+            </AppText>
+          </Surface>
+          <Surface elevation="e1" radius="md" style={styles.statCard}>
+            <AppText variant="h1" style={styles.statValue}>
+              {totalCount}
+            </AppText>
+            <AppText variant="caption" tone="inkMuted">
+              전체 스팟
+            </AppText>
+          </Surface>
+          <Surface elevation="e1" radius="md" style={styles.statCard}>
+            <AppText variant="h1" style={styles.statValue}>
+              {remainingCount}
+            </AppText>
+            <AppText variant="caption" tone="inkMuted">
+              남은 스팟
+            </AppText>
+          </Surface>
         </View>
 
-        <View style={styles.activityCard}>
-          <Text style={styles.cardTitle}>최근 활동</Text>
+        <Surface elevation="e1" radius="lg" style={styles.activityCard}>
+          <AppText variant="h3">최근 활동</AppText>
           {latestStamp ? (
             <Pressable
               accessibilityRole="button"
@@ -94,49 +143,59 @@ export function MyPageView({ stamps, nickname, onSelectStamp }: MyPageViewProps)
               style={({ pressed }) => [styles.activityRow, pressed ? styles.pressed : null]}
             >
               <View style={styles.activityStamp}>
-                <Text style={styles.activityStampText}>🏯</Text>
+                <AppText style={styles.activityStampText}>🏯</AppText>
               </View>
               <View style={styles.activityText}>
-                <Text style={styles.activityTitle}>{latestStamp.title} 스탬프 획득</Text>
-                <Text style={styles.activityMeta}>
+                <AppText variant="bodyBold">{latestStamp.title} 스탬프 획득</AppText>
+                <AppText variant="caption" tone="inkMuted">
                   {latestStamp.collectedAt
                     ? `오늘 ${formatTime(latestStamp.collectedAt)}`
                     : '방문 기록 없음'}{' '}
                   · +10 EXP
-                </Text>
+                </AppText>
               </View>
             </Pressable>
           ) : (
-            <Text style={styles.activityMeta}>아직 최근 활동이 없습니다.</Text>
+            <AppText variant="caption" tone="inkMuted">
+              아직 최근 활동이 없습니다.
+            </AppText>
           )}
-        </View>
+        </Surface>
 
         <View style={styles.sectionHead}>
-          <Text style={styles.sectionTitle}>대표 배지</Text>
-          <Text style={styles.sectionAction}>전체 보기</Text>
+          <AppText variant="h2">대표 배지</AppText>
+          <AppText variant="caption" tone="brand">
+            전체 보기
+          </AppText>
         </View>
 
         <View style={styles.badgeGrid}>
-          <View style={styles.badgeCard}>
+          <Surface elevation="e1" radius="lg" style={styles.badgeCard}>
             <View style={styles.badgeCircle}>
-              <Text style={styles.badgeCircleText}>🏯</Text>
+              <AppText style={styles.badgeCircleText}>🏯</AppText>
             </View>
-            <Text style={styles.badgeTitle}>궁궐 탐험가</Text>
-            <Text style={styles.badgeMeta}>대표 테마 배지</Text>
-          </View>
+            <AppText variant="bodyBold">궁궐 탐험가</AppText>
+            <AppText variant="caption" tone="inkMuted" style={styles.badgeMeta}>
+              대표 테마 배지
+            </AppText>
+          </Surface>
 
-          <View style={styles.badgeCard}>
+          <Surface elevation="e1" radius="lg" style={styles.badgeCard}>
             <View style={styles.badgeCircle}>
-              <Text style={styles.badgeCircleText}>🎪</Text>
+              <AppText style={styles.badgeCircleText}>🎪</AppText>
             </View>
-            <Text style={styles.badgeTitle}>행사 참여러</Text>
-            <Text style={styles.badgeMeta}>최근 활동 기준</Text>
-          </View>
+            <AppText variant="bodyBold">행사 참여러</AppText>
+            <AppText variant="caption" tone="inkMuted" style={styles.badgeMeta}>
+              최근 활동 기준
+            </AppText>
+          </Surface>
         </View>
 
         <View style={styles.sectionHead}>
-          <Text style={styles.sectionTitle}>도장 보관함</Text>
-          <Text style={styles.sectionAction}>전체 보기</Text>
+          <AppText variant="h2">도장 보관함</AppText>
+          <AppText variant="caption" tone="brand">
+            전체 보기
+          </AppText>
         </View>
 
         <View style={styles.collectionList}>
@@ -146,37 +205,41 @@ export function MyPageView({ stamps, nickname, onSelectStamp }: MyPageViewProps)
               accessibilityRole="button"
               accessibilityLabel={`${stamp.title} 상세 보기`}
               onPress={() => onSelectStamp?.(stamp.contentId)}
-              style={({ pressed }) => [styles.collectionRow, pressed ? styles.pressed : null]}
+              style={({ pressed }) => [pressed ? styles.pressed : null]}
             >
-              <View
-                style={[
-                  styles.collectionIcon,
-                  stamp.collected ? styles.collectionIconDone : styles.collectionIconTodo,
-                ]}
-              >
-                <Text
+              <Surface elevation="e1" radius="md" style={styles.collectionRow}>
+                <View
                   style={[
-                    styles.collectionIconText,
-                    stamp.collected ? styles.collectionIconTextDone : styles.collectionIconTextTodo,
+                    styles.collectionIcon,
+                    stamp.collected ? styles.collectionIconDone : styles.collectionIconTodo,
                   ]}
                 >
-                  {stamp.collected ? '✓' : '·'}
-                </Text>
-              </View>
-              <View style={styles.collectionText}>
-                <Text style={styles.collectionTitle}>{stamp.title}</Text>
-                <Text style={styles.collectionMeta}>
-                  {stamp.collected
-                    ? `수집 완료 · ${formatCollectedAt(stamp.collectedAt)}`
-                    : '아직 방문 전'}
-                </Text>
-              </View>
+                  <AppText
+                    variant="h3"
+                    style={
+                      stamp.collected
+                        ? styles.collectionIconTextDone
+                        : styles.collectionIconTextTodo
+                    }
+                  >
+                    {stamp.collected ? '✓' : '·'}
+                  </AppText>
+                </View>
+                <View style={styles.collectionText}>
+                  <AppText variant="bodyBold">{stamp.title}</AppText>
+                  <AppText variant="caption" tone="inkMuted">
+                    {stamp.collected
+                      ? `수집 완료 · ${formatCollectedAt(stamp.collectedAt)}`
+                      : '아직 방문 전'}
+                  </AppText>
+                </View>
+              </Surface>
             </Pressable>
           ))}
         </View>
 
         <View style={styles.sectionHead}>
-          <Text style={styles.sectionTitle}>설정</Text>
+          <AppText variant="h2">설정</AppText>
         </View>
 
         <View style={styles.settingsList}>
@@ -186,18 +249,24 @@ export function MyPageView({ stamps, nickname, onSelectStamp }: MyPageViewProps)
               accessibilityRole="button"
               accessibilityLabel={row.label}
               onPress={() => setSelectedSetting(row.feedback)}
-              style={({ pressed }) => [styles.settingRow, pressed ? styles.pressed : null]}
+              style={({ pressed }) => [pressed ? styles.pressed : null]}
             >
-              <Text style={styles.settingLabel}>{row.label}</Text>
-              <Text style={styles.settingChevron}>›</Text>
+              <Surface elevation="e1" radius="md" style={styles.settingRow}>
+                <AppText variant="bodyBold">{row.label}</AppText>
+                <AppText variant="h2" tone="inkMuted">
+                  ›
+                </AppText>
+              </Surface>
             </Pressable>
           ))}
         </View>
 
-        <View style={styles.feedbackCard}>
-          <Text style={styles.feedbackLabel}>선택 상태</Text>
-          <Text style={styles.feedbackText}>{selectedSetting}</Text>
-        </View>
+        <Surface elevation="none" radius="md" style={styles.feedbackCard}>
+          <AppText variant="caption" tone="inkMuted">
+            선택 상태
+          </AppText>
+          <AppText variant="bodyBold">{selectedSetting}</AppText>
+        </Surface>
       </ScrollView>
     </SafeAreaView>
   );
@@ -232,132 +301,98 @@ const settingsRows = [
 ] as const;
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#EEF3F8' },
-  content: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 28, gap: 14 },
+  root: { flex: 1, backgroundColor: colors.canvas },
+  content: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xxxl,
+    gap: spacing.md,
+  },
   topbar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: spacing.md,
   },
   brandBlock: { flex: 1, minWidth: 0, gap: 2 },
-  brand: { color: '#172033', fontSize: 26, fontWeight: '900', letterSpacing: -0.6 },
-  brandCaption: { color: '#657084', fontSize: 13 },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#173C35',
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
   hero: {
-    borderRadius: 24,
-    backgroundColor: '#0F766E',
-    padding: 18,
-    gap: 14,
+    paddingVertical: spacing.xl,
+    gap: spacing.sm + 2,
   },
-  heroIdentity: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  heroIdentity: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   bigAvatar: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.46)',
+    backgroundColor: colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bigAvatarText: { color: '#FFFFFF', fontSize: 24, fontWeight: '900' },
-  heroText: { flex: 1, minWidth: 0, gap: 4 },
-  heroLabel: { color: '#D5F6F1', fontSize: 13, fontWeight: '800' },
-  heroTitle: { color: '#FFFFFF', fontSize: 24, fontWeight: '900', letterSpacing: -0.6 },
-  progressBlock: { gap: 8 },
-  progressRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  progressText: { color: '#E7F8F4', fontSize: 12, fontWeight: '700' },
-  progressTrack: {
-    height: 8,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 999,
-    overflow: 'hidden',
+  heroText: { flex: 1, minWidth: 0, gap: spacing.xs },
+  heroFootRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-  progressFill: { width: '62%', height: '100%', backgroundColor: '#F0C95A', borderRadius: 999 },
   sectionHead: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',
   },
-  sectionTitle: { color: '#172033', fontSize: 18, fontWeight: '900' },
-  sectionAction: { color: '#14806F', fontSize: 12, fontWeight: '800' },
-  statsRow: { flexDirection: 'row', gap: 10 },
+  statsRow: { flexDirection: 'row', gap: spacing.sm + 2 },
   statCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
-    gap: 4,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
+    gap: spacing.xs,
   },
-  statValue: { color: '#172033', fontSize: 24, fontWeight: '900' },
-  statLabel: { color: '#657084', fontSize: 12 },
+  statValue: { fontSize: 24 },
   activityCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
-    gap: 10,
+    padding: spacing.lg,
+    gap: spacing.sm + 2,
   },
-  cardTitle: { color: '#172033', fontSize: 16, fontWeight: '900' },
-  activityRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  activityRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   activityStamp: {
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: '#0F766E',
+    backgroundColor: colors.rewardSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   activityStampText: { fontSize: 20 },
   activityText: { flex: 1, minWidth: 0, gap: 2 },
-  activityTitle: { color: '#172033', fontSize: 14, fontWeight: '900' },
-  activityMeta: { color: '#657084', fontSize: 12, lineHeight: 18 },
-  badgeGrid: { flexDirection: 'row', gap: 10 },
+  badgeGrid: { flexDirection: 'row', gap: spacing.sm + 2 },
   badgeCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    paddingVertical: 16,
-    paddingHorizontal: 10,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.sm + 2,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
-    gap: 6,
+    gap: spacing.sm - 2,
   },
   badgeCircle: {
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: '#F0FDF9',
+    backgroundColor: colors.brandSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   badgeCircleText: { fontSize: 22 },
-  badgeTitle: { color: '#172033', fontSize: 14, fontWeight: '900' },
-  badgeMeta: { color: '#657084', fontSize: 12, textAlign: 'center' },
-  collectionList: { gap: 10 },
+  badgeMeta: { textAlign: 'center' },
+  collectionList: { gap: spacing.sm + 2 },
   collectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
+    gap: spacing.md,
+    padding: spacing.md,
   },
   collectionIcon: {
     width: 46,
@@ -366,37 +401,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  collectionIconDone: { backgroundColor: '#173C35' },
-  collectionIconTodo: { backgroundColor: '#EEF3F8' },
-  collectionIconText: { color: '#FFFFFF', fontSize: 18, fontWeight: '900' },
-  collectionIconTextDone: { color: '#FFFFFF' },
-  collectionIconTextTodo: { color: '#657084' },
+  collectionIconDone: { backgroundColor: colors.ink },
+  collectionIconTodo: { backgroundColor: colors.surfaceSink },
+  collectionIconTextDone: { color: colors.surface },
+  collectionIconTextTodo: { color: colors.inkSoft },
   collectionText: { flex: 1, minWidth: 0, gap: 3 },
-  collectionTitle: { color: '#172033', fontSize: 15, fontWeight: '900' },
-  collectionMeta: { color: '#657084', fontSize: 12, lineHeight: 18 },
-  settingsList: { gap: 8 },
+  settingsList: { gap: spacing.sm },
   settingRow: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  settingLabel: { color: '#172033', fontSize: 14, fontWeight: '900' },
-  settingChevron: { color: '#94A3B8', fontSize: 20, fontWeight: '900' },
   feedbackCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
-    gap: 4,
+    padding: spacing.md,
+    gap: spacing.xs,
+    backgroundColor: colors.surfaceSink,
   },
-  feedbackLabel: { color: '#657084', fontSize: 12, fontWeight: '800' },
-  feedbackText: { color: '#172033', fontSize: 14, fontWeight: '800' },
-  pressed: { opacity: 0.82 },
+  pressed: { opacity: 0.85 },
 });

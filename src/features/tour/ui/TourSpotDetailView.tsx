@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { STAMP_RADIUS_METERS } from '@shared/config';
+import { AppText, Badge, Button, Mascot, Surface, colors, radius, spacing } from '@shared/ui';
 import type { HomeTourSpot } from './HomeView';
 
 interface TourSpotDetailViewProps {
@@ -19,129 +20,155 @@ export function TourSpotDetailView({
 }: TourSpotDetailViewProps) {
   const [message, setMessage] = useState('카카오 길찾기 준비 중');
 
-  const accent = useMemo(() => getAccent(spot?.theme), [spot?.theme]);
-
   if (!spot) {
     return (
       <SafeAreaView style={styles.root}>
         <View style={styles.emptyState}>
-          <Text style={styles.emptyTitle}>선택된 관광지가 없습니다</Text>
-          <Text style={styles.emptySubtitle}>
+          <Mascot size={80} mood="sad" style={styles.emptyMascot} />
+          <AppText variant="h1">선택된 관광지가 없어요</AppText>
+          <AppText variant="body" tone="inkMuted" style={styles.emptySubtitle}>
             홈, 지도, MY 화면의 카드에서 관광지를 골라보세요.
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="이전 화면으로 이동"
+          </AppText>
+          <Button
+            variant="secondary"
+            size="md"
             onPress={onBack}
-            style={({ pressed }) => [styles.secondaryButton, pressed ? styles.pressed : null]}
+            accessibilityLabel="이전 화면으로 이동"
           >
-            <Text style={styles.secondaryButtonText}>뒤로 가기</Text>
-          </Pressable>
+            뒤로 가기
+          </Button>
         </View>
       </SafeAreaView>
     );
   }
 
   const intro = getIntroText(spot.title, spot.theme);
+  const statusLabel = getSpotStatusLabel(spot);
 
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.hero, accent.hero]}>
-          <View style={styles.heroTopRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="이전 화면으로 이동"
-              onPress={onBack}
-              style={({ pressed }) => [styles.backButton, pressed ? styles.pressed : null]}
-            >
-              <Text style={styles.backButtonText}>‹</Text>
-            </Pressable>
-            <View style={styles.heroBadge}>
-              <Text style={styles.heroBadgeText}>{getSpotStatusLabel(spot)}</Text>
-            </View>
-          </View>
-
-          <View style={styles.heroArtwork}>
-            <View style={[styles.artCircle, accent.artPrimary]} />
-            <View style={[styles.artCircleSmall, accent.artSecondary]} />
-            <Text style={styles.heroArtworkLabel}>{spot.title}</Text>
-            <Text style={styles.heroArtworkMeta}>{spot.theme}</Text>
-          </View>
+        {/* Back + status row */}
+        <View style={styles.heroTopRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="이전 화면으로 이동"
+            onPress={onBack}
+            style={({ pressed }) => [styles.backButton, pressed ? styles.pressed : null]}
+          >
+            <AppText variant="h2" style={styles.backButtonText}>
+              ‹
+            </AppText>
+          </Pressable>
+          <Badge tone={getStatusTone(spot)} size="md">
+            {statusLabel}
+          </Badge>
         </View>
 
-        <View style={styles.titleCard}>
-          <Text style={styles.title}>{spot.title}</Text>
-          <View style={styles.badgeRow}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{spot.theme}</Text>
-            </View>
-            <View style={[styles.badge, getSpotStatusStyle(spot)]}>
-              <Text style={[styles.badgeText, getSpotStatusTextStyle(spot)]}>
-                {getSpotStatusLabel(spot)}
-              </Text>
-            </View>
-          </View>
+        {/* Typographic hero — no gradient */}
+        <View style={styles.heroBlock}>
+          <AppText variant="display" tone="ink">
+            {spot.title}
+          </AppText>
+          <AppText variant="body" tone="inkMuted">
+            {spot.theme} · {spot.address}
+          </AppText>
         </View>
 
+        {/* Stamp preview circle */}
+        <View style={styles.stampPreviewWrapper}>
+          <View style={styles.stampPreview}>
+            {spot.collected ? (
+              <View style={styles.stampCollectedIcon}>
+                <AppText variant="display" tone="onDark">
+                  ✓
+                </AppText>
+              </View>
+            ) : (
+              <Mascot size={80} mood="happy" />
+            )}
+          </View>
+          <AppText variant="caption" tone="inkMuted" style={styles.stampPreviewLabel}>
+            {spot.collected ? '수집 완료된 스탬프' : '도장 찍기 전'}
+          </AppText>
+        </View>
+
+        {/* Info grid */}
         <View style={styles.infoGrid}>
-          <View style={styles.infoBox}>
-            <Text style={styles.infoValue}>{spot.distanceMeters}m</Text>
-            <Text style={styles.infoLabel}>현재 거리</Text>
-          </View>
-          <View style={styles.infoBox}>
-            <Text style={styles.infoValue}>+10</Text>
-            <Text style={styles.infoLabel}>획득 EXP</Text>
-          </View>
-          <View style={styles.infoBox}>
-            <Text style={styles.infoValue}>1회</Text>
-            <Text style={styles.infoLabel}>획득 제한</Text>
-          </View>
+          <Surface elevation="e1" radius="sm" style={styles.infoBox}>
+            <AppText variant="h2">{spot.distanceMeters}m</AppText>
+            <AppText variant="caption" tone="inkMuted">
+              현재 거리
+            </AppText>
+          </Surface>
+          <Surface elevation="e1" radius="sm" style={styles.infoBox}>
+            <AppText variant="h2">+10</AppText>
+            <AppText variant="caption" tone="inkMuted">
+              획득 EXP
+            </AppText>
+          </Surface>
+          <Surface elevation="e1" radius="sm" style={styles.infoBox}>
+            <AppText variant="h2">1회</AppText>
+            <AppText variant="caption" tone="inkMuted">
+              획득 제한
+            </AppText>
+          </Surface>
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>관광지 소개</Text>
-          <Text style={styles.cardBody}>{intro}</Text>
-        </View>
+        <Surface elevation="e1" radius="md" style={styles.card}>
+          <AppText variant="h3">관광지 소개</AppText>
+          <AppText variant="body" tone="inkSoft">
+            {intro}
+          </AppText>
+        </Surface>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>주소</Text>
-          <Text style={styles.cardBody}>{spot.address}</Text>
-        </View>
+        <Surface elevation="e1" radius="md" style={styles.card}>
+          <AppText variant="h3">주소</AppText>
+          <AppText variant="body" tone="inkSoft">
+            {spot.address}
+          </AppText>
+        </Surface>
 
-        <View style={[styles.card, styles.noticeCard]}>
-          <Text style={[styles.cardTitle, styles.noticeTitle]}>도장 인증 안내</Text>
-          <Text style={styles.cardBody}>
+        <Surface elevation="none" radius="md" style={styles.noticeCard}>
+          <AppText variant="h3" style={styles.noticeTitle}>
+            도장 인증 안내
+          </AppText>
+          <AppText variant="body" tone="inkSoft">
             실제 도장은 하단 가운데 도장 탭에서만 진행됩니다. 관광지 반경 {STAMP_RADIUS_METERS}m
             이내에서 도장 화면을 열면 인증할 수 있어요.
-          </Text>
-        </View>
+          </AppText>
+        </Surface>
 
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${spot.title} 도장 화면으로 이동`}
+        {/* Primary CTA: brand red for stamp-related action */}
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth
           onPress={onOpenStamp}
-          style={({ pressed }) => [styles.primaryButton, pressed ? styles.pressed : null]}
+          accessibilityLabel={`${spot.title} 도장 화면으로 이동`}
         >
-          <Text style={styles.primaryButtonText}>도장 화면으로 이동</Text>
-        </Pressable>
+          도장 화면으로 이동
+        </Button>
 
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${spot.title} 카카오맵으로 길찾기`}
+        <Button
+          variant="secondary"
+          size="lg"
+          fullWidth
           onPress={() => {
             setMessage(`${spot.title} 길찾기 준비 중`);
             onOpenDirections?.();
           }}
-          style={({ pressed }) => [styles.secondaryButton, pressed ? styles.pressed : null]}
+          accessibilityLabel={`${spot.title} 카카오맵으로 길찾기`}
         >
-          <Text style={styles.secondaryButtonText}>카카오맵으로 길찾기</Text>
-        </Pressable>
+          카카오맵으로 길찾기
+        </Button>
 
-        <View style={styles.feedbackCard}>
-          <Text style={styles.feedbackLabel}>선택 상태</Text>
-          <Text style={styles.feedbackText}>{message}</Text>
-        </View>
+        <Surface elevation="none" radius="sm" style={styles.feedbackCard}>
+          <AppText variant="caption" tone="inkMuted">
+            선택 상태
+          </AppText>
+          <AppText variant="bodyBold">{message}</AppText>
+        </Surface>
       </ScrollView>
     </SafeAreaView>
   );
@@ -160,29 +187,6 @@ const getIntroText = (title: string, theme: string) => {
   return introByTheme[theme] ?? `${title}는 여행 중 잠시 멈춰 보기 좋은 관광지입니다.`;
 };
 
-const getAccent = (theme?: string) => {
-  switch (theme) {
-    case '궁궐 산책':
-      return {
-        hero: { backgroundColor: '#8F5A3C' },
-        artPrimary: { backgroundColor: 'rgba(255, 255, 255, 0.16)' },
-        artSecondary: { backgroundColor: 'rgba(255, 255, 255, 0.28)' },
-      };
-    case '골목 여행':
-      return {
-        hero: { backgroundColor: '#40507A' },
-        artPrimary: { backgroundColor: 'rgba(255, 255, 255, 0.18)' },
-        artSecondary: { backgroundColor: 'rgba(255, 221, 170, 0.28)' },
-      };
-    default:
-      return {
-        hero: { backgroundColor: '#116D63' },
-        artPrimary: { backgroundColor: 'rgba(255, 255, 255, 0.14)' },
-        artSecondary: { backgroundColor: 'rgba(145, 232, 218, 0.3)' },
-      };
-  }
-};
-
 const getSpotStatusLabel = (spot: HomeTourSpot) => {
   if (spot.collected) {
     return '수집 완료';
@@ -195,182 +199,108 @@ const getSpotStatusLabel = (spot: HomeTourSpot) => {
   return '가까이 이동 필요';
 };
 
-const getSpotStatusStyle = (spot: HomeTourSpot) => {
+const getStatusTone = (spot: HomeTourSpot): 'done' | 'ready' | 'neutral' => {
   if (spot.collected) {
-    return styles.badgeDone;
+    return 'done';
   }
 
   if (spot.distanceMeters <= STAMP_RADIUS_METERS) {
-    return styles.badgeReady;
+    return 'ready';
   }
 
-  return styles.badgePending;
-};
-
-const getSpotStatusTextStyle = (spot: HomeTourSpot) => {
-  if (spot.collected) {
-    return styles.badgeDoneText;
-  }
-
-  if (spot.distanceMeters <= STAMP_RADIUS_METERS) {
-    return styles.badgeReadyText;
-  }
-
-  return styles.badgePendingText;
+  return 'neutral';
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#EEF3F8' },
-  content: { paddingBottom: 24 },
-  hero: {
-    height: 290,
-    paddingHorizontal: 18,
-    paddingTop: 14,
-    paddingBottom: 18,
+  root: { flex: 1, backgroundColor: colors.canvas },
+  content: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xxl,
+    gap: spacing.lg,
+    paddingTop: spacing.md,
   },
-  heroTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  heroTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: colors.surfaceSink,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  backButtonText: { color: '#1C2430', fontSize: 26, fontWeight: '700', marginTop: -3 },
-  heroBadge: {
-    backgroundColor: 'rgba(255,255,255,0.88)',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  heroBadgeText: { color: '#24313D', fontSize: 12, fontWeight: '800' },
-  heroArtwork: {
-    marginTop: 30,
-    flex: 1,
-    borderRadius: 28,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderColor: colors.border,
   },
-  artCircle: {
-    position: 'absolute',
+  backButtonText: { color: colors.ink, marginTop: -3 },
+  heroBlock: {
+    gap: spacing.sm,
+  },
+  stampPreviewWrapper: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.lg,
+  },
+  stampPreview: {
     width: 160,
     height: 160,
     borderRadius: 80,
-    top: -28,
-    right: -18,
+    borderWidth: 3,
+    borderColor: colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.canvas,
   },
-  artCircleSmall: {
-    position: 'absolute',
-    width: 106,
-    height: 106,
-    borderRadius: 53,
-    bottom: -12,
-    left: -10,
+  stampCollectedIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  heroArtworkLabel: { color: '#FFFFFF', fontSize: 28, fontWeight: '900', letterSpacing: -0.6 },
-  heroArtworkMeta: { color: 'rgba(255,255,255,0.86)', fontSize: 14, marginTop: 6 },
-  titleCard: {
-    backgroundColor: '#FFFFFF',
-    marginTop: -20,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 18,
-    paddingTop: 18,
-    paddingBottom: 12,
-    gap: 10,
-  },
-  title: { color: '#172033', fontSize: 28, fontWeight: '900', letterSpacing: -0.6 },
-  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  badge: {
-    borderRadius: 999,
-    backgroundColor: '#EEF3F8',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  badgeText: { color: '#465466', fontSize: 12, fontWeight: '800' },
-  badgeDone: { backgroundColor: '#E6F6EA' },
-  badgeReady: { backgroundColor: '#FFF3D5' },
-  badgePending: { backgroundColor: '#E8EEF5' },
-  badgeDoneText: { color: '#1E7A38' },
-  badgeReadyText: { color: '#A06A00' },
-  badgePendingText: { color: '#48607A' },
+  stampPreviewLabel: { textAlign: 'center' },
   infoGrid: {
-    paddingHorizontal: 18,
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: 14,
+    gap: spacing.sm + 2,
   },
   infoBox: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 10,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm + 2,
     alignItems: 'center',
+    gap: spacing.xs,
   },
-  infoValue: { color: '#172033', fontSize: 18, fontWeight: '900' },
-  infoLabel: { color: '#6C7581', fontSize: 12, marginTop: 4 },
   card: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 18,
-    borderRadius: 10,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
-    marginBottom: 12,
-    gap: 8,
+    padding: spacing.lg,
+    gap: spacing.sm,
   },
-  cardTitle: { color: '#172033', fontSize: 16, fontWeight: '900' },
-  cardBody: { color: '#5B6570', fontSize: 13, lineHeight: 21 },
   noticeCard: {
-    backgroundColor: '#F0FDF9',
-    borderColor: '#B7EFE5',
-  },
-  noticeTitle: { color: '#0F766E' },
-  primaryButton: {
-    marginHorizontal: 18,
-    borderRadius: 16,
-    backgroundColor: '#173C35',
-    paddingVertical: 15,
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  primaryButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '900' },
-  secondaryButton: {
-    marginHorizontal: 18,
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 15,
-    alignItems: 'center',
+    backgroundColor: colors.brandSoft,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#D7E0E8',
-    marginTop: 10,
+    borderColor: colors.brand,
+    padding: spacing.lg,
+    gap: spacing.sm,
   },
-  secondaryButtonText: { color: '#173C35', fontSize: 15, fontWeight: '900' },
+  noticeTitle: { color: colors.brandInk },
   feedbackCard: {
-    marginHorizontal: 18,
-    marginTop: 14,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
+    padding: spacing.md,
+    gap: spacing.xs,
+    backgroundColor: colors.surfaceSink,
   },
-  feedbackLabel: { color: '#6C7581', fontSize: 12, fontWeight: '800' },
-  feedbackText: { color: '#172033', fontSize: 14, fontWeight: '800', marginTop: 4 },
   emptyState: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
-    gap: 12,
+    padding: spacing.xxl,
+    gap: spacing.md,
   },
-  emptyTitle: { color: '#172033', fontSize: 22, fontWeight: '900' },
-  emptySubtitle: { color: '#6C7581', fontSize: 14, textAlign: 'center', lineHeight: 20 },
-  pressed: { opacity: 0.8 },
+  emptyMascot: {
+    transform: [{ rotate: '-8deg' }],
+  },
+  emptySubtitle: { textAlign: 'center' },
+  pressed: { opacity: 0.85 },
 });

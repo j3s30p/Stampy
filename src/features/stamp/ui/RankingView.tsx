@@ -1,6 +1,9 @@
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppText, Mascot, Surface, colors, radius, spacing } from '@shared/ui';
 
 export interface RankingEntry {
   readonly id: string;
@@ -30,31 +33,69 @@ export function RankingView({ entries }: RankingViewProps) {
     tabRows[0] ??
     null;
 
+  // Hero entrance
+  const heroOpacity = useSharedValue(0);
+  const heroTranslateY = useSharedValue(8);
+  // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for entrance animation
+  const heroOpacityRef = useRef(heroOpacity);
+  // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for entrance animation
+  const heroTranslateYRef = useRef(heroTranslateY);
+
+  const heroAnimStyle = useAnimatedStyle(() => ({
+    opacity: heroOpacityRef.current.value,
+    transform: [{ translateY: heroTranslateYRef.current.value }],
+  }));
+
+  useFocusEffect(
+    useCallback(() => {
+      heroOpacityRef.current.value = 0;
+      heroTranslateYRef.current.value = 8;
+      heroOpacityRef.current.value = withTiming(1, { duration: 350 });
+      heroTranslateYRef.current.value = withTiming(0, { duration: 350 });
+    }, []),
+  );
+
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topbar}>
           <View style={styles.brandBlock}>
-            <Text style={styles.brand}>{getTabLabel(selectedTab)}</Text>
-            <Text style={styles.brandCaption}>{getTabCaption(selectedTab)}</Text>
-          </View>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>★</Text>
+            <AppText variant="h1">{getTabLabel(selectedTab)}</AppText>
+            <AppText variant="caption" tone="inkMuted">
+              {getTabCaption(selectedTab)}
+            </AppText>
           </View>
         </View>
 
-        <View style={styles.hero}>
-          <Text style={styles.heroLabel}>내 현재 순위</Text>
-          <Text style={styles.heroTitle}>{getHeroTitle(selectedTab)}</Text>
-          <View style={styles.heroBadges}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>12 stamps</Text>
-            </View>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>620 EXP</Text>
+        {/* Hero block — typographic, no gradient */}
+        <Animated.View style={[styles.hero, heroAnimStyle]}>
+          <View style={styles.heroRankRow}>
+            <Mascot size={40} mood="happy" />
+            <View style={styles.heroRankText}>
+              <AppText variant="micro" tone="inkMuted">
+                내 현재 순위
+              </AppText>
+              <AppText variant="title" tone="ink">
+                {getHeroRank(selectedTab)}
+              </AppText>
             </View>
           </View>
-        </View>
+          <AppText variant="body" tone="inkSoft">
+            {getHeroSub(selectedTab)}
+          </AppText>
+          <View style={styles.heroBadges}>
+            <View style={styles.heroBadge}>
+              <AppText variant="micro" tone="inkMuted">
+                12 stamps
+              </AppText>
+            </View>
+            <View style={styles.heroBadge}>
+              <AppText variant="micro" tone="inkMuted">
+                620 EXP
+              </AppText>
+            </View>
+          </View>
+        </Animated.View>
 
         <View style={styles.tabs}>
           {rankingTabs.map((tab) => {
@@ -73,20 +114,29 @@ export function RankingView({ entries }: RankingViewProps) {
                   pressed ? styles.pressed : null,
                 ]}
               >
-                <Text style={[styles.tabText, isActive ? styles.tabTextActive : null]}>
+                <AppText
+                  variant="captionBold"
+                  style={isActive ? styles.tabTextActive : styles.tabTextInactive}
+                >
                   {tab.label}
-                </Text>
+                </AppText>
               </Pressable>
             );
           })}
         </View>
 
         {selectedEntry ? (
-          <View style={styles.selectedPanel}>
-            <Text style={styles.selectedLabel}>선택한 참여자</Text>
-            <Text style={styles.selectedTitle}>{selectedEntry.nickname}</Text>
-            <Text style={styles.selectedMeta}>현재 수집 도장 {selectedEntry.stampCount}개</Text>
-          </View>
+          <Surface elevation="none" radius="lg" style={styles.selectedPanel}>
+            <AppText variant="micro" tone="inkMuted" style={styles.selectedLabel}>
+              선택한 참여자
+            </AppText>
+            <AppText variant="h1" tone="ink">
+              {selectedEntry.nickname}
+            </AppText>
+            <AppText variant="body" tone="inkSoft">
+              현재 수집 도장 {selectedEntry.stampCount}개
+            </AppText>
+          </Surface>
         ) : null}
 
         <View style={styles.rows}>
@@ -97,29 +147,45 @@ export function RankingView({ entries }: RankingViewProps) {
               accessibilityLabel={`${entry.nickname} 랭킹 선택`}
               accessibilityState={{ selected: entry.id === selectedEntry?.id }}
               onPress={() => setSelectedEntryId(entry.id)}
-              style={({ pressed }) => [
-                styles.row,
-                entry.isMe ? styles.meRow : null,
-                entry.id === selectedEntry?.id ? styles.rowSelected : null,
-                pressed ? styles.pressed : null,
-              ]}
+              style={({ pressed }) => [pressed ? styles.pressed : null]}
             >
-              <View style={[styles.rankBox, index === 0 ? styles.rankBoxTop : null]}>
-                <Text style={styles.rank}>{index + 1}</Text>
-              </View>
-              <View style={styles.member}>
-                <Text style={styles.nickname}>{entry.nickname}</Text>
-                <Text style={styles.meta}>{getRowMeta(selectedTab, entry)}</Text>
-              </View>
-              <Text style={styles.score}>{getScoreLabel(index, selectedTab)}</Text>
+              <Surface
+                elevation="none"
+                radius="md"
+                style={[
+                  styles.row,
+                  entry.isMe ? styles.meRow : null,
+                  entry.id === selectedEntry?.id ? styles.rowSelected : null,
+                ]}
+              >
+                <View style={[styles.rankBox, index === 0 ? styles.rankBoxTop : null]}>
+                  <AppText
+                    variant="captionBold"
+                    style={[styles.rank, index === 0 ? styles.rankTop : null]}
+                  >
+                    {index + 1}
+                  </AppText>
+                </View>
+                <View style={styles.member}>
+                  <AppText variant="h3">{entry.nickname}</AppText>
+                  <AppText variant="caption" tone="inkMuted">
+                    {getRowMeta(selectedTab, entry)}
+                  </AppText>
+                </View>
+                <AppText variant="captionBold" tone="brand" style={styles.score}>
+                  {getScoreLabel(index, selectedTab)}
+                </AppText>
+              </Surface>
             </Pressable>
           ))}
         </View>
 
-        <View style={styles.missionCard}>
-          <Text style={styles.missionTitle}>오늘의 미션</Text>
-          <Text style={styles.missionBody}>{getMissionText(selectedTab)}</Text>
-        </View>
+        <Surface elevation="e1" radius="lg" style={styles.missionCard}>
+          <AppText variant="h3">오늘의 미션</AppText>
+          <AppText variant="body" tone="inkSoft">
+            {getMissionText(selectedTab)}
+          </AppText>
+        </Surface>
       </ScrollView>
     </SafeAreaView>
   );
@@ -208,16 +274,28 @@ const getTabCaption = (tab: RankingTab) => {
   return '이번 주 가장 많이 걸은 여행자';
 };
 
-const getHeroTitle = (tab: RankingTab) => {
+const getHeroRank = (tab: RankingTab) => {
   if (tab === 'region') {
-    return '종로권 4위\n오늘은 지역 랭킹 2칸 상승';
+    return '종로권 4위';
   }
 
   if (tab === 'friends') {
-    return '친구 중 2위\n한 명만 더 찍으면 1위';
+    return '친구 중 2위';
   }
 
-  return `이번 주 8위\n스탬프 2개만 더 찍으면 TOP 5`;
+  return '이번 주 8위';
+};
+
+const getHeroSub = (tab: RankingTab) => {
+  if (tab === 'region') {
+    return '오늘은 지역 랭킹 2칸 상승';
+  }
+
+  if (tab === 'friends') {
+    return '한 명만 더 찍으면 1위';
+  }
+
+  return '스탬프 2개만 더 찍으면 TOP 5';
 };
 
 const getRowMeta = (tab: RankingTab, entry: RankingEntry) => {
@@ -257,109 +335,85 @@ const getMissionText = (tab: RankingTab) => {
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#EEF3F8' },
-  content: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 28, gap: 14 },
+  root: { flex: 1, backgroundColor: colors.canvas },
+  content: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xxxl,
+    gap: spacing.md,
+  },
   topbar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: spacing.md,
   },
   brandBlock: { flex: 1, minWidth: 0, gap: 2 },
-  brand: { color: '#172033', fontSize: 26, fontWeight: '900', letterSpacing: -0.6 },
-  brandCaption: { color: '#657084', fontSize: 13 },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#173C35',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: { color: '#FFFFFF', fontSize: 18, fontWeight: '900' },
   hero: {
-    borderRadius: 24,
-    backgroundColor: '#D97706',
-    padding: 18,
-    gap: 10,
+    paddingVertical: spacing.xl,
+    gap: spacing.sm + 2,
   },
-  heroLabel: { color: '#FFF8DF', fontSize: 13, fontWeight: '800' },
-  heroTitle: {
-    color: '#FFFFFF',
-    fontSize: 25,
-    fontWeight: '900',
-    lineHeight: 34,
-    letterSpacing: -0.6,
+  heroRankRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
   },
-  heroBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  badge: {
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 9,
-    paddingVertical: 5,
+  heroRankText: { gap: 2 },
+  heroBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm - 2 },
+  heroBadge: {
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceSink,
+    paddingHorizontal: spacing.sm + 1,
+    paddingVertical: spacing.xs + 1,
   },
-  badgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '800' },
-  tabs: { flexDirection: 'row', gap: 8 },
+  tabs: { flexDirection: 'row', gap: spacing.sm },
   tab: {
     flex: 1,
-    borderRadius: 999,
+    borderRadius: radius.full,
     paddingVertical: 11,
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#E7EDF4',
+    borderColor: colors.border,
   },
   tabActive: {
-    backgroundColor: '#173C35',
-    borderColor: '#173C35',
+    backgroundColor: colors.brand,
+    borderColor: colors.brand,
   },
-  tabText: { color: '#657084', fontSize: 12, fontWeight: '800' },
-  tabTextActive: { color: '#FFFFFF' },
-  pressed: { opacity: 0.82 },
+  tabTextInactive: { color: colors.inkSoft },
+  tabTextActive: { color: colors.surface },
+  pressed: { opacity: 0.85 },
   selectedPanel: {
-    backgroundColor: '#172033',
-    borderRadius: 18,
-    padding: 16,
-    gap: 4,
+    backgroundColor: colors.surfaceSink,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    gap: spacing.xs,
   },
-  selectedLabel: { color: '#C9B8EA', fontSize: 12, fontWeight: '800' },
-  selectedTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: '900' },
-  selectedMeta: { color: '#E7DDF7', fontSize: 14, lineHeight: 20 },
-  rows: { gap: 10 },
+  selectedLabel: { letterSpacing: 0.4 },
+  rows: { gap: spacing.sm + 2 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
+    gap: spacing.md,
+    padding: spacing.md,
   },
-  meRow: { borderColor: '#14806F', backgroundColor: '#F0FDF9' },
-  rowSelected: { borderColor: '#C4972E' },
+  meRow: { borderColor: colors.brand, backgroundColor: colors.brandSoft },
+  rowSelected: { borderColor: colors.borderStrong },
   rankBox: {
     width: 36,
     height: 36,
-    borderRadius: 12,
-    backgroundColor: '#F1F5F9',
+    borderRadius: radius.xs,
+    backgroundColor: colors.surfaceSink,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rankBoxTop: { backgroundColor: '#FFF8DC' },
-  rank: { color: '#334155', fontSize: 14, fontWeight: '900' },
+  rankBoxTop: { backgroundColor: colors.reward },
+  rank: { color: colors.ink },
+  rankTop: { color: colors.ink },
   member: { flex: 1, minWidth: 0, gap: 3 },
-  nickname: { color: '#172033', fontSize: 16, fontWeight: '900' },
-  meta: { color: '#657084', fontSize: 12, lineHeight: 18 },
-  score: { color: '#14806F', fontSize: 13, fontWeight: '900' },
+  score: {},
   missionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
-    gap: 6,
+    padding: spacing.lg,
+    gap: spacing.sm - 2,
   },
-  missionTitle: { color: '#172033', fontSize: 16, fontWeight: '900' },
-  missionBody: { color: '#657084', fontSize: 13, lineHeight: 20 },
 });

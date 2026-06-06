@@ -1,6 +1,10 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useRef } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { STAMP_RADIUS_METERS } from '@shared/config';
+import { AppText, Badge, Mascot, Gauge, Surface, colors, radius, spacing } from '@shared/ui';
 
 export interface HomeTourSpot {
   readonly contentId: string;
@@ -22,40 +26,71 @@ export function HomeView({ spots, collectedCount, onSelectSpot }: HomeViewProps)
   const level = 3;
   const exp = 620;
   const nextExp = 1000;
+  const progressPercent = Math.round((exp / nextExp) * 100);
+
+  // Hero entrance animation
+  const heroOpacity = useSharedValue(0);
+  const heroTranslateY = useSharedValue(8);
+  // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for animation in useEffect
+  const heroOpacityRef = useRef(heroOpacity);
+  // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for animation in useEffect
+  const heroTranslateYRef = useRef(heroTranslateY);
+
+  const heroAnimStyle = useAnimatedStyle(() => ({
+    opacity: heroOpacityRef.current.value,
+    transform: [{ translateY: heroTranslateYRef.current.value }],
+  }));
+
+  useFocusEffect(
+    useCallback(() => {
+      heroOpacityRef.current.value = 0;
+      heroTranslateYRef.current.value = 8;
+      heroOpacityRef.current.value = withTiming(1, { duration: 350 });
+      heroTranslateYRef.current.value = withTiming(0, { duration: 350 });
+    }, []),
+  );
 
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topbar}>
           <View style={styles.brandBlock}>
-            <Text style={styles.brand}>스탬피</Text>
-            <Text style={styles.brandCaption}>오늘은 어디서 스탬프를 찍어볼까요?</Text>
+            <AppText variant="h2" tone="ink">
+              스탬피
+            </AppText>
+            <AppText variant="caption" tone="inkMuted">
+              오늘은 어디서 스탬프를 찍어볼까요?
+            </AppText>
           </View>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>J</Text>
+            <Mascot size={40} mood="happy" />
           </View>
         </View>
 
-        <View style={styles.hero}>
-          <Text style={styles.heroLabel}>Lv.{level} 지역 탐험가</Text>
-          <Text style={styles.heroTitle}>이번 주 2개만 더 찍으면{'\n'}서울 컬렉션 완성!</Text>
-
-          <View style={styles.progressBlock}>
-            <View style={styles.progressRow}>
-              <Text style={styles.progressText}>
-                EXP {exp} / {nextExp}
-              </Text>
-              <Text style={styles.progressText}>{Math.round((exp / nextExp) * 100)}%</Text>
-            </View>
-            <View style={styles.progressTrack}>
-              <View style={styles.progressFill} />
-            </View>
+        {/* Hero block: typography-led, no gradient */}
+        <Animated.View style={[styles.hero, heroAnimStyle]}>
+          <AppText variant="micro" tone="brand">
+            LV.{level} · 지역 탐험가
+          </AppText>
+          <AppText variant="display" tone="ink" style={styles.heroTitle}>
+            이번 주{'\n'}2개만 더
+          </AppText>
+          <Gauge value={progressPercent} tone="reward" />
+          <View style={styles.heroFootRow}>
+            <AppText variant="caption" tone="inkMuted">
+              EXP {exp} / {nextExp}
+            </AppText>
+            <AppText variant="captionBold" tone="ink">
+              {progressPercent}%
+            </AppText>
           </View>
-        </View>
+        </Animated.View>
 
         <View style={styles.sectionHead}>
-          <Text style={styles.sectionTitle}>근처에서 찍을 수 있어요</Text>
-          <Text style={styles.sectionAction}>지도 보기</Text>
+          <AppText variant="h2">근처에서 찍을 수 있어요</AppText>
+          <AppText variant="caption" tone="brand">
+            지도 보기
+          </AppText>
         </View>
 
         <View style={styles.nearbyList}>
@@ -65,60 +100,64 @@ export function HomeView({ spots, collectedCount, onSelectSpot }: HomeViewProps)
               accessibilityRole="button"
               accessibilityLabel={`${spot.title} 상세 보기`}
               onPress={() => onSelectSpot?.(spot.contentId)}
-              style={({ pressed }) => [styles.spotCard, pressed ? styles.pressed : null]}
+              style={({ pressed }) => [pressed ? styles.pressed : null]}
             >
-              <View style={[styles.thumb, getThumbStyle(index)]}>
-                <Text style={styles.thumbText}>{getSpotIcon(index)}</Text>
-              </View>
-              <View style={styles.spotCopy}>
-                <Text style={styles.spotTitle}>{spot.title}</Text>
-                <Text style={styles.spotMeta}>
-                  {spot.address} · 현재 위치에서 {spot.distanceMeters}m
-                </Text>
-                <View style={styles.badgeRow}>
-                  <View style={[styles.badge, getStatusBadgeStyle(spot)]}>
-                    <Text style={styles.badgeText}>{getStatusLabel(spot)}</Text>
-                  </View>
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{spot.theme}</Text>
+              <Surface elevation="e1" radius="md" style={styles.spotCard}>
+                <View style={[styles.thumb, getThumbStyle(index)]}>
+                  <AppText style={styles.thumbText}>{getSpotIcon(index)}</AppText>
+                </View>
+                <View style={styles.spotCopy}>
+                  <AppText variant="h3">{spot.title}</AppText>
+                  <AppText variant="caption" tone="inkMuted">
+                    {spot.address} · {spot.distanceMeters}m
+                  </AppText>
+                  <View style={styles.badgeRow}>
+                    <Badge tone={getStatusTone(spot)} size="sm">
+                      {getStatusLabel(spot)}
+                    </Badge>
+                    <Badge tone="neutral" size="sm">
+                      {spot.theme}
+                    </Badge>
                   </View>
                 </View>
-              </View>
+              </Surface>
             </Pressable>
           ))}
         </View>
 
         <View style={styles.sectionHead}>
-          <Text style={styles.sectionTitle}>추천 컬렉션</Text>
-          <Text style={styles.sectionAction}>전체</Text>
+          <AppText variant="h2">추천 컬렉션</AppText>
+          <AppText variant="caption" tone="brand">
+            전체
+          </AppText>
         </View>
 
-        <View style={styles.collectionCard}>
-          <Text style={styles.collectionTitle}>서울 5대 궁궐 컬렉션</Text>
-          <View style={styles.collectionTrack}>
-            <View style={styles.collectionFill} />
-          </View>
+        <Surface elevation="e1" radius="lg" style={styles.collectionCard}>
+          <AppText variant="h3">서울 5대 궁궐 컬렉션</AppText>
+          <Gauge value={60} tone="reward" />
           <View style={styles.collectionBadges}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{Math.min(collectedCount + 2, 5)} / 5 완료</Text>
-            </View>
-            <View style={[styles.badge, styles.badgeReady]}>
-              <Text style={styles.badgeText}>보상 +50EXP</Text>
-            </View>
+            <Badge tone="neutral" size="sm">
+              {Math.min(collectedCount + 2, 5)} / 5 완료
+            </Badge>
+            <Badge tone="reward" size="sm">
+              보상 +50EXP
+            </Badge>
           </View>
-        </View>
+        </Surface>
 
         <View style={styles.sectionHead}>
-          <Text style={styles.sectionTitle}>오늘의 목표</Text>
-          <Text style={styles.sectionAction}>{STAMP_RADIUS_METERS}m 반경</Text>
+          <AppText variant="h2">오늘의 목표</AppText>
+          <AppText variant="caption" tone="brand">
+            {STAMP_RADIUS_METERS}m 반경
+          </AppText>
         </View>
 
-        <View style={styles.goalCard}>
-          <Text style={styles.goalTitle}>근처 관광지 2곳에서 도장 수집</Text>
-          <Text style={styles.goalMeta}>
+        <Surface elevation="e1" radius="lg" style={styles.goalCard}>
+          <AppText variant="h3">근처 관광지 2곳에서 도장 수집</AppText>
+          <AppText variant="body" tone="inkSoft">
             홈에서 스팟을 열고, 상세에서 도장 화면으로 이어가 보세요.
-          </Text>
-        </View>
+          </AppText>
+        </Surface>
       </ScrollView>
     </SafeAreaView>
   );
@@ -152,133 +191,85 @@ const getStatusLabel = (spot: HomeTourSpot) => {
   return '방문 전';
 };
 
-const getStatusBadgeStyle = (spot: HomeTourSpot) => {
+const getStatusTone = (spot: HomeTourSpot): 'done' | 'ready' | 'neutral' => {
   if (spot.collected) {
-    return styles.badgeDone;
+    return 'done';
   }
 
   if (spot.distanceMeters <= STAMP_RADIUS_METERS) {
-    return styles.badgeReady;
+    return 'ready';
   }
 
-  return styles.badgePending;
+  return 'neutral';
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#EEF3F8' },
-  content: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 28, gap: 14 },
+  root: { flex: 1, backgroundColor: colors.canvas },
+  content: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xxxl,
+    gap: spacing.md,
+  },
   topbar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: spacing.md,
   },
   brandBlock: { flex: 1, minWidth: 0, gap: 2 },
-  brand: { color: '#172033', fontSize: 28, fontWeight: '900', letterSpacing: -0.6 },
-  brandCaption: { color: '#657084', fontSize: 13 },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#173C35',
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
   hero: {
-    borderRadius: 24,
-    backgroundColor: '#173C35',
-    padding: 18,
-    overflow: 'hidden',
+    paddingVertical: spacing.xl,
+    gap: spacing.sm + 2,
   },
-  heroLabel: { color: '#A7D8CF', fontSize: 13, fontWeight: '800' },
   heroTitle: {
-    color: '#FFFFFF',
-    fontSize: 25,
-    fontWeight: '900',
-    lineHeight: 34,
-    marginTop: 8,
-    letterSpacing: -0.6,
+    marginTop: spacing.xs,
   },
-  progressBlock: { marginTop: 14, gap: 8 },
-  progressRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  progressText: { color: '#E8F4F0', fontSize: 12, fontWeight: '700' },
-  progressTrack: {
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    overflow: 'hidden',
+  heroFootRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-  progressFill: { width: '62%', height: '100%', backgroundColor: '#F0C95A', borderRadius: 999 },
   sectionHead: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',
     marginTop: 2,
   },
-  sectionTitle: { color: '#172033', fontSize: 18, fontWeight: '900' },
-  sectionAction: { color: '#14806F', fontSize: 12, fontWeight: '800' },
-  nearbyList: { gap: 10 },
+  nearbyList: { gap: spacing.sm + 2 },
   spotCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
+    gap: spacing.md,
+    padding: spacing.md,
   },
-  pressed: { opacity: 0.82 },
+  pressed: { opacity: 0.85 },
   thumb: {
     width: 64,
     height: 64,
-    borderRadius: 18,
+    borderRadius: radius.sm + 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  thumbPalace: { backgroundColor: '#EFC9A3' },
-  thumbEvent: { backgroundColor: '#FFD0DA' },
+  thumbPalace: { backgroundColor: colors.brandSoft },
+  thumbEvent: { backgroundColor: colors.surfaceSink },
   thumbText: { fontSize: 24 },
-  spotCopy: { flex: 1, minWidth: 0, gap: 4 },
-  spotTitle: { color: '#172033', fontSize: 16, fontWeight: '900' },
-  spotMeta: { color: '#657084', fontSize: 13, lineHeight: 18 },
-  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
-  badge: {
-    borderRadius: 999,
-    backgroundColor: '#EEF3F8',
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-  },
-  badgeReady: { backgroundColor: '#FFF3D5' },
-  badgeDone: { backgroundColor: '#E6F6EA' },
-  badgePending: { backgroundColor: '#E8EEF5' },
-  badgeText: { color: '#465466', fontSize: 11, fontWeight: '800' },
+  spotCopy: { flex: 1, minWidth: 0, gap: spacing.xs },
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm - 2, marginTop: spacing.xs },
   collectionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
-    gap: 10,
+    padding: spacing.lg,
+    gap: spacing.sm + 2,
   },
-  collectionTitle: { color: '#172033', fontSize: 16, fontWeight: '900' },
-  collectionTrack: {
-    height: 8,
-    backgroundColor: '#EDF3F8',
-    borderRadius: 999,
-    overflow: 'hidden',
-  },
-  collectionFill: { width: '60%', height: '100%', backgroundColor: '#14806F', borderRadius: 999 },
-  collectionBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  collectionBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm - 2 },
   goalCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E7EDF4',
-    gap: 6,
+    padding: spacing.lg,
+    gap: spacing.sm - 2,
   },
-  goalTitle: { color: '#172033', fontSize: 15, fontWeight: '900' },
-  goalMeta: { color: '#657084', fontSize: 13, lineHeight: 18 },
 });
