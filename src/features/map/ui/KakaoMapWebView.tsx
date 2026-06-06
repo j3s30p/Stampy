@@ -202,7 +202,7 @@ const buildHtml = (kakaoJsKey: string) => {
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self' data: https://dapi.kakao.com https://t1.daumcdn.net https://map.daumcdn.net; img-src 'self' data: https://dapi.kakao.com https://t1.daumcdn.net https://map.daumcdn.net; style-src 'self' 'unsafe-inline' https://dapi.kakao.com https://t1.daumcdn.net https://map.daumcdn.net; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://dapi.kakao.com https://t1.daumcdn.net https://map.daumcdn.net; connect-src 'self' https://dapi.kakao.com https://t1.daumcdn.net https://map.daumcdn.net;"
+      content="default-src 'self' data: https://dapi.kakao.com https://*.kakao.com https://*.daumcdn.net; img-src 'self' data: https://dapi.kakao.com https://*.kakao.com https://*.daumcdn.net; style-src 'self' 'unsafe-inline' https://dapi.kakao.com https://*.kakao.com https://*.daumcdn.net; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://dapi.kakao.com https://*.kakao.com https://*.daumcdn.net; connect-src 'self' https://dapi.kakao.com https://*.kakao.com https://*.daumcdn.net;"
     />
     <style>
       html, body, #map {
