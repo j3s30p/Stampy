@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -45,10 +46,14 @@ export function RankingView({ entries }: RankingViewProps) {
     transform: [{ translateY: heroTranslateYRef.current.value }],
   }));
 
-  useEffect(() => {
-    heroOpacityRef.current.value = withTiming(1, { duration: 350 });
-    heroTranslateYRef.current.value = withTiming(0, { duration: 350 });
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      heroOpacityRef.current.value = 0;
+      heroTranslateYRef.current.value = 8;
+      heroOpacityRef.current.value = withTiming(1, { duration: 350 });
+      heroTranslateYRef.current.value = withTiming(0, { duration: 350 });
+    }, []),
+  );
 
   return (
     <SafeAreaView style={styles.root}>
