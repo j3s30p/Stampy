@@ -55,6 +55,7 @@ export async function getMockFlow(currentLocation: Coordinates | null = null) {
     theme: index === 0 ? '궁궐 산책' : index === 1 ? '골목 여행' : '도심 휴식',
     distanceMeters: distanceMetersBetween(locationForDistance, spot.location),
     collected: collectedSpotIds.has(spot.contentId),
+    location: spot.location,
   }));
 
   const selectedSpot = spotCards.find((spot) => spot.contentId === selectedSpotId) ?? null;

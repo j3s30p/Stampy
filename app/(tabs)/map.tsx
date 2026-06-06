@@ -1,10 +1,11 @@
 import { useRouter } from 'expo-router';
 import { useMockFlow } from '@core/demo';
 import { MapView } from '@features/map/ui';
+import { env } from '@shared/config';
 
 export default function MapScreen() {
   const router = useRouter();
-  const { flow, selectSpot } = useMockFlow();
+  const { flow, selectSpot, currentLocation, locationStatus } = useMockFlow();
 
   const openDetail = (contentId: string) => {
     selectSpot(contentId);
@@ -17,6 +18,15 @@ export default function MapScreen() {
   };
 
   return (
-    <MapView spots={flow?.spots ?? []} onOpenSpotDetail={openDetail} onOpenStamp={openStamp} />
+    <MapView
+      kakaoJsKey={env.kakaoJsKey}
+      spots={flow?.spots ?? []}
+      selectedSpotId={flow?.selectedSpotId ?? null}
+      currentLocation={currentLocation}
+      locationStatus={locationStatus}
+      onSelectSpot={selectSpot}
+      onOpenSpotDetail={openDetail}
+      onOpenStamp={openStamp}
+    />
   );
 }

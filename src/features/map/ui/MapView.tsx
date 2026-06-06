@@ -1,37 +1,71 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import type { CurrentLocationStatus } from '@core/location';
 import { STAMP_RADIUS_METERS } from '@shared/config';
-import { AppText, Button, Surface, colors, radius, shadow, spacing } from '@shared/ui';
-
-export interface MapSpotPin {
-  readonly contentId: string;
-  readonly title: string;
-  readonly address: string;
-  readonly distanceMeters: number;
-  readonly collected: boolean;
-}
+import type { Coordinates } from '@shared/types';
+import { AppText, Button, Surface, colors, radius, spacing } from '@shared/ui';
+import type { MapSpotPin } from '../model';
+import { KakaoMapWebView } from './KakaoMapWebView';
 
 interface MapViewProps {
+  readonly kakaoJsKey: string;
   readonly spots: readonly MapSpotPin[];
+  readonly selectedSpotId: string | null;
+  readonly currentLocation: Coordinates | null;
+  readonly locationStatus: CurrentLocationStatus;
+  readonly onSelectSpot?: (contentId: string) => void;
   readonly onOpenSpotDetail?: (contentId: string) => void;
   readonly onOpenStamp?: (contentId: string) => void;
 }
 
-export function MapView({ spots, onOpenSpotDetail, onOpenStamp }: MapViewProps) {
-  const [selectedSpotId, setSelectedSpotId] = useState<string | null>(spots[0]?.contentId ?? null);
+export function MapView({
+  kakaoJsKey,
+  spots,
+  selectedSpotId,
+  currentLocation,
+  locationStatus,
+  onSelectSpot,
+  onOpenSpotDetail,
+  onOpenStamp,
+}: MapViewProps) {
+  const [internalSelectedSpotId, setInternalSelectedSpotId] = useState<string | null>(
+    selectedSpotId ?? spots[0]?.contentId ?? null,
+  );
   const [directionMessage, setDirectionMessage] = useState('카카오 길찾기를 눌러 보세요');
+  const [mapErrorMessage, setMapErrorMessage] = useState<string | null>(null);
+
+  const effectiveSelectedSpotId = resolveEffectiveSelectedSpotId(
+    spots,
+    selectedSpotId,
+    internalSelectedSpotId,
+  );
 
   const selectedSpot = useMemo(() => {
-    return spots.find((spot) => spot.contentId === selectedSpotId) ?? spots[0] ?? null;
-  }, [selectedSpotId, spots]);
+    return resolveSelectedSpot(spots, effectiveSelectedSpotId);
+  }, [effectiveSelectedSpotId, spots]);
 
-  const pinPositions = [
-    { left: 18, top: 24 },
-    { left: 56, top: 38 },
-    { left: 28, top: 64 },
-    { left: 68, top: 72 },
-  ];
+  const handleSelectSpot = (contentId: string) => {
+    setInternalSelectedSpotId(contentId);
+    const nextSpot = spots.find((spot) => spot.contentId === contentId) ?? null;
+    setDirectionMessage(nextSpot ? `${nextSpot.title} 선택됨` : '카카오 길찾기를 눌러 보세요');
+    onSelectSpot?.(contentId);
+  };
+
+  const handleOpenDirections = async () => {
+    if (!selectedSpot) {
+      return;
+    }
+
+    const url = buildKakaoDirectionsUrl(selectedSpot);
+
+    try {
+      setDirectionMessage(`${selectedSpot.title} 카카오맵 열기`);
+      await Linking.openURL(url);
+    } catch {
+      setDirectionMessage('카카오맵을 열지 못했습니다');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.root}>
@@ -40,62 +74,47 @@ export function MapView({ spots, onOpenSpotDetail, onOpenStamp }: MapViewProps) 
           <View style={styles.brandBlock}>
             <AppText variant="h1">주변 스탬프 지도</AppText>
             <AppText variant="caption" tone="inkMuted">
-              Kakao Map + 관광공사 API
+              Kakao Map + 관광공사 API · 위치 {locationStatus}
             </AppText>
           </View>
         </View>
 
-        {/* Map shell — white canvas bg, border, no gradient */}
         <View style={styles.mapShell}>
-          {/* Fake road lines */}
-          <View style={styles.gridLineHorizontal} />
-          <View style={styles.gridLineVertical} />
-          <View style={styles.roadHorizontal} />
-          <View style={styles.roadDiagonalOne} />
-          <View style={styles.roadDiagonalTwo} />
-
-          {spots.map((spot, index) => {
-            const pinPosition = pinPositions[index % pinPositions.length]!;
-            const isSelected = spot.contentId === selectedSpot?.contentId;
-            const status = getSpotStatus(spot);
-
-            return (
-              <Pressable
-                key={spot.contentId}
-                accessibilityRole="button"
-                accessibilityLabel={`${spot.title} 지도 핀 선택`}
-                onPress={() => {
-                  setSelectedSpotId(spot.contentId);
-                  setDirectionMessage(`${spot.title} 선택됨`);
-                }}
-                style={[
-                  styles.pin,
-                  status === 'collected'
-                    ? styles.pinCollected
-                    : status === 'ready'
-                      ? styles.pinReady
-                      : styles.pinPending,
-                  isSelected ? styles.pinSelected : null,
-                  { left: `${pinPosition.left}%`, top: `${pinPosition.top}%` },
-                ]}
-              >
-                <AppText style={styles.pinText}>{getSpotIcon(index)}</AppText>
-              </Pressable>
-            );
-          })}
-
-          <View style={styles.currentLocation}>
-            <View style={styles.currentDot} />
-            <AppText variant="micro" tone="onDark">
-              현재 위치
-            </AppText>
-          </View>
-
-          <View style={styles.mapHint}>
-            <AppText variant="micro" style={styles.mapHintText}>
-              도장 가능한 스팟은 빨간 핀으로 표시돼요
-            </AppText>
-          </View>
+          {kakaoJsKey.trim() ? (
+            <View style={styles.mapCanvas}>
+              <KakaoMapWebView
+                kakaoJsKey={kakaoJsKey}
+                spots={spots}
+                selectedSpotId={effectiveSelectedSpotId}
+                currentLocation={currentLocation}
+                onMarkerTap={handleSelectSpot}
+                onMapReady={() => setMapErrorMessage(null)}
+                onMapError={setMapErrorMessage}
+              />
+              <View style={styles.mapHint}>
+                <AppText variant="micro" style={styles.mapHintText}>
+                  파란 핀은 현재 위치, 붉은 핀은 선택된 스팟이에요
+                </AppText>
+              </View>
+              {mapErrorMessage ? (
+                <View style={styles.mapOverlay}>
+                  <Surface elevation="e1" radius="md" style={styles.overlayCard}>
+                    <AppText variant="h3">지도를 불러오지 못했어요</AppText>
+                    <AppText variant="caption" tone="inkMuted">
+                      {mapErrorMessage}
+                    </AppText>
+                  </Surface>
+                </View>
+              ) : null}
+            </View>
+          ) : (
+            <Surface elevation="e1" radius="md" style={styles.emptyMapState}>
+              <AppText variant="h3">지도 설정이 필요해요</AppText>
+              <AppText variant="body" tone="inkMuted">
+                EXPO_PUBLIC_KAKAO_JS_KEY가 없어서 Kakao Maps WebView를 띄울 수 없어요.
+              </AppText>
+            </Surface>
+          )}
         </View>
 
         {selectedSpot ? (
@@ -160,7 +179,7 @@ export function MapView({ spots, onOpenSpotDetail, onOpenStamp }: MapViewProps) 
                 variant="ghost"
                 size="md"
                 fullWidth
-                onPress={() => setDirectionMessage(`${selectedSpot.title} 카카오 길찾기 준비 중`)}
+                onPress={handleOpenDirections}
                 accessibilityLabel={`${selectedSpot.title} 카카오 길찾기`}
               >
                 카카오 길찾기
@@ -193,10 +212,7 @@ export function MapView({ spots, onOpenSpotDetail, onOpenStamp }: MapViewProps) 
                 key={spot.contentId}
                 accessibilityRole="button"
                 accessibilityLabel={`${spot.title} 지도 목록 선택`}
-                onPress={() => {
-                  setSelectedSpotId(spot.contentId);
-                  setDirectionMessage(`${spot.title} 선택됨`);
-                }}
+                onPress={() => handleSelectSpot(spot.contentId)}
                 style={({ pressed }) => [pressed ? styles.pressed : null]}
               >
                 <Surface
@@ -249,204 +265,202 @@ export function MapView({ spots, onOpenSpotDetail, onOpenStamp }: MapViewProps) 
   );
 }
 
-const getSpotIcon = (index: number) => {
-  if (index === 0) {
-    return '🏯';
-  }
-
-  if (index === 1) {
-    return '🎪';
-  }
-
-  return '🌳';
-};
-
-const getSpotStatus = (spot: MapSpotPin) => {
-  if (spot.collected) {
-    return 'collected' as const;
-  }
-
-  if (spot.distanceMeters <= STAMP_RADIUS_METERS) {
-    return 'ready' as const;
-  }
-
-  return 'outside' as const;
+const buildKakaoDirectionsUrl = (spot: MapSpotPin) => {
+  const lat = spot.location.latitude;
+  const lng = spot.location.longitude;
+  return `https://map.kakao.com/link/to/${encodeURIComponent(spot.title)},${lat},${lng}`;
 };
 
 const getSpotStatusLabel = (spot: MapSpotPin) => {
-  const status = getSpotStatus(spot);
-
-  if (status === 'collected') {
+  if (spot.collected) {
     return '수집 완료';
   }
 
-  if (status === 'ready') {
+  if (spot.distanceMeters <= STAMP_RADIUS_METERS) {
     return '도장 가능';
   }
 
-  return '가까이 이동 필요';
+  return '방문 전';
+};
+
+const getSpotStatus = (spot: MapSpotPin): 'collected' | 'ready' | 'pending' => {
+  if (spot.collected) {
+    return 'collected';
+  }
+
+  if (spot.distanceMeters <= STAMP_RADIUS_METERS) {
+    return 'ready';
+  }
+
+  return 'pending';
+};
+
+const resolveEffectiveSelectedSpotId = (
+  spots: readonly MapSpotPin[],
+  selectedSpotId: string | null,
+  internalSelectedSpotId: string | null,
+) => {
+  const candidateSpotId = selectedSpotId ?? internalSelectedSpotId;
+
+  if (candidateSpotId && spots.some((spot) => spot.contentId === candidateSpotId)) {
+    return candidateSpotId;
+  }
+
+  return spots[0]?.contentId ?? null;
+};
+
+const resolveSelectedSpot = (spots: readonly MapSpotPin[], selectedSpotId: string | null) => {
+  return spots.find((spot) => spot.contentId === selectedSpotId) ?? spots[0] ?? null;
 };
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.canvas },
   content: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xxxl,
-    gap: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xxl,
+    gap: spacing.lg,
+    paddingTop: spacing.md,
   },
   topbar: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     gap: spacing.md,
   },
-  brandBlock: { flex: 1, minWidth: 0, gap: 2 },
+  brandBlock: {
+    flex: 1,
+    gap: spacing.xs,
+  },
   mapShell: {
-    height: 460,
-    borderRadius: radius.xl,
+    gap: spacing.xs,
+  },
+  mapCanvas: {
+    height: 310,
     overflow: 'hidden',
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  gridLineHorizontal: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: '52%',
-    height: 2,
     backgroundColor: colors.surfaceSink,
-  },
-  gridLineVertical: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: '48%',
-    width: 2,
-    backgroundColor: colors.surfaceSink,
-  },
-  roadHorizontal: {
-    position: 'absolute',
-    left: -24,
-    right: -24,
-    top: '39%',
-    height: 20,
-    borderRadius: radius.full,
-    backgroundColor: colors.border,
-    transform: [{ rotate: '-16deg' }],
-  },
-  roadDiagonalOne: {
-    position: 'absolute',
-    width: 430,
-    height: 18,
-    left: -18,
-    top: '64%',
-    borderRadius: radius.full,
-    backgroundColor: colors.border,
-    transform: [{ rotate: '31deg' }],
-  },
-  roadDiagonalTwo: {
-    position: 'absolute',
-    width: 300,
-    height: 16,
-    left: 14,
-    top: '18%',
-    borderRadius: radius.full,
-    backgroundColor: colors.border,
-    transform: [{ rotate: '64deg' }],
-  },
-  pin: {
-    position: 'absolute',
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    backgroundColor: colors.surface,
-    ...shadow.e1,
-  },
-  // collected = border ink
-  pinCollected: { borderColor: colors.ink },
-  // ready = border brand + bg brandSoft
-  pinReady: { borderColor: colors.brand, backgroundColor: colors.brandSoft },
-  // pending = border inkSubtle
-  pinPending: { borderColor: colors.inkSubtle },
-  pinSelected: { borderWidth: 3 },
-  pinText: { fontSize: 16 },
-  currentLocation: {
-    position: 'absolute',
-    left: 18,
-    bottom: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.ink,
-    borderRadius: radius.full,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  currentDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.locationDot,
-    borderWidth: 2,
-    borderColor: colors.surface,
+    position: 'relative',
   },
   mapHint: {
     position: 'absolute',
-    top: 16,
-    left: 16,
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    left: spacing.md,
+    bottom: spacing.md,
+    right: spacing.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     borderRadius: radius.full,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: 'rgba(15, 23, 42, 0.72)',
   },
-  mapHintText: { color: colors.inkSoft },
-  sheet: {
+  mapHintText: {
+    color: colors.surface,
+  },
+  mapOverlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: spacing.lg,
-    gap: spacing.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
-  selectedRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  selectedText: { flex: 1, minWidth: 0, gap: spacing.xs },
-  statusBadge: {
-    borderRadius: radius.full,
-    paddingHorizontal: spacing.sm + 2,
-    paddingVertical: spacing.sm - 2,
-  },
-  statusDone: { backgroundColor: colors.surfaceSink },
-  statusReady: { backgroundColor: colors.brandSoft },
-  statusPending: { backgroundColor: colors.surfaceSink },
-  statusBadgeTextDone: { color: colors.inkSoft },
-  statusBadgeTextReady: { color: colors.brandInk },
-  statusBadgeTextPending: { color: colors.inkMuted },
-  actionRow: { gap: spacing.sm + 2 },
-  feedbackCard: {
-    backgroundColor: colors.surfaceSink,
-    borderRadius: radius.xs,
-    padding: spacing.md,
+  overlayCard: {
+    width: '100%',
     gap: spacing.xs,
   },
-  sectionHead: { gap: spacing.xs },
-  list: { gap: spacing.sm + 2 },
+  emptyMapState: {
+    minHeight: 310,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+    gap: spacing.sm,
+  },
+  sheet: {
+    gap: spacing.md,
+    padding: spacing.lg,
+  },
+  selectedRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  selectedText: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  statusBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+    alignSelf: 'flex-start',
+  },
+  statusDone: {
+    backgroundColor: colors.brandSoft,
+  },
+  statusReady: {
+    backgroundColor: colors.rewardSoft,
+  },
+  statusPending: {
+    backgroundColor: colors.surfaceSink,
+  },
+  statusBadgeTextDone: {
+    color: colors.brandInk,
+  },
+  statusBadgeTextReady: {
+    color: '#9A6A00',
+  },
+  statusBadgeTextPending: {
+    color: colors.inkMuted,
+  },
+  actionRow: {
+    gap: spacing.sm,
+  },
+  feedbackCard: {
+    gap: spacing.xs,
+  },
+  sectionHead: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  list: {
+    gap: spacing.sm,
+  },
   listItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.md,
     padding: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
   },
-  listItemSelected: { borderColor: colors.borderStrong, backgroundColor: colors.brandSoft },
-  listIndex: { width: 28, color: colors.brand, textAlign: 'center' },
-  listText: { flex: 1, minWidth: 0, gap: spacing.xs },
-  listDistance: { fontWeight: '800' },
+  listItemSelected: {
+    borderWidth: 1,
+    borderColor: colors.brandSoft,
+  },
+  listIndex: {
+    width: 26,
+    textAlign: 'center',
+    color: colors.brand,
+  },
+  listText: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  listDistance: {
+    marginTop: spacing.xs / 2,
+  },
   listBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     borderRadius: radius.full,
-    paddingHorizontal: spacing.sm + 1,
-    paddingVertical: spacing.xs + 1,
   },
-  pressed: { opacity: 0.85 },
+  pressed: {
+    opacity: 0.8,
+  },
 });

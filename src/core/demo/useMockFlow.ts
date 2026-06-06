@@ -44,6 +44,7 @@ export function useMockFlow() {
     flow,
     collectCandidate,
     selectSpot,
+    currentLocation: currentLocation.location,
     locationAvailable: currentLocation.status === 'granted' && currentLocation.location !== null,
     locationAccuracyMeters: currentLocation.accuracyMeters,
     locationStatus: currentLocation.status,

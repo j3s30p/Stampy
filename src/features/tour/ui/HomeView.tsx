@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { STAMP_RADIUS_METERS } from '@shared/config';
+import type { Coordinates } from '@shared/types';
 import { AppText, Badge, Mascot, Gauge, Surface, colors, radius, spacing } from '@shared/ui';
 
 export interface HomeTourSpot {
@@ -13,6 +14,7 @@ export interface HomeTourSpot {
   readonly theme: string;
   readonly distanceMeters: number;
   readonly collected: boolean;
+  readonly location: Coordinates;
 }
 
 interface HomeViewProps {
