@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { useRef } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -42,9 +43,7 @@ export function Button({
   const handlePressIn = () => {
     scaleRef.current.value = withTiming(0.96, { duration: 80 });
     if (Platform.OS !== 'web') {
-      import('expo-haptics')
-        .then(({ impactAsync, ImpactFeedbackStyle }) => impactAsync(ImpactFeedbackStyle.Light))
-        .catch(() => undefined);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
     }
   };
 

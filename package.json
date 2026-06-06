@@ -25,6 +25,7 @@
     "expo-asset": "~11.0.5",
     "expo-constants": "~17.0.0",
     "expo-font": "~13.0.4",
+    "expo-haptics": "~14.0.1",
     "expo-linear-gradient": "~14.0.2",
     "expo-linking": "~7.0.0",
     "expo-location": "~18.0.0",
@@ -38,6 +39,7 @@
     "react-native-reanimated": "~3.16.0",
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "~4.4.0",
+    "react-native-svg": "15.8.0",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5"
   },
@@ -57,6 +59,7 @@
     "lint-staged": "^17.0.7",
     "npm-run-all2": "^9.0.1",
     "prettier": "^3.8.3",
+    "puppeteer": "^25.1.0",
     "typescript": "~5.3.3"
   }
 }

@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import * as Haptics from 'expo-haptics';
 import { Tabs } from 'expo-router';
 import { Platform, StyleSheet, View } from 'react-native';
 import { colors } from '@shared/ui';
@@ -25,18 +26,19 @@ function TabIcon({ color, focused, activeIcon, inactiveIcon }: TabIconProps) {
   );
 }
 
+const tabPressHaptic = () => {
+  if (Platform.OS === 'web') {
+    return;
+  }
+
+  Haptics.selectionAsync().catch(() => undefined);
+};
+
+const tabListeners = { tabPress: tabPressHaptic };
+
 export default function TabsLayout() {
   return (
     <Tabs
-      screenListeners={{
-        tabPress: () => {
-          if (Platform.OS !== 'web') {
-            import('expo-haptics')
-              .then(({ selectionAsync }) => selectionAsync())
-              .catch(() => undefined);
-          }
-        },
-      }}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.brand,
@@ -57,6 +59,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
+        listeners={tabListeners}
         options={{
           title: '홈',
           tabBarIcon: ({ color, focused }) => (
@@ -71,6 +74,7 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="map"
+        listeners={tabListeners}
         options={{
           title: '지도',
           tabBarIcon: ({ color, focused }) => (
@@ -80,6 +84,7 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="stamp"
+        listeners={tabListeners}
         options={{
           title: '도장',
           tabBarIcon: ({ color, focused }) => (
@@ -94,6 +99,7 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="ranking"
+        listeners={tabListeners}
         options={{
           title: '랭킹',
           tabBarIcon: ({ color, focused }) => (
@@ -108,6 +114,7 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="my"
+        listeners={tabListeners}
         options={{
           title: 'MY',
           tabBarIcon: ({ color, focused }) => (

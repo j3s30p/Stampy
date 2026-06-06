@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { useEffect, useRef } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -45,11 +46,7 @@ export function StampDrop({ onComplete }: StampDropProps) {
   useEffect(() => {
     // Success haptic — makes the stamp-collection moment physically satisfying
     if (Platform.OS !== 'web') {
-      import('expo-haptics')
-        .then(({ notificationAsync, NotificationFeedbackType }) =>
-          notificationAsync(NotificationFeedbackType.Success),
-        )
-        .catch(() => undefined);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     }
 
     // Stamp drop: scale 1.4 → 1, rotation stays at -8deg
