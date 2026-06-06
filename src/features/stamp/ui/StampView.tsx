@@ -45,6 +45,7 @@ interface StampViewProps {
   readonly collectedCount: number;
   readonly totalCount: number;
   readonly locationAvailable: boolean;
+  readonly locationAccuracyMeters: number | null;
   readonly locationStatus: StampLocationStatus;
   readonly recentStamps?: readonly RecentStampItem[];
   readonly onCollect?: () => void;
@@ -55,15 +56,33 @@ export function StampView({
   collectedCount,
   totalCount,
   locationAvailable,
+  locationAccuracyMeters,
   locationStatus,
   recentStamps = [],
   onCollect,
 }: StampViewProps) {
+  const hasSufficientAccuracy =
+    locationAccuracyMeters !== null && locationAccuracyMeters <= STAMP_RADIUS_METERS;
+  const routeCollectedCount = totalCount > 0 ? Math.min(collectedCount, totalCount) : 0;
   const canVerify = candidate
-    ? locationAvailable && candidate.distanceMeters <= STAMP_RADIUS_METERS && !candidate.collected
+    ? locationAvailable &&
+      hasSufficientAccuracy &&
+      candidate.distanceMeters <= STAMP_RADIUS_METERS &&
+      !candidate.collected
     : false;
-  const progressPercent = totalCount > 0 ? Math.round((collectedCount / totalCount) * 100) : 0;
-  const ctaLabel = getCtaLabel({ candidate, canVerify, locationAvailable, locationStatus });
+  const progressPercent = totalCount > 0 ? Math.round((routeCollectedCount / totalCount) * 100) : 0;
+  const ctaLabel = getCtaLabel({
+    candidate,
+    canVerify,
+    locationAccuracyMeters,
+    locationAvailable,
+    locationStatus,
+  });
+  const locationBadgeLabel = getLocationBadgeLabel({
+    locationAccuracyMeters,
+    locationAvailable,
+    locationStatus,
+  });
   const latestStamps = recentStamps.filter((stamp) => stamp.collected).slice(0, 3);
 
   // Mascot pulse animation when CTA is ready
@@ -132,7 +151,7 @@ export function StampView({
               오늘 루트 수집 현황
             </AppText>
             <AppText variant="h1" style={styles.summaryValue}>
-              {collectedCount} / {totalCount}
+              {routeCollectedCount} / {totalCount}
             </AppText>
             <Gauge value={progressPercent} tone="reward" />
           </Surface>
@@ -157,7 +176,7 @@ export function StampView({
 
             <View style={styles.badgeRow}>
               <Badge tone="neutral" size="sm">
-                {locationAvailable ? 'GPS 확인' : 'GPS 대기'}
+                {locationBadgeLabel}
               </Badge>
               <Badge tone="neutral" size="sm">
                 {candidate.distanceMeters}m
@@ -190,8 +209,8 @@ export function StampView({
                 스탬프를 꾹 눌러주세요
               </AppText>
               <AppText variant="body" tone="inkMuted" style={styles.actionBody}>
-                도장은 이 화면에서만 찍을 수 있어요. 지도와 상세 화면에서는 위치와 정보를
-                확인합니다.
+                도장은 이 화면에서만 찍을 수 있어요. 정확도가 충분할 때만 실제 위치 기준으로
+                찍힙니다.
               </AppText>
 
               <Button
@@ -290,11 +309,13 @@ const getRecentIcon = (index: number) => {
 const getCtaLabel = ({
   candidate,
   canVerify,
+  locationAccuracyMeters,
   locationAvailable,
   locationStatus,
 }: {
   readonly candidate: StampCandidate | null;
   readonly canVerify: boolean;
+  readonly locationAccuracyMeters: number | null;
   readonly locationAvailable: boolean;
   readonly locationStatus: StampLocationStatus;
 }) => {
@@ -310,11 +331,55 @@ const getCtaLabel = ({
     return `${candidate.title} 도장 찍기`;
   }
 
+  if (locationStatus === 'denied') {
+    return '위치 권한을 허용하면 인증 가능';
+  }
+
   if (!locationAvailable) {
-    return locationStatus === 'denied' ? '위치 권한을 허용하면 인증 가능' : '현재 위치 확인 중';
+    return '현재 위치 확인 중';
+  }
+
+  if (locationAccuracyMeters === null) {
+    return '위치 정확도 확인 중';
+  }
+
+  if (locationAccuracyMeters > STAMP_RADIUS_METERS) {
+    return '위치 정확도 낮음';
+  }
+
+  if (locationStatus === 'unavailable') {
+    return '현재 위치 확인 중';
   }
 
   return `${STAMP_RADIUS_METERS}m 안으로 이동하면 인증 가능`;
+};
+
+const getLocationBadgeLabel = ({
+  locationAccuracyMeters,
+  locationAvailable,
+  locationStatus,
+}: {
+  readonly locationAccuracyMeters: number | null;
+  readonly locationAvailable: boolean;
+  readonly locationStatus: StampLocationStatus;
+}) => {
+  if (locationStatus === 'denied') {
+    return '위치 권한 필요';
+  }
+
+  if (!locationAvailable) {
+    return 'GPS 대기';
+  }
+
+  if (locationAccuracyMeters === null) {
+    return 'GPS 확인 중';
+  }
+
+  if (locationAccuracyMeters > STAMP_RADIUS_METERS) {
+    return '위치 정확도 낮음';
+  }
+
+  return 'GPS 확인';
 };
 
 const styles = StyleSheet.create({

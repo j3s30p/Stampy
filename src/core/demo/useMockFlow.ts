@@ -33,8 +33,8 @@ export function useMockFlow() {
   }, [currentLocation.location, refresh]);
 
   const collectCandidate = useCallback(async () => {
-    setFlow(await collectMockCandidate(currentLocation.location));
-  }, [currentLocation.location]);
+    setFlow(await collectMockCandidate(currentLocation.location, currentLocation.accuracyMeters));
+  }, [currentLocation.accuracyMeters, currentLocation.location]);
 
   const selectSpot = useCallback((contentId: string) => {
     selectMockSpot(contentId);
@@ -45,6 +45,7 @@ export function useMockFlow() {
     collectCandidate,
     selectSpot,
     locationAvailable: currentLocation.status === 'granted' && currentLocation.location !== null,
+    locationAccuracyMeters: currentLocation.accuracyMeters,
     locationStatus: currentLocation.status,
   };
 }

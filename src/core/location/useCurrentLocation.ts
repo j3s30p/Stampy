@@ -6,6 +6,7 @@ export type CurrentLocationStatus = 'loading' | 'granted' | 'denied' | 'unavaila
 
 export interface CurrentLocationState {
   readonly location: Coordinates | null;
+  readonly accuracyMeters: number | null;
   readonly status: CurrentLocationStatus;
 }
 
@@ -17,6 +18,7 @@ const toCoordinates = (coords: Location.LocationObjectCoords): Coordinates => ({
 export function useCurrentLocation(): CurrentLocationState {
   const [state, setState] = useState<CurrentLocationState>({
     location: null,
+    accuracyMeters: null,
     status: 'loading',
   });
 
@@ -32,7 +34,7 @@ export function useCurrentLocation(): CurrentLocationState {
       }
 
       if (!permission.granted) {
-        setState({ location: null, status: 'denied' });
+        setState({ location: null, accuracyMeters: null, status: 'denied' });
         return;
       }
 
@@ -44,6 +46,7 @@ export function useCurrentLocation(): CurrentLocationState {
         (position) => {
           setState({
             location: toCoordinates(position.coords),
+            accuracyMeters: position.coords.accuracy ?? null,
             status: 'granted',
           });
         },
@@ -52,7 +55,7 @@ export function useCurrentLocation(): CurrentLocationState {
 
     void startWatching().catch(() => {
       if (mounted) {
-        setState({ location: null, status: 'unavailable' });
+        setState({ location: null, accuracyMeters: null, status: 'unavailable' });
       }
     });
 
