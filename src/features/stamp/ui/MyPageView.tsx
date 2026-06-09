@@ -3,7 +3,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppText, Mascot, Gauge, Surface, colors, spacing } from '@shared/ui';
+import { AppText, Badge, Gauge, Mascot, Surface, colors, radius, spacing } from '@shared/ui';
 
 export interface MyStampSummary {
   readonly contentId: string;
@@ -33,7 +33,6 @@ export function MyPageView({ stamps, nickname, onSelectStamp }: MyPageViewProps)
   );
   const currentMonth = '2026.06';
 
-  // Hero entrance
   const heroOpacity = useSharedValue(0);
   const heroTranslateY = useSharedValue(8);
   // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for entrance animation
@@ -50,8 +49,8 @@ export function MyPageView({ stamps, nickname, onSelectStamp }: MyPageViewProps)
     useCallback(() => {
       heroOpacityRef.current.value = 0;
       heroTranslateYRef.current.value = 8;
-      heroOpacityRef.current.value = withTiming(1, { duration: 350 });
-      heroTranslateYRef.current.value = withTiming(0, { duration: 350 });
+      heroOpacityRef.current.value = withTiming(1, { duration: 320 });
+      heroTranslateYRef.current.value = withTiming(0, { duration: 320 });
     }, []),
   );
 
@@ -60,81 +59,128 @@ export function MyPageView({ stamps, nickname, onSelectStamp }: MyPageViewProps)
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topbar}>
           <View style={styles.brandBlock}>
-            <AppText variant="h1">마이페이지</AppText>
-            <AppText variant="caption" tone="inkMuted">
-              내 여행 기록과 성장 정보
+            <AppText variant="micro" tone="brand" numberOfLines={1}>
+              MY
+            </AppText>
+            <AppText variant="h1" tone="ink" numberOfLines={1}>
+              도장 보관함
+            </AppText>
+            <AppText variant="caption" tone="inkMuted" numberOfLines={2}>
+              내 여행 기록과 성장 정보를 한 번에 확인합니다.
             </AppText>
           </View>
           <View style={styles.avatar}>
-            <Mascot size={40} mood="happy" />
+            <Mascot size={42} mood="happy" />
           </View>
         </View>
 
-        {/* Hero — typographic, white background, no gradient */}
-        <Animated.View style={[styles.hero, heroAnimStyle]}>
-          <View style={styles.heroIdentity}>
-            <View style={styles.bigAvatar}>
-              <AppText variant="h2" tone="onDark">
-                {nickname.slice(0, 1)}
-              </AppText>
+        <Animated.View style={heroAnimStyle}>
+          <Surface elevation="e1" radius="lg" style={styles.hero}>
+            <View style={styles.heroIdentity}>
+              <View style={styles.bigAvatar}>
+                <AppText variant="h2" tone="onDark" numberOfLines={1}>
+                  {nickname.slice(0, 1)}
+                </AppText>
+              </View>
+              <View style={styles.heroText}>
+                <Badge tone="brand" size="sm">
+                  스탬피 여행자
+                </Badge>
+                <AppText variant="h2" tone="ink" numberOfLines={1}>
+                  {nickname}
+                </AppText>
+                <AppText variant="caption" tone="inkMuted" numberOfLines={2}>
+                  LV.3 지역 탐험가 · 이번 달 도장 {collectedCount}개
+                </AppText>
+              </View>
             </View>
-            <View style={styles.heroText}>
-              <AppText variant="micro" tone="inkMuted">
-                스탬피 여행자
-              </AppText>
-              <AppText variant="h1" tone="ink">
-                Lv.3 지역 탐험가
-              </AppText>
-            </View>
-          </View>
 
-          <Gauge value={expPercent} tone="reward" />
-          <View style={styles.heroFootRow}>
-            <AppText variant="caption" tone="inkMuted">
-              다음 레벨까지 380 EXP
-            </AppText>
-            <AppText variant="captionBold" tone="ink">
-              620 / 1000
-            </AppText>
-          </View>
+            <Gauge value={expPercent} tone="reward" />
+
+            <View style={styles.heroFootRow}>
+              <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
+                다음 레벨까지 380 EXP
+              </AppText>
+              <AppText variant="captionBold" tone="ink" numberOfLines={1}>
+                620 / 1000
+              </AppText>
+            </View>
+
+            <View style={styles.heroStatsRow}>
+              <View style={styles.heroStat}>
+                <AppText variant="title" tone="ink" numberOfLines={1}>
+                  {collectedCount}
+                </AppText>
+                <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
+                  획득 스탬프
+                </AppText>
+              </View>
+              <View style={styles.heroStat}>
+                <AppText variant="title" tone="ink" numberOfLines={1}>
+                  {totalCount}
+                </AppText>
+                <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
+                  전체 스팟
+                </AppText>
+              </View>
+              <View style={styles.heroStat}>
+                <AppText variant="title" tone="ink" numberOfLines={1}>
+                  {remainingCount}
+                </AppText>
+                <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
+                  남은 스팟
+                </AppText>
+              </View>
+            </View>
+          </Surface>
         </Animated.View>
 
         <View style={styles.sectionHead}>
-          <AppText variant="h2">나의 여행 요약</AppText>
-          <AppText variant="caption" tone="brand">
-            {currentMonth}
+          <AppText variant="h2" tone="ink" numberOfLines={1}>
+            나의 여행 요약
           </AppText>
+          <Badge tone="neutral" size="sm">
+            {currentMonth}
+          </Badge>
         </View>
 
         <View style={styles.statsRow}>
-          <Surface elevation="e1" radius="md" style={styles.statCard}>
-            <AppText variant="h1" style={styles.statValue}>
+          <Surface elevation="e1" radius="lg" style={styles.statCard}>
+            <AppText variant="h1" tone="ink" numberOfLines={1}>
               {collectedCount}
             </AppText>
-            <AppText variant="caption" tone="inkMuted">
+            <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
               획득 스탬프
             </AppText>
           </Surface>
-          <Surface elevation="e1" radius="md" style={styles.statCard}>
-            <AppText variant="h1" style={styles.statValue}>
+          <Surface elevation="e1" radius="lg" style={styles.statCard}>
+            <AppText variant="h1" tone="ink" numberOfLines={1}>
               {totalCount}
             </AppText>
-            <AppText variant="caption" tone="inkMuted">
+            <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
               전체 스팟
             </AppText>
           </Surface>
-          <Surface elevation="e1" radius="md" style={styles.statCard}>
-            <AppText variant="h1" style={styles.statValue}>
+          <Surface elevation="e1" radius="lg" style={styles.statCard}>
+            <AppText variant="h1" tone="ink" numberOfLines={1}>
               {remainingCount}
             </AppText>
-            <AppText variant="caption" tone="inkMuted">
+            <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
               남은 스팟
             </AppText>
           </Surface>
         </View>
 
         <Surface elevation="e1" radius="lg" style={styles.activityCard}>
-          <AppText variant="h3">최근 활동</AppText>
+          <View style={styles.sectionHead}>
+            <AppText variant="h2" tone="ink" numberOfLines={1}>
+              최근 활동
+            </AppText>
+            <Badge tone="neutral" size="sm">
+              최신 1건
+            </Badge>
+          </View>
+
           {latestStamp ? (
             <Pressable
               accessibilityRole="button"
@@ -143,59 +189,74 @@ export function MyPageView({ stamps, nickname, onSelectStamp }: MyPageViewProps)
               style={({ pressed }) => [styles.activityRow, pressed ? styles.pressed : null]}
             >
               <View style={styles.activityStamp}>
-                <AppText style={styles.activityStampText}>🏯</AppText>
+                <AppText variant="captionBold" tone="onDark" numberOfLines={1}>
+                  01
+                </AppText>
               </View>
               <View style={styles.activityText}>
-                <AppText variant="bodyBold">{latestStamp.title} 스탬프 획득</AppText>
-                <AppText variant="caption" tone="inkMuted">
+                <AppText variant="bodyBold" tone="ink" numberOfLines={1}>
+                  {latestStamp.title} 스탬프 획득
+                </AppText>
+                <AppText variant="caption" tone="inkMuted" numberOfLines={2}>
                   {latestStamp.collectedAt
-                    ? `오늘 ${formatTime(latestStamp.collectedAt)}`
-                    : '방문 기록 없음'}{' '}
-                  · +10 EXP
+                    ? `오늘 ${formatTime(latestStamp.collectedAt)} · +10 EXP`
+                    : '방문 기록 없음'}
                 </AppText>
               </View>
             </Pressable>
           ) : (
-            <AppText variant="caption" tone="inkMuted">
+            <AppText variant="caption" tone="inkMuted" numberOfLines={2}>
               아직 최근 활동이 없습니다.
             </AppText>
           )}
         </Surface>
 
         <View style={styles.sectionHead}>
-          <AppText variant="h2">대표 배지</AppText>
-          <AppText variant="caption" tone="brand">
-            전체 보기
+          <AppText variant="h2" tone="ink" numberOfLines={1}>
+            대표 배지
           </AppText>
+          <Badge tone="neutral" size="sm">
+            2개
+          </Badge>
         </View>
 
         <View style={styles.badgeGrid}>
           <Surface elevation="e1" radius="lg" style={styles.badgeCard}>
             <View style={styles.badgeCircle}>
-              <AppText style={styles.badgeCircleText}>🏯</AppText>
+              <AppText variant="captionBold" tone="ink" numberOfLines={1}>
+                01
+              </AppText>
             </View>
-            <AppText variant="bodyBold">궁궐 탐험가</AppText>
-            <AppText variant="caption" tone="inkMuted" style={styles.badgeMeta}>
+            <AppText variant="bodyBold" tone="ink" numberOfLines={1}>
+              궁궐 탐험가
+            </AppText>
+            <AppText variant="caption" tone="inkMuted" style={styles.badgeMeta} numberOfLines={2}>
               대표 테마 배지
             </AppText>
           </Surface>
 
           <Surface elevation="e1" radius="lg" style={styles.badgeCard}>
             <View style={styles.badgeCircle}>
-              <AppText style={styles.badgeCircleText}>🎪</AppText>
+              <AppText variant="captionBold" tone="ink" numberOfLines={1}>
+                02
+              </AppText>
             </View>
-            <AppText variant="bodyBold">행사 참여러</AppText>
-            <AppText variant="caption" tone="inkMuted" style={styles.badgeMeta}>
+            <AppText variant="bodyBold" tone="ink" numberOfLines={1}>
+              행사 참여러
+            </AppText>
+            <AppText variant="caption" tone="inkMuted" style={styles.badgeMeta} numberOfLines={2}>
               최근 활동 기준
             </AppText>
           </Surface>
         </View>
 
         <View style={styles.sectionHead}>
-          <AppText variant="h2">도장 보관함</AppText>
-          <AppText variant="caption" tone="brand">
-            전체 보기
+          <AppText variant="h2" tone="ink" numberOfLines={1}>
+            도장 보관함
           </AppText>
+          <Badge tone="brand" size="sm">
+            전체 보기
+          </Badge>
         </View>
 
         <View style={styles.collectionList}>
@@ -207,7 +268,7 @@ export function MyPageView({ stamps, nickname, onSelectStamp }: MyPageViewProps)
               onPress={() => onSelectStamp?.(stamp.contentId)}
               style={({ pressed }) => [pressed ? styles.pressed : null]}
             >
-              <Surface elevation="e1" radius="md" style={styles.collectionRow}>
+              <Surface elevation="e1" radius="lg" style={styles.collectionRow}>
                 <View
                   style={[
                     styles.collectionIcon,
@@ -215,23 +276,31 @@ export function MyPageView({ stamps, nickname, onSelectStamp }: MyPageViewProps)
                   ]}
                 >
                   <AppText
-                    variant="h3"
+                    variant="captionBold"
                     style={
                       stamp.collected
                         ? styles.collectionIconTextDone
                         : styles.collectionIconTextTodo
                     }
+                    numberOfLines={1}
                   >
                     {stamp.collected ? '✓' : '·'}
                   </AppText>
                 </View>
                 <View style={styles.collectionText}>
-                  <AppText variant="bodyBold">{stamp.title}</AppText>
-                  <AppText variant="caption" tone="inkMuted">
-                    {stamp.collected
-                      ? `수집 완료 · ${formatCollectedAt(stamp.collectedAt)}`
-                      : '아직 방문 전'}
+                  <AppText variant="bodyBold" tone="ink" numberOfLines={1}>
+                    {stamp.title}
                   </AppText>
+                  <View style={styles.collectionMetaRow}>
+                    <Badge tone={stamp.collected ? 'done' : 'neutral'} size="sm">
+                      {stamp.collected ? '수집 완료' : '아직 방문 전'}
+                    </Badge>
+                    <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
+                      {stamp.collected
+                        ? `수집 완료 · ${formatCollectedAt(stamp.collectedAt)}`
+                        : '위치 확인 중'}
+                    </AppText>
+                  </View>
                 </View>
               </Surface>
             </Pressable>
@@ -239,7 +308,9 @@ export function MyPageView({ stamps, nickname, onSelectStamp }: MyPageViewProps)
         </View>
 
         <View style={styles.sectionHead}>
-          <AppText variant="h2">설정</AppText>
+          <AppText variant="h2" tone="ink" numberOfLines={1}>
+            설정
+          </AppText>
         </View>
 
         <View style={styles.settingsList}>
@@ -251,9 +322,11 @@ export function MyPageView({ stamps, nickname, onSelectStamp }: MyPageViewProps)
               onPress={() => setSelectedSetting(row.feedback)}
               style={({ pressed }) => [pressed ? styles.pressed : null]}
             >
-              <Surface elevation="e1" radius="md" style={styles.settingRow}>
-                <AppText variant="bodyBold">{row.label}</AppText>
-                <AppText variant="h2" tone="inkMuted">
+              <Surface elevation="e1" radius="lg" style={styles.settingRow}>
+                <AppText variant="bodyBold" tone="ink" numberOfLines={1}>
+                  {row.label}
+                </AppText>
+                <AppText variant="h2" tone="inkMuted" numberOfLines={1}>
                   ›
                 </AppText>
               </Surface>
@@ -262,10 +335,12 @@ export function MyPageView({ stamps, nickname, onSelectStamp }: MyPageViewProps)
         </View>
 
         <Surface elevation="none" radius="md" style={styles.feedbackCard}>
-          <AppText variant="caption" tone="inkMuted">
+          <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
             선택 상태
           </AppText>
-          <AppText variant="bodyBold">{selectedSetting}</AppText>
+          <AppText variant="bodyBold" tone="ink" numberOfLines={2}>
+            {selectedSetting}
+          </AppText>
         </Surface>
       </ScrollView>
     </SafeAreaView>
@@ -301,7 +376,10 @@ const settingsRows = [
 ] as const;
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.canvas },
+  root: {
+    flex: 1,
+    backgroundColor: colors.canvas,
+  },
   content: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
@@ -310,24 +388,34 @@ const styles = StyleSheet.create({
   },
   topbar: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: spacing.md,
   },
-  brandBlock: { flex: 1, minWidth: 0, gap: 2 },
+  brandBlock: {
+    flex: 1,
+    minWidth: 0,
+    gap: spacing.xs,
+  },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    overflow: 'hidden',
+    width: 56,
+    height: 56,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   hero: {
-    paddingVertical: spacing.xl,
-    gap: spacing.sm + 2,
+    padding: spacing.lg,
+    gap: spacing.md,
   },
-  heroIdentity: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  heroIdentity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
   bigAvatar: {
     width: 64,
     height: 64,
@@ -336,29 +424,55 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroText: { flex: 1, minWidth: 0, gap: spacing.xs },
+  heroText: {
+    flex: 1,
+    minWidth: 0,
+    gap: spacing.xs,
+  },
   heroFootRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  heroStatsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  heroStat: {
+    flex: 1,
+    minWidth: 0,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceSink,
+    gap: 2,
   },
   sectionHead: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',
+    gap: spacing.sm,
   },
-  statsRow: { flexDirection: 'row', gap: spacing.sm + 2 },
+  statsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
   statCard: {
     flex: 1,
+    minWidth: 0,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.md,
     gap: spacing.xs,
   },
-  statValue: { fontSize: 24 },
   activityCard: {
     padding: spacing.lg,
-    gap: spacing.sm + 2,
+    gap: spacing.sm,
   },
-  activityRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  activityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
   activityStamp: {
     width: 46,
     height: 46,
@@ -367,15 +481,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  activityStampText: { fontSize: 20 },
-  activityText: { flex: 1, minWidth: 0, gap: 2 },
-  badgeGrid: { flexDirection: 'row', gap: spacing.sm + 2 },
+  activityText: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  badgeGrid: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
   badgeCard: {
     flex: 1,
     paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.sm + 2,
+    paddingHorizontal: spacing.sm,
     alignItems: 'center',
-    gap: spacing.sm - 2,
+    gap: spacing.sm,
   },
   badgeCircle: {
     width: 54,
@@ -385,9 +505,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeCircleText: { fontSize: 22 },
-  badgeMeta: { textAlign: 'center' },
-  collectionList: { gap: spacing.sm + 2 },
+  badgeMeta: {
+    textAlign: 'center',
+  },
+  collectionList: {
+    gap: spacing.sm,
+  },
   collectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -401,23 +524,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  collectionIconDone: { backgroundColor: colors.ink },
-  collectionIconTodo: { backgroundColor: colors.surfaceSink },
-  collectionIconTextDone: { color: colors.surface },
-  collectionIconTextTodo: { color: colors.inkSoft },
-  collectionText: { flex: 1, minWidth: 0, gap: 3 },
-  settingsList: { gap: spacing.sm },
+  collectionIconDone: {
+    backgroundColor: colors.ink,
+  },
+  collectionIconTodo: {
+    backgroundColor: colors.surfaceSink,
+  },
+  collectionIconTextDone: {
+    color: colors.surface,
+  },
+  collectionIconTextTodo: {
+    color: colors.inkSoft,
+  },
+  collectionText: {
+    flex: 1,
+    minWidth: 0,
+    gap: spacing.xs,
+  },
+  collectionMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  settingsList: {
+    gap: spacing.sm,
+  },
   settingRow: {
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: spacing.sm,
   },
   feedbackCard: {
     padding: spacing.md,
     gap: spacing.xs,
     backgroundColor: colors.surfaceSink,
   },
-  pressed: { opacity: 0.85 },
+  pressed: {
+    opacity: 0.85,
+  },
 });

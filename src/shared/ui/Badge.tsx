@@ -15,7 +15,7 @@ const toneStyles: Record<BadgeTone, { bg: string; text: string }> = {
   brand: { bg: colors.brandSoft, text: colors.brandInk },
   reward: { bg: colors.rewardSoft, text: colors.inkSoft },
   ready: { bg: colors.brand, text: colors.surface },
-  done: { bg: colors.surfaceSink, text: colors.inkSoft },
+  done: { bg: colors.mapLand, text: colors.stampInk },
 };
 
 export function Badge({ tone = 'neutral', size = 'sm', children }: BadgeProps) {
@@ -23,7 +23,10 @@ export function Badge({ tone = 'neutral', size = 'sm', children }: BadgeProps) {
 
   return (
     <View style={[styles.base, { backgroundColor: bg }, size === 'md' ? styles.md : styles.sm]}>
-      <Text style={[styles.text, { color: text }, size === 'md' ? styles.textMd : styles.textSm]}>
+      <Text
+        numberOfLines={1}
+        style={[styles.text, { color: text }, size === 'md' ? styles.textMd : styles.textSm]}
+      >
         {children}
       </Text>
     </View>
@@ -34,6 +37,8 @@ const styles = StyleSheet.create({
   base: {
     borderRadius: radius.full,
     alignSelf: 'flex-start',
+    overflow: 'hidden',
+    maxWidth: '100%',
   },
   sm: {
     paddingHorizontal: spacing.sm + 1,
@@ -45,6 +50,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontFamily: 'Pretendard-Bold',
+    flexShrink: 1,
   },
   textSm: {
     fontSize: 11,

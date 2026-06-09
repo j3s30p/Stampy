@@ -3,7 +3,16 @@ import type { TextProps } from 'react-native';
 import { colors, typography } from './tokens';
 import type { TypographyVariant } from './tokens';
 
-type TextTone = 'ink' | 'inkSoft' | 'inkMuted' | 'inkSubtle' | 'onDark' | 'brand' | 'reward';
+type TextTone =
+  | 'ink'
+  | 'inkSoft'
+  | 'inkMuted'
+  | 'inkSubtle'
+  | 'onDark'
+  | 'brand'
+  | 'reward'
+  | 'stamp'
+  | 'location';
 
 const toneColor: Record<TextTone, string> = {
   ink: colors.ink,
@@ -13,6 +22,8 @@ const toneColor: Record<TextTone, string> = {
   onDark: colors.surface,
   brand: colors.brand,
   reward: colors.reward,
+  stamp: colors.stamp,
+  location: colors.locationDot,
 };
 
 // Maps typography weight tokens to specific Pretendard family files.
@@ -58,6 +69,8 @@ export function AppText({
           fontFamily: pretendardFamily(t.weight),
           letterSpacing: t.letterSpacing,
           color: toneColor[tone],
+          flexShrink: 1,
+          minWidth: 0,
         },
         style,
       ]}

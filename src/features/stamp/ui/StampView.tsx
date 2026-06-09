@@ -1,28 +1,9 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useRef } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { STAMP_RADIUS_METERS } from '@shared/config';
-import {
-  AppText,
-  Badge,
-  Button,
-  Mascot,
-  Gauge,
-  StampDrop,
-  Surface,
-  colors,
-  radius,
-  spacing,
-} from '@shared/ui';
+import { AppText, Badge, StampDrop, colors, radius, shadow, spacing } from '@shared/ui';
 
 export interface StampCandidate {
   readonly contentId: string;
@@ -34,383 +15,341 @@ export interface StampCandidate {
 
 export type StampLocationStatus = 'loading' | 'granted' | 'denied' | 'unavailable';
 
-interface RecentStampItem {
-  readonly contentId: string;
-  readonly title: string;
-  readonly collected: boolean;
-}
-
 interface StampViewProps {
   readonly candidate: StampCandidate | null;
-  readonly collectedCount: number;
-  readonly totalCount: number;
+  readonly collectedCount?: number;
+  readonly totalCount?: number;
   readonly locationAvailable: boolean;
+  readonly locationAccuracyMeters: number | null;
   readonly locationStatus: StampLocationStatus;
-  readonly recentStamps?: readonly RecentStampItem[];
+  readonly recentStamps?: readonly {
+    readonly contentId: string;
+    readonly title: string;
+    readonly collected: boolean;
+  }[];
   readonly onCollect?: () => void;
 }
 
-export function StampView({
-  candidate,
-  collectedCount,
-  totalCount,
-  locationAvailable,
-  locationStatus,
-  recentStamps = [],
-  onCollect,
-}: StampViewProps) {
+export function StampView(props: StampViewProps) {
+  const { candidate, locationAvailable, locationAccuracyMeters, locationStatus, onCollect } = props;
   const canVerify = candidate
-    ? locationAvailable && candidate.distanceMeters <= STAMP_RADIUS_METERS && !candidate.collected
+    ? locationAvailable &&
+      locationAccuracyMeters !== null &&
+      locationAccuracyMeters <= STAMP_RADIUS_METERS &&
+      candidate.distanceMeters <= STAMP_RADIUS_METERS &&
+      !candidate.collected
     : false;
-  const progressPercent = totalCount > 0 ? Math.round((collectedCount / totalCount) * 100) : 0;
-  const ctaLabel = getCtaLabel({ candidate, canVerify, locationAvailable, locationStatus });
-  const latestStamps = recentStamps.filter((stamp) => stamp.collected).slice(0, 3);
 
-  // Mascot pulse animation when CTA is ready
-  const mascotScale = useSharedValue(1);
-  // eslint-disable-next-line react-hooks/immutability -- SharedValue ref for animation in useEffect
-  const mascotScaleRef = useRef(mascotScale);
-
-  const mascotAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: mascotScaleRef.current.value }],
-  }));
-
-  useEffect(() => {
-    if (canVerify) {
-      mascotScaleRef.current.value = withRepeat(
-        withSequence(
-          withTiming(1.03, { duration: 500 }),
-          withTiming(1, { duration: 500 }),
-          withTiming(1, { duration: 1000 }), // pause ~1s
-        ),
-        -1,
-        false,
-      );
-    } else {
-      mascotScaleRef.current.value = withSpring(1);
-    }
-  }, [canVerify]);
-
-  // Hero entrance
-  const heroOpacity = useSharedValue(0);
-  const heroTranslateY = useSharedValue(8);
-  // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for entrance animation
-  const heroOpacityRef = useRef(heroOpacity);
-  // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for entrance animation
-  const heroTranslateYRef = useRef(heroTranslateY);
-
-  const heroAnimStyle = useAnimatedStyle(() => ({
-    opacity: heroOpacityRef.current.value,
-    transform: [{ translateY: heroTranslateYRef.current.value }],
-  }));
+  const [stampBurstKey, setStampBurstKey] = useState(0);
+  const burstTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useFocusEffect(
     useCallback(() => {
-      heroOpacityRef.current.value = 0;
-      heroTranslateYRef.current.value = 8;
-      heroOpacityRef.current.value = withTiming(1, { duration: 350 });
-      heroTranslateYRef.current.value = withTiming(0, { duration: 350 });
+      setStampBurstKey(0);
+      if (burstTimerRef.current) {
+        clearTimeout(burstTimerRef.current);
+        burstTimerRef.current = null;
+      }
+      return () => {
+        if (burstTimerRef.current) {
+          clearTimeout(burstTimerRef.current);
+          burstTimerRef.current = null;
+        }
+      };
     }, []),
   );
+
+  useEffect(
+    () => () => {
+      if (burstTimerRef.current) {
+        clearTimeout(burstTimerRef.current);
+      }
+    },
+    [],
+  );
+
+  const statusLabel = getStatusLabel({ candidate, canVerify });
+  const statusTone = getStatusTone({ candidate, canVerify });
+  const statusHint = getStatusHint({
+    candidate,
+    canVerify,
+    locationAccuracyMeters,
+    locationAvailable,
+    locationStatus,
+  });
+  const accessibilityHint = canVerify
+    ? '길게 눌러 도장을 찍습니다.'
+    : (statusHint ?? '도장을 찍을 수 없는 상태입니다.');
+
+  const handleLongPress = useCallback(() => {
+    if (!candidate || !canVerify || !onCollect) {
+      return;
+    }
+
+    setStampBurstKey((current) => current + 1);
+    onCollect();
+
+    if (burstTimerRef.current) {
+      clearTimeout(burstTimerRef.current);
+    }
+
+    burstTimerRef.current = setTimeout(() => {
+      setStampBurstKey(0);
+      burstTimerRef.current = null;
+    }, 680);
+  }, [canVerify, candidate, onCollect]);
 
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.topbar}>
-          <View style={styles.brandBlock}>
-            <AppText variant="h1">도장 찍기</AppText>
-            <AppText variant="caption" tone="inkMuted">
-              현장 인증 후 스탬프를 눌러요
+        <View style={styles.header}>
+          <View style={styles.headerCopy}>
+            <Badge tone="brand" size="sm">
+              도장
+            </Badge>
+            <AppText variant="h1" tone="ink" numberOfLines={1}>
+              도장 찍기
             </AppText>
+            <AppText variant="caption" tone="inkMuted" numberOfLines={2}>
+              장소에 도착하면 길게 눌러 실제 도장을 찍듯 인증합니다.
+            </AppText>
+          </View>
+
+          <View style={styles.headerState}>
+            <Badge tone={statusTone} size="sm">
+              {statusLabel}
+            </Badge>
           </View>
         </View>
 
-        {/* Summary card */}
-        <Animated.View style={heroAnimStyle}>
-          <Surface elevation="e1" radius="lg" style={styles.summaryCard}>
-            <AppText variant="caption" tone="inkMuted">
-              오늘 루트 수집 현황
+        <View style={styles.stage}>
+          <View style={styles.stageMeta}>
+            <AppText variant="h2" tone="ink" numberOfLines={1} style={styles.placeTitle}>
+              {candidate?.title ?? '주변 도장을 찾는 중'}
             </AppText>
-            <AppText variant="h1" style={styles.summaryValue}>
-              {collectedCount} / {totalCount}
+            <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
+              {candidate ? statusHint : '가까운 장소가 잡히면 도장 영역이 나타납니다.'}
             </AppText>
-            <Gauge value={progressPercent} tone="reward" />
-          </Surface>
-        </Animated.View>
+          </View>
 
-        {candidate ? (
-          <Surface elevation="e1" radius="lg" style={styles.candidateCard}>
-            <View style={styles.candidateRow}>
-              <View style={styles.thumb}>
-                <AppText style={styles.thumbText}>🏯</AppText>
-              </View>
-              <View style={styles.candidateText}>
-                <AppText variant="micro" tone="brand" style={styles.cardLabel}>
-                  현재 추천 인증 스팟
-                </AppText>
-                <AppText variant="h2">{candidate.title}</AppText>
-                <AppText variant="caption" tone="inkMuted">
-                  {candidate.address}
-                </AppText>
-              </View>
-            </View>
-
-            <View style={styles.badgeRow}>
-              <Badge tone="neutral" size="sm">
-                {locationAvailable ? 'GPS 확인' : 'GPS 대기'}
-              </Badge>
-              <Badge tone="neutral" size="sm">
-                {candidate.distanceMeters}m
-              </Badge>
-              <Badge tone="neutral" size="sm">
-                중복 없음
-              </Badge>
-            </View>
-
-            {/* Stamp action shell */}
-            <View style={styles.actionShell}>
-              {/* Stamp handle */}
-              <View style={styles.stampHandle} />
-
-              {/* Stamp target circle with Mascot inside */}
-              <View style={styles.stampTarget}>
-                {canVerify ? (
-                  <StampDrop onComplete={onCollect} />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={candidate ? `${candidate.title} 도장 영역` : '도장 대기 영역'}
+            accessibilityHint={accessibilityHint}
+            accessibilityState={{ disabled: !canVerify }}
+            delayLongPress={420}
+            disabled={!canVerify}
+            onLongPress={handleLongPress}
+            style={({ pressed }) => [
+              styles.stampTarget,
+              pressed && canVerify && styles.stampTargetPressed,
+              !canVerify && styles.stampTargetDisabled,
+            ]}
+          >
+            <View style={styles.stampRing}>
+              <View style={styles.stampCore}>
+                {stampBurstKey > 0 ? (
+                  <View style={styles.stampDropLayer}>
+                    <StampDrop key={stampBurstKey} />
+                  </View>
                 ) : (
-                  <Animated.View style={mascotAnimStyle}>
-                    <Mascot
-                      size={80}
-                      mood={candidate.collected ? 'happy' : locationAvailable ? 'sleeping' : 'sad'}
-                    />
-                  </Animated.View>
+                  <>
+                    <AppText
+                      variant="title"
+                      tone={canVerify ? 'brand' : 'inkMuted'}
+                      numberOfLines={1}
+                    >
+                      꾹~
+                    </AppText>
+                    <AppText variant="caption" tone="inkMuted" numberOfLines={2}>
+                      {getTargetPrompt({ candidate, canVerify })}
+                    </AppText>
+                  </>
                 )}
               </View>
-
-              <AppText variant="h3" style={styles.actionTitle}>
-                스탬프를 꾹 눌러주세요
-              </AppText>
-              <AppText variant="body" tone="inkMuted" style={styles.actionBody}>
-                도장은 이 화면에서만 찍을 수 있어요. 지도와 상세 화면에서는 위치와 정보를
-                확인합니다.
-              </AppText>
-
-              <Button
-                variant="primary"
-                size="lg"
-                fullWidth
-                disabled={!canVerify}
-                onPress={onCollect}
-                accessibilityLabel={`${candidate.title} 도장 찍기`}
-              >
-                {ctaLabel}
-              </Button>
             </View>
-          </Surface>
-        ) : (
-          <Surface elevation="none" radius="lg" style={styles.emptyCard}>
-            <Mascot size={64} mood="sad" style={styles.emptyMascot} />
-            <AppText variant="h3">추천 스팟이 없어요</AppText>
-            <AppText variant="caption" tone="inkMuted">
-              근처 스팟을 찾고 있어요
-            </AppText>
-          </Surface>
-        )}
-
-        <View style={styles.sectionHead}>
-          <AppText variant="h2">최근 획득 도장</AppText>
-          <AppText variant="caption" tone="brand">
-            도장함 보기
-          </AppText>
+          </Pressable>
         </View>
-
-        <View style={styles.miniGrid}>
-          {latestStamps.length > 0 ? (
-            latestStamps.map((stamp, index) => (
-              <Surface key={stamp.contentId} elevation="e1" radius="md" style={styles.miniStamp}>
-                <AppText style={styles.miniStampIcon}>{getRecentIcon(index)}</AppText>
-                <AppText variant="micro" tone="inkMuted" style={styles.miniStampTitle}>
-                  {stamp.title}
-                </AppText>
-              </Surface>
-            ))
-          ) : (
-            <>
-              <Surface elevation="e1" radius="md" style={styles.miniStamp}>
-                <AppText style={styles.miniStampIcon}>🏯</AppText>
-                <AppText variant="micro" tone="inkMuted" style={styles.miniStampTitle}>
-                  경복궁
-                </AppText>
-              </Surface>
-              <Surface elevation="e1" radius="md" style={styles.miniStamp}>
-                <AppText style={styles.miniStampIcon}>🎪</AppText>
-                <AppText variant="micro" tone="inkMuted" style={styles.miniStampTitle}>
-                  봄빛 행사
-                </AppText>
-              </Surface>
-              <Surface elevation="e1" radius="md" style={styles.miniStamp}>
-                <AppText style={styles.miniStampIcon}>🌉</AppText>
-                <AppText variant="micro" tone="inkMuted" style={styles.miniStampTitle}>
-                  한강 야경
-                </AppText>
-              </Surface>
-            </>
-          )}
-        </View>
-
-        {/* Collection card — no gradient */}
-        <Surface elevation="e1" radius="lg" style={styles.collectionCard}>
-          <AppText variant="h3">서울 5대 궁궐 컬렉션</AppText>
-          <Gauge value={Math.min(60 + collectedCount * 6, 100)} tone="reward" />
-          <View style={styles.badgeRow}>
-            <Badge tone="neutral" size="sm">
-              {Math.min(collectedCount + 2, 5)} / 5 완료
-            </Badge>
-            <Badge tone="reward" size="sm">
-              완성까지 2개
-            </Badge>
-          </View>
-        </Surface>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const getRecentIcon = (index: number) => {
-  if (index === 0) {
-    return '🏯';
-  }
-
-  if (index === 1) {
-    return '🎪';
-  }
-
-  return '🌉';
-};
-
-const getCtaLabel = ({
+const getStatusTone = ({
   candidate,
   canVerify,
+}: {
+  readonly candidate: StampCandidate | null;
+  readonly canVerify: boolean;
+}): 'done' | 'ready' | 'neutral' => {
+  if (candidate?.collected) {
+    return 'done';
+  }
+
+  return canVerify ? 'ready' : 'neutral';
+};
+
+const getStatusLabel = ({
+  candidate,
+  canVerify,
+}: {
+  readonly candidate: StampCandidate | null;
+  readonly canVerify: boolean;
+}) => {
+  if (!candidate) {
+    return '대기 중';
+  }
+
+  if (candidate.collected) {
+    return '수집 완료';
+  }
+
+  return canVerify ? '도장 가능' : '이동 필요';
+};
+
+const getStatusHint = ({
+  candidate,
+  canVerify,
+  locationAccuracyMeters,
   locationAvailable,
   locationStatus,
 }: {
   readonly candidate: StampCandidate | null;
   readonly canVerify: boolean;
+  readonly locationAccuracyMeters: number | null;
   readonly locationAvailable: boolean;
   readonly locationStatus: StampLocationStatus;
 }) => {
   if (!candidate) {
-    return '추천 스팟 없음';
+    return '주변 장소를 찾고 있어요.';
   }
 
   if (candidate.collected) {
-    return '이미 수집한 도장입니다';
+    return '이미 이 장소의 도장을 찍었습니다.';
   }
 
   if (canVerify) {
-    return `${candidate.title} 도장 찍기`;
+    return '길게 눌러 도장을 찍으세요.';
   }
 
-  if (!locationAvailable) {
-    return locationStatus === 'denied' ? '위치 권한을 허용하면 인증 가능' : '현재 위치 확인 중';
+  if (locationStatus === 'denied') {
+    return '위치 권한을 허용해야 도장을 찍을 수 있어요.';
   }
 
-  return `${STAMP_RADIUS_METERS}m 안으로 이동하면 인증 가능`;
+  if (locationStatus === 'loading' || locationStatus === 'unavailable' || !locationAvailable) {
+    return 'GPS 확인 중';
+  }
+
+  if (locationAccuracyMeters === null) {
+    return 'GPS 확인 중';
+  }
+
+  if (candidate.distanceMeters > STAMP_RADIUS_METERS) {
+    return `반경 ${STAMP_RADIUS_METERS}m 안으로 이동하세요.`;
+  }
+
+  if (locationAccuracyMeters > STAMP_RADIUS_METERS) {
+    return '위치 정확도가 아직 부족해요.';
+  }
+
+  return '상태를 확인하는 중이에요.';
+};
+
+const getTargetPrompt = ({
+  candidate,
+  canVerify,
+}: {
+  readonly candidate: StampCandidate | null;
+  readonly canVerify: boolean;
+}) => {
+  if (!candidate) {
+    return '주변 도장을 기다리는 중';
+  }
+
+  if (candidate.collected) {
+    return '이미 찍은 도장';
+  }
+
+  return canVerify ? '길게 눌러 도장 찍기' : '도장 불가';
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.canvas },
+  root: {
+    flex: 1,
+    backgroundColor: colors.canvas,
+  },
   content: {
+    flexGrow: 1,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.xxxl,
-    gap: spacing.md,
-  },
-  topbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    paddingBottom: spacing.xxl,
     justifyContent: 'space-between',
-    gap: spacing.md,
+    gap: spacing.lg,
   },
-  brandBlock: { flex: 1, minWidth: 0, gap: 2 },
-  summaryCard: {
-    padding: spacing.lg,
+  header: {
     gap: spacing.sm,
   },
-  summaryValue: { fontSize: 24 },
-  candidateCard: {
-    padding: spacing.lg,
-    gap: spacing.md,
+  headerCopy: {
+    gap: spacing.xs,
   },
-  candidateRow: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },
-  thumb: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.sm + 4,
-    backgroundColor: colors.brandSoft,
+  headerState: {
+    alignSelf: 'flex-start',
+  },
+  stage: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  thumbText: { fontSize: 24 },
-  candidateText: { flex: 1, minWidth: 0, gap: spacing.xs },
-  cardLabel: { letterSpacing: 0.5 },
-  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm - 2 },
-  actionShell: {
-    alignItems: 'center',
-    backgroundColor: colors.canvas,
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm + 2,
-    paddingBottom: spacing.lg,
-    borderWidth: 2,
-    borderColor: colors.border,
     gap: spacing.md,
   },
-  stampHandle: {
-    width: 56,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: colors.brand,
-    marginBottom: -12,
-  },
-  stampTarget: {
-    width: 178,
-    height: 178,
-    borderRadius: 89,
-    backgroundColor: colors.canvas,
-    borderWidth: 2,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionTitle: { textAlign: 'center' },
-  actionBody: {
-    textAlign: 'center',
-  },
-  emptyCard: {
-    padding: spacing.xl,
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  emptyMascot: {
-    transform: [{ rotate: '-8deg' }],
-  },
-  sectionHead: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-  },
-  miniGrid: { flexDirection: 'row', gap: spacing.sm },
-  miniStamp: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
+  stageMeta: {
     alignItems: 'center',
     gap: spacing.xs,
   },
-  miniStampIcon: { fontSize: 22 },
-  miniStampTitle: { textAlign: 'center' },
-  collectionCard: {
-    padding: spacing.lg,
-    gap: spacing.sm + 2,
+  placeTitle: {
+    textAlign: 'center',
+  },
+  stampTarget: {
+    width: '100%',
+    maxWidth: 296,
+    aspectRatio: 1,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    ...shadow.e2,
+  },
+  stampTargetPressed: {
+    transform: [{ scale: 0.985 }],
+  },
+  stampTargetDisabled: {
+    opacity: 0.62,
+  },
+  stampRing: {
+    width: '74%',
+    aspectRatio: 1,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 12,
+    borderColor: colors.brandSoft,
+    backgroundColor: colors.surfaceSink,
+  },
+  stampCore: {
+    width: '72%',
+    aspectRatio: 1,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.brandSoft,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+  },
+  stampDropLayer: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
