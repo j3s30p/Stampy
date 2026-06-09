@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { CurrentLocationStatus } from '@core/location';
 import { STAMP_RADIUS_METERS } from '@shared/config';
 import type { Coordinates } from '@shared/types';
-import { AppText, Button, Surface, colors, radius, spacing } from '@shared/ui';
+import { AppText, Badge, Button, Surface, colors, radius, spacing } from '@shared/ui';
 import type { MapSpotPin } from '../model';
 import { KakaoMapWebView } from './KakaoMapWebView';
 
@@ -72,11 +72,19 @@ export function MapView({
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topbar}>
           <View style={styles.brandBlock}>
-            <AppText variant="h1">주변 스탬프 지도</AppText>
-            <AppText variant="caption" tone="inkMuted">
-              Kakao Map + 관광공사 API · 위치 {locationStatus}
+            <AppText variant="micro" tone="brand" numberOfLines={1}>
+              지도
+            </AppText>
+            <AppText variant="h1" tone="ink" numberOfLines={1}>
+              주변 스탬프 지도
+            </AppText>
+            <AppText variant="caption" tone="inkMuted" numberOfLines={2}>
+              Kakao WebView · 위치 상태 {locationStatus}
             </AppText>
           </View>
+          <Badge tone="neutral" size="sm">
+            {spots.length}곳
+          </Badge>
         </View>
 
         <View style={styles.mapShell}>
@@ -91,16 +99,26 @@ export function MapView({
                 onMapReady={() => setMapErrorMessage(null)}
                 onMapError={setMapErrorMessage}
               />
+              <View style={styles.mapChips}>
+                <Badge tone="brand" size="sm">
+                  Kakao WebView
+                </Badge>
+                <Badge tone="neutral" size="sm">
+                  {getLocationStatusLabel(locationStatus)}
+                </Badge>
+              </View>
               <View style={styles.mapHint}>
-                <AppText variant="micro" style={styles.mapHintText}>
-                  파란 핀은 현재 위치, 붉은 핀은 선택된 스팟이에요
+                <AppText variant="micro" tone="onDark" style={styles.mapHintText} numberOfLines={2}>
+                  파란 핀은 현재 위치, 붉은 핀은 선택된 스팟이에요.
                 </AppText>
               </View>
               {mapErrorMessage ? (
                 <View style={styles.mapOverlay}>
-                  <Surface elevation="e1" radius="md" style={styles.overlayCard}>
-                    <AppText variant="h3">지도를 불러오지 못했어요</AppText>
-                    <AppText variant="caption" tone="inkMuted">
+                  <Surface elevation="e1" radius="lg" style={styles.overlayCard}>
+                    <AppText variant="h3" tone="ink" numberOfLines={1}>
+                      지도를 불러오지 못했어요
+                    </AppText>
+                    <AppText variant="caption" tone="inkMuted" numberOfLines={3}>
                       {mapErrorMessage}
                     </AppText>
                   </Surface>
@@ -108,9 +126,11 @@ export function MapView({
               ) : null}
             </View>
           ) : (
-            <Surface elevation="e1" radius="md" style={styles.emptyMapState}>
-              <AppText variant="h3">지도 설정이 필요해요</AppText>
-              <AppText variant="body" tone="inkMuted">
+            <Surface elevation="e1" radius="lg" style={styles.emptyMapState}>
+              <AppText variant="h3" tone="ink" numberOfLines={1}>
+                지도 설정이 필요해요
+              </AppText>
+              <AppText variant="body" tone="inkMuted" style={styles.emptyMapText} numberOfLines={3}>
                 EXPO_PUBLIC_KAKAO_JS_KEY가 없어서 Kakao Maps WebView를 띄울 수 없어요.
               </AppText>
             </Surface>
@@ -121,37 +141,19 @@ export function MapView({
           <Surface elevation="e1" radius="lg" style={styles.sheet}>
             <View style={styles.selectedRow}>
               <View style={styles.selectedText}>
-                <AppText variant="micro" tone="brand">
+                <Badge tone="brand" size="sm">
                   선택한 스팟
+                </Badge>
+                <AppText variant="h2" tone="ink" numberOfLines={1}>
+                  {selectedSpot.title}
                 </AppText>
-                <AppText variant="h2">{selectedSpot.title}</AppText>
-                <AppText variant="caption" tone="inkMuted">
+                <AppText variant="caption" tone="inkMuted" numberOfLines={2}>
                   현재 위치에서 {selectedSpot.distanceMeters}m · 반경 {STAMP_RADIUS_METERS}m
                 </AppText>
               </View>
-              <View
-                style={[
-                  styles.statusBadge,
-                  getSpotStatus(selectedSpot) === 'collected'
-                    ? styles.statusDone
-                    : getSpotStatus(selectedSpot) === 'ready'
-                      ? styles.statusReady
-                      : styles.statusPending,
-                ]}
-              >
-                <AppText
-                  variant="micro"
-                  style={
-                    getSpotStatus(selectedSpot) === 'collected'
-                      ? styles.statusBadgeTextDone
-                      : getSpotStatus(selectedSpot) === 'ready'
-                        ? styles.statusBadgeTextReady
-                        : styles.statusBadgeTextPending
-                  }
-                >
-                  {getSpotStatusLabel(selectedSpot)}
-                </AppText>
-              </View>
+              <Badge tone={getSpotStatusTone(selectedSpot)} size="md">
+                {getSpotStatusLabel(selectedSpot)}
+              </Badge>
             </View>
 
             <View style={styles.actionRow}>
@@ -186,18 +188,22 @@ export function MapView({
               </Button>
             </View>
 
-            <View style={styles.feedbackCard}>
-              <AppText variant="caption" tone="inkMuted">
+            <Surface elevation="none" radius="md" style={styles.feedbackCard}>
+              <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
                 선택 상태
               </AppText>
-              <AppText variant="bodyBold">{directionMessage}</AppText>
-            </View>
+              <AppText variant="bodyBold" tone="ink" numberOfLines={2}>
+                {directionMessage}
+              </AppText>
+            </Surface>
           </Surface>
         ) : null}
 
         <View style={styles.sectionHead}>
-          <AppText variant="h2">스팟 목록</AppText>
-          <AppText variant="caption" tone="inkMuted">
+          <AppText variant="h2" tone="ink" numberOfLines={1}>
+            스팟 목록
+          </AppText>
+          <AppText variant="caption" tone="inkMuted" numberOfLines={2}>
             홈과 도장 탭의 동일한 mock 데이터
           </AppText>
         </View>
@@ -213,47 +219,38 @@ export function MapView({
                 accessibilityRole="button"
                 accessibilityLabel={`${spot.title} 지도 목록 선택`}
                 onPress={() => handleSelectSpot(spot.contentId)}
-                style={({ pressed }) => [pressed ? styles.pressed : null]}
+                style={({ pressed }) => [styles.listPressable, pressed ? styles.pressed : null]}
               >
                 <Surface
                   elevation="none"
-                  radius="md"
+                  radius="lg"
                   style={[styles.listItem, isSelected ? styles.listItemSelected : null]}
                 >
-                  <AppText variant="h3" style={styles.listIndex}>
-                    {index + 1}
-                  </AppText>
-                  <View style={styles.listText}>
-                    <AppText variant="h3">{spot.title}</AppText>
-                    <AppText variant="caption" tone="inkMuted">
-                      {spot.address}
-                    </AppText>
-                    <AppText variant="caption" tone="brand" style={styles.listDistance}>
-                      {spot.distanceMeters}m 떨어짐
+                  <View style={styles.listIndexWrap}>
+                    <AppText variant="captionBold" tone="ink" numberOfLines={1}>
+                      {index + 1}
                     </AppText>
                   </View>
-                  <View
-                    style={[
-                      styles.listBadge,
-                      status === 'collected'
-                        ? styles.statusDone
-                        : status === 'ready'
-                          ? styles.statusReady
-                          : styles.statusPending,
-                    ]}
-                  >
-                    <AppText
-                      variant="micro"
-                      style={
-                        status === 'collected'
-                          ? styles.statusBadgeTextDone
-                          : status === 'ready'
-                            ? styles.statusBadgeTextReady
-                            : styles.statusBadgeTextPending
-                      }
-                    >
-                      {getSpotStatusLabel(spot)}
+                  <View style={styles.listText}>
+                    <AppText variant="h3" tone="ink" numberOfLines={1}>
+                      {spot.title}
                     </AppText>
+                    <AppText variant="caption" tone="inkMuted" numberOfLines={2}>
+                      {spot.address}
+                    </AppText>
+                    <View style={styles.listMetaRow}>
+                      <Badge tone="neutral" size="sm">
+                        {spot.distanceMeters}m
+                      </Badge>
+                      <Badge
+                        tone={
+                          status === 'collected' ? 'done' : status === 'ready' ? 'ready' : 'neutral'
+                        }
+                        size="sm"
+                      >
+                        {getSpotStatusLabel(spot)}
+                      </Badge>
+                    </View>
                   </View>
                 </Surface>
               </Pressable>
@@ -277,10 +274,10 @@ const getSpotStatusLabel = (spot: MapSpotPin) => {
   }
 
   if (spot.distanceMeters <= STAMP_RADIUS_METERS) {
-    return '도장 가능';
+    return '반경 안';
   }
 
-  return '방문 전';
+  return '인증 확인 필요';
 };
 
 const getSpotStatus = (spot: MapSpotPin): 'collected' | 'ready' | 'pending' => {
@@ -293,6 +290,31 @@ const getSpotStatus = (spot: MapSpotPin): 'collected' | 'ready' | 'pending' => {
   }
 
   return 'pending';
+};
+
+const getSpotStatusTone = (spot: MapSpotPin): 'done' | 'ready' | 'neutral' => {
+  if (spot.collected) {
+    return 'done';
+  }
+
+  if (spot.distanceMeters <= STAMP_RADIUS_METERS) {
+    return 'ready';
+  }
+
+  return 'neutral';
+};
+
+const getLocationStatusLabel = (status: CurrentLocationStatus) => {
+  switch (status) {
+    case 'granted':
+      return 'GPS 양호';
+    case 'denied':
+      return 'GPS 권한 필요';
+    case 'loading':
+      return 'GPS 확인 중';
+    default:
+      return 'GPS 확인 중';
+  }
 };
 
 const resolveEffectiveSelectedSpotId = (
@@ -314,28 +336,32 @@ const resolveSelectedSpot = (spots: readonly MapSpotPin[], selectedSpotId: strin
 };
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.canvas },
+  root: {
+    flex: 1,
+    backgroundColor: colors.canvas,
+  },
   content: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xxl,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xxxl,
     gap: spacing.lg,
-    paddingTop: spacing.md,
   },
   topbar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.md,
   },
   brandBlock: {
     flex: 1,
+    minWidth: 0,
     gap: spacing.xs,
   },
   mapShell: {
     gap: spacing.xs,
   },
   mapCanvas: {
-    height: 310,
+    height: 330,
     overflow: 'hidden',
     borderRadius: radius.lg,
     borderWidth: 1,
@@ -343,15 +369,26 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceSink,
     position: 'relative',
   },
+  mapChips: {
+    position: 'absolute',
+    top: spacing.md,
+    left: spacing.md,
+    right: spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    zIndex: 2,
+  },
   mapHint: {
     position: 'absolute',
     left: spacing.md,
-    bottom: spacing.md,
     right: spacing.md,
+    bottom: spacing.md,
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.xs + 1,
     borderRadius: radius.full,
-    backgroundColor: 'rgba(15, 23, 42, 0.72)',
+    backgroundColor: 'rgba(17, 32, 51, 0.74)',
+    zIndex: 2,
   },
   mapHintText: {
     color: colors.surface,
@@ -365,18 +402,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.28)',
+    zIndex: 3,
   },
   overlayCard: {
     width: '100%',
     gap: spacing.xs,
   },
   emptyMapState: {
-    minHeight: 310,
+    minHeight: 330,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
     gap: spacing.sm,
+  },
+  emptyMapText: {
+    textAlign: 'center',
   },
   sheet: {
     gap: spacing.md,
@@ -390,31 +431,8 @@ const styles = StyleSheet.create({
   },
   selectedText: {
     flex: 1,
+    minWidth: 0,
     gap: spacing.xs,
-  },
-  statusBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.full,
-    alignSelf: 'flex-start',
-  },
-  statusDone: {
-    backgroundColor: colors.brandSoft,
-  },
-  statusReady: {
-    backgroundColor: colors.rewardSoft,
-  },
-  statusPending: {
-    backgroundColor: colors.surfaceSink,
-  },
-  statusBadgeTextDone: {
-    color: colors.brandInk,
-  },
-  statusBadgeTextReady: {
-    color: '#9A6A00',
-  },
-  statusBadgeTextPending: {
-    color: colors.inkMuted,
   },
   actionRow: {
     gap: spacing.sm,
@@ -431,36 +449,39 @@ const styles = StyleSheet.create({
   list: {
     gap: spacing.sm,
   },
+  listPressable: {
+    minWidth: 0,
+  },
   listItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: spacing.md,
     padding: spacing.md,
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
   },
   listItemSelected: {
     borderWidth: 1,
-    borderColor: colors.brandSoft,
+    borderColor: colors.borderStrong,
   },
-  listIndex: {
-    width: 26,
-    textAlign: 'center',
-    color: colors.brand,
+  listIndexWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceSink,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   listText: {
     flex: 1,
+    minWidth: 0,
     gap: spacing.xs,
   },
-  listDistance: {
-    marginTop: spacing.xs / 2,
-  },
-  listBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.full,
+  listMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.82,
   },
 });

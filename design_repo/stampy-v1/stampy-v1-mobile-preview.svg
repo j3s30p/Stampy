@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1180" viewBox="0 0 1600 1180">
+  <style>
+    .bg{fill:#f3f6fb}.card{fill:#fff;stroke:#d8e1ef;stroke-width:2}.screen{fill:#fbfcff;stroke:#d8e1ef;stroke-width:1.5}.ink{fill:#112033}.muted{fill:#637387}.green{fill:#18a968}.greenSoft{fill:#eaf8f1}.blue{fill:#2f6bff}.blueSoft{fill:#eef4ff}.coral{fill:#ff7a45}.yellow{fill:#ffcc49}.line{stroke:#d8e1ef;stroke-width:2}.road{stroke:#fff;stroke-width:16;stroke-linecap:round}.title{font:700 44px -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",sans-serif}.h{font:700 24px -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",sans-serif}.body{font:500 17px -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",sans-serif}.small{font:600 13px -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",sans-serif}.micro{font:500 11px -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",sans-serif}.white{fill:#fff}
+  </style>
+  <rect class="bg" width="1600" height="1180"/>
+  <text x="70" y="72" class="title ink">Stampy V1 Design Preview</text>
+  <text x="70" y="112" class="body muted">게임화된 여행 수집 앱 + Toss식 한국어 정보 정돈 · 기준 반경 100m 고정 · Kakao WebView</text>
+
+  <!-- Simple mascot -->
+  <g transform="translate(1390 40) scale(1.25)">
+    <path d="M28 12h18a10 10 0 0 0 20 0h18a10 10 0 0 0 20 0h18a22 22 0 0 1 22 22v16a13 13 0 0 0 0 26v36a44 44 0 0 1-44 44H50a44 44 0 0 1-44-44V76a13 13 0 0 0 0-26V34A22 22 0 0 1 28 12z" fill="#a8d940" stroke="#145c24" stroke-width="10" stroke-linejoin="round"/>
+    <circle cx="58" cy="78" r="8" fill="#151515"/><circle cx="96" cy="78" r="8" fill="#151515"/>
+    <path d="M70 100q12 12 26 0" fill="none" stroke="#151515" stroke-width="7" stroke-linecap="round"/>
+    <path d="M78 112c-18-24 24-24 6 0l-3 5z" class="coral"/>
+  </g>
+
+  <!-- Phone helper groups -->
+  <g transform="translate(50 170)">
+    <rect class="card" rx="34" width="285" height="680"/><rect class="screen" x="14" y="14" rx="28" width="257" height="590"/>
+    <text x="31" y="42" class="micro ink">9:41</text>
+    <text x="31" y="92" class="small muted">서울 · 오늘</text><text x="31" y="123" class="h ink">경복궁 주변 도장 수집</text>
+    <rect x="31" y="155" width="220" height="135" rx="22" class="blueSoft" stroke="#d8e1ef"/>
+    <rect x="47" y="174" width="116" height="28" rx="14" class="greenSoft"/><text x="62" y="193" class="micro green">실시간 방문 체크</text>
+    <text x="47" y="232" class="body ink">다음 도장까지 1분</text><text x="47" y="260" class="small muted">100m 안에서 바로 검증</text>
+    <circle cx="207" cy="229" r="36" fill="#a8d940" stroke="#145c24" stroke-width="5"/><circle cx="196" cy="223" r="4"/><circle cx="217" cy="223" r="4"/><path d="M199 239q8 8 18 0" fill="none" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+    <text x="31" y="338" class="body ink">오늘의 추천</text>
+    <rect x="31" y="360" width="220" height="58" rx="16" class="card"/><text x="47" y="383" class="small ink">경복궁</text><text x="47" y="404" class="micro muted">도보 6분 · 420m</text><rect x="170" y="375" width="65" height="24" rx="12" fill="#f0f3f6"/><text x="181" y="392" class="micro muted">이동 필요</text>
+    <rect x="31" y="430" width="220" height="58" rx="16" class="card"/><text x="47" y="453" class="small ink">국립민속박물관</text><text x="47" y="474" class="micro muted">도보 8분 · 610m</text><rect x="170" y="445" width="55" height="24" rx="12" fill="#f0f3f6"/><text x="181" y="462" class="micro muted">준비 중</text>
+    <rect x="31" y="522" width="220" height="48" rx="24" class="green"/><text x="77" y="552" class="body white">가까운 도장 찾기</text>
+    <rect x="14" y="596" width="257" height="58" rx="24" class="card"/><text x="43" y="631" class="small green">홈</text><text x="90" y="631" class="small muted">지도</text><text x="139" y="631" class="small muted">인증</text><text x="188" y="631" class="small muted">모음</text><text x="234" y="631" class="small muted">MY</text>
+    <text x="12" y="725" class="h ink">Home</text>
+  </g>
+
+  <g transform="translate(365 170)">
+    <rect class="card" rx="34" width="285" height="680"/><rect class="screen" x="14" y="14" rx="28" width="257" height="590"/>
+    <text x="31" y="42" class="micro ink">9:41</text><text x="31" y="92" class="h ink">주변 관광지와 인증 범위</text>
+    <rect x="31" y="130" width="220" height="300" rx="22" fill="#eaf3df" stroke="#d8e1ef"/>
+    <path d="M45 195L235 150M35 300L240 245M115 140L185 410" class="road"/>
+    <circle cx="137" cy="270" r="42" fill="#eaf2ff" stroke="#2f6bff" stroke-width="3"/><circle cx="137" cy="270" r="12" class="blue"/>
+    <circle cx="174" cy="190" r="15" class="coral"/><circle cx="204" cy="316" r="15" class="green"/>
+    <rect x="47" y="146" width="70" height="24" rx="12" class="card"/><text x="58" y="163" class="micro green">GPS 양호</text>
+    <rect x="126" y="146" width="100" height="24" rx="12" class="card"/><text x="137" y="163" class="micro muted">Kakao WebView</text>
+    <rect x="31" y="452" width="220" height="112" rx="22" class="card"/><text x="47" y="480" class="body ink">인증 가능 1곳</text><text x="47" y="506" class="small muted">경복궁 정문 · 거리 92m</text><text x="47" y="530" class="micro muted">향원정 · 168m · 도보 이동 필요</text>
+    <rect x="14" y="596" width="257" height="58" rx="24" class="card"/><text x="43" y="631" class="small muted">홈</text><text x="90" y="631" class="small green">지도</text><text x="139" y="631" class="small muted">인증</text><text x="188" y="631" class="small muted">모음</text><text x="234" y="631" class="small muted">MY</text>
+    <text x="12" y="725" class="h ink">Map</text>
+  </g>
+
+  <g transform="translate(680 170)">
+    <rect class="card" rx="34" width="285" height="680"/><rect class="screen" x="14" y="14" rx="28" width="257" height="590"/>
+    <text x="31" y="42" class="micro ink">9:41</text><text x="31" y="92" class="small muted">관광지 상세</text><text x="31" y="123" class="h ink">경복궁 정문</text>
+    <rect x="31" y="155" width="220" height="120" rx="24" class="greenSoft" stroke="#d8e1ef"/><rect x="47" y="174" width="70" height="28" rx="14" class="greenSoft"/><text x="58" y="193" class="micro green">도장 가능</text><text x="47" y="226" class="small ink">정문 앞 92m에서 바로 도장을 찍을 수 있어요</text>
+    <text x="31" y="324" class="body ink">인증 전 체크</text><text x="39" y="360" class="small muted">✓ GPS 정확도 20m 이하</text><text x="39" y="392" class="small muted">✓ 도장 반경 100m 안에서 대기</text><text x="39" y="424" class="small muted">✓ 연속 인증 중복 방지 확인</text>
+    <rect x="31" y="514" width="102" height="48" rx="20" class="card"/><text x="60" y="544" class="small muted">길 안내</text><rect x="145" y="514" width="106" height="48" rx="20" class="green"/><text x="170" y="544" class="small white">도장 찍기</text>
+    <text x="12" y="725" class="h ink">Spot Detail</text>
+  </g>
+
+  <g transform="translate(995 170)">
+    <rect class="card" rx="34" width="285" height="680"/><rect class="screen" x="14" y="14" rx="28" width="257" height="590"/>
+    <text x="31" y="42" class="micro ink">9:41</text><text x="31" y="92" class="h ink">도장 인증</text><rect x="31" y="115" width="70" height="28" rx="14" class="greenSoft"/><text x="42" y="134" class="micro green">도장 가능</text>
+    <circle cx="141" cy="225" r="66" class="greenSoft" stroke="#18a968" stroke-width="5"/><text x="104" y="220" class="h green">100%</text><text x="112" y="250" class="small muted">정확도</text>
+    <text x="31" y="338" class="body ink">현재 위치가 인증 범위 안에 들어왔어요</text><text x="31" y="390" class="small muted">반경 92m · 검사 완료</text>
+    <rect x="31" y="425" width="66" height="54" rx="15" class="card"/><text x="45" y="445" class="micro muted">정확도</text><text x="51" y="467" class="small ink">18m</text><rect x="109" y="425" width="66" height="54" rx="15" class="card"/><text x="124" y="445" class="micro muted">네트워크</text><text x="128" y="467" class="small ink">정상</text><rect x="187" y="425" width="66" height="54" rx="15" class="card"/><text x="205" y="445" class="micro muted">반경</text><text x="205" y="467" class="small ink">92m</text>
+    <rect x="31" y="522" width="220" height="48" rx="24" class="green"/><text x="108" y="552" class="body white">도장 찍기</text>
+    <rect x="14" y="596" width="257" height="58" rx="24" class="card"/><text x="43" y="631" class="small muted">홈</text><text x="90" y="631" class="small muted">지도</text><text x="139" y="631" class="small green">인증</text><text x="188" y="631" class="small muted">모음</text><text x="234" y="631" class="small muted">MY</text>
+    <text x="12" y="725" class="h ink">Stamp Verify</text>
+  </g>
+
+  <g transform="translate(1310 170)">
+    <rect class="card" rx="34" width="285" height="680"/><rect class="screen" x="14" y="14" rx="28" width="257" height="590"/>
+    <text x="31" y="42" class="micro ink">9:41</text><text x="31" y="92" class="h ink">도장함</text>
+    <rect x="31" y="130" width="220" height="98" rx="22" class="card"/><text x="47" y="160" class="body ink">서울 5대 궁궐</text><text x="47" y="188" class="small green">3 / 5 완료</text><rect x="47" y="204" width="170" height="10" rx="5" fill="#e7edf5"/><rect x="47" y="204" width="102" height="10" rx="5" class="yellow"/>
+    <text x="31" y="278" class="body ink">수집한 도장</text>
+    <g class="micro muted">
+      <rect x="31" y="304" width="102" height="66" rx="16" class="card"/><circle cx="55" cy="336" r="15" class="green"/><text x="80" y="332">경복궁</text><text x="80" y="352">완료</text>
+      <rect x="149" y="304" width="102" height="66" rx="16" class="card"/><circle cx="173" cy="336" r="15" class="green"/><text x="198" y="332">창덕궁</text><text x="198" y="352">완료</text>
+      <rect x="31" y="388" width="102" height="66" rx="16" class="card"/><circle cx="55" cy="420" r="15" class="green"/><text x="80" y="416">덕수궁</text><text x="80" y="436">완료</text>
+      <rect x="149" y="388" width="102" height="66" rx="16" fill="#f0f3f6" stroke="#d8e1ef"/><circle cx="173" cy="420" r="15" fill="#cbd5e1"/><text x="198" y="416">창경궁</text><text x="198" y="436">방문 전</text>
+    </g>
+    <rect x="14" y="596" width="257" height="58" rx="24" class="card"/><text x="43" y="631" class="small muted">홈</text><text x="90" y="631" class="small muted">지도</text><text x="139" y="631" class="small muted">인증</text><text x="188" y="631" class="small green">모음</text><text x="234" y="631" class="small muted">MY</text>
+    <text x="12" y="725" class="h ink">Collection</text>
+  </g>
+
+  <rect x="70" y="965" width="440" height="120" rx="28" class="card"/><text x="105" y="1015" class="h green">PM 승인</text><text x="105" y="1050" class="body muted">100m 규칙/상태 충돌 해결</text>
+  <rect x="580" y="965" width="440" height="120" rx="28" class="card"/><text x="615" y="1015" class="h ink">디자인 방향</text><text x="615" y="1050" class="body muted">게임화된 여행 수집 + 한국어 정보 정돈</text>
+  <rect x="1090" y="965" width="440" height="120" rx="28" class="card"/><text x="1125" y="1015" class="h ink">다음 단계</text><text x="1125" y="1050" class="body muted">React Native / Expo 구현</text>
+</svg>

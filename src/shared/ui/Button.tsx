@@ -1,7 +1,8 @@
 import * as Haptics from 'expo-haptics';
 import { useRef } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { AppText } from './Text';
 import { colors, radius, spacing } from './tokens';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost';
@@ -67,9 +68,13 @@ export function Button({
         ]}
       >
         <View style={styles.content}>
-          <Text style={[styles.label, labelStyle(variant, isDisabled)]}>
+          <AppText
+            variant="bodyBold"
+            numberOfLines={2}
+            style={[styles.label, labelStyle(variant, isDisabled)]}
+          >
             {loading ? '...' : children}
-          </Text>
+          </AppText>
         </View>
       </Pressable>
     </Animated.View>
@@ -111,22 +116,37 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
+    minWidth: 0,
+    overflow: 'hidden',
   },
   md: { height: 48, paddingHorizontal: spacing.xl },
   lg: { height: 56, paddingHorizontal: spacing.xxl },
   fullWidth: { width: '100%' },
-  content: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  label: { fontSize: 15, lineHeight: 20, fontFamily: 'Pretendard-Bold', letterSpacing: 0 },
-  variantPrimary: { backgroundColor: colors.ink },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minWidth: 0,
+  },
+  label: {
+    textAlign: 'center',
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  variantPrimary: { backgroundColor: colors.brand },
   variantSecondary: {
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
   },
   variantGhost: { backgroundColor: 'transparent' },
-  variantDisabled: { backgroundColor: colors.surfaceSink },
+  variantDisabled: {
+    backgroundColor: colors.surfaceSink,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   labelPrimary: { color: colors.surface },
   labelSecondary: { color: colors.ink },
-  labelGhost: { color: colors.ink },
+  labelGhost: { color: colors.brandInk },
   labelDisabled: { color: colors.inkMuted },
 });

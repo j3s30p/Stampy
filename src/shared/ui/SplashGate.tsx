@@ -33,6 +33,23 @@ export function SplashGate() {
 
   // Stable ref for the ready timer so cleanup works reliably
   const readyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fadeFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hiddenRef = useRef(false);
+
+  const completeHide = () => {
+    if (hiddenRef.current) {
+      return;
+    }
+
+    hiddenRef.current = true;
+
+    if (fadeFallbackTimerRef.current !== null) {
+      clearTimeout(fadeFallbackTimerRef.current);
+      fadeFallbackTimerRef.current = null;
+    }
+
+    setVisible(false);
+  };
 
   useEffect(() => {
     // Mascot: spring drop from top + scale 1.2 → 1
@@ -51,7 +68,7 @@ export function SplashGate() {
       }),
     ]).start();
 
-    // Ink splash at 100ms — brand-red circle scales 0 → 4, opacity fades 0.18 → 0
+    // Ink splash after 0.1s — brand-red circle scales 0 → 4, opacity fades 0.18 → 0
     Animated.sequence([
       Animated.delay(100),
       Animated.parallel([
@@ -79,18 +96,23 @@ export function SplashGate() {
     // Ready after 1300ms minimum, then fade out 300ms
     readyTimerRef.current = setTimeout(() => {
       SplashScreen.hideAsync().catch(() => undefined);
+      fadeFallbackTimerRef.current = setTimeout(completeHide, 350);
+
       Animated.timing(overlayOpacity, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
       }).start(() => {
-        setVisible(false);
+        completeHide();
       });
     }, 1300);
 
     return () => {
       if (readyTimerRef.current !== null) {
         clearTimeout(readyTimerRef.current);
+      }
+      if (fadeFallbackTimerRef.current !== null) {
+        clearTimeout(fadeFallbackTimerRef.current);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Animated values from lazy useState are stable; deps would cause re-animation on every render
