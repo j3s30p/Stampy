@@ -1,6 +1,15 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { STAMP_RADIUS_METERS } from '@shared/config';
 import { AppText, Badge, Button, Mascot, Surface, colors, radius, spacing } from '@shared/ui';
@@ -20,8 +29,16 @@ export function TourSpotDetailView({
   onOpenDirections,
 }: TourSpotDetailViewProps) {
   const { width } = useWindowDimensions();
-  const isCompactHero = width < 360;
   const [message, setMessage] = useState('길찾기와 도장 동선을 확인해 보세요.');
+
+  const carouselWidth = Math.max(width - spacing.lg * 2, 0);
+  const images = spot
+    ? spot.imageUrls.length > 0
+      ? [...spot.imageUrls]
+      : spot.thumbnailUrl
+        ? [spot.thumbnailUrl]
+        : []
+    : [];
 
   if (!spot) {
     return (
@@ -49,7 +66,7 @@ export function TourSpotDetailView({
     );
   }
 
-  const intro = getIntroText(spot.title, spot.theme);
+  const intro = spot.overview ?? getIntroText(spot.title, spot.theme);
   const statusLabel = getSpotStatusLabel(spot);
 
   return (
@@ -69,11 +86,14 @@ export function TourSpotDetailView({
           </Badge>
         </View>
 
-        <Surface
-          elevation="e1"
-          radius="lg"
-          style={[styles.heroCard, isCompactHero ? styles.heroCardCompact : null]}
-        >
+        <Surface elevation="e1" radius="lg" style={styles.heroCard}>
+          <SpotImageCarousel
+            key={spot.contentId}
+            images={images}
+            collected={spot.collected}
+            width={carouselWidth}
+          />
+
           <View style={styles.heroCopy}>
             <Badge tone="brand" size="sm">
               관광지 상세
@@ -102,32 +122,6 @@ export function TourSpotDetailView({
                 </AppText>
               </View>
             </View>
-          </View>
-          <View
-            style={[styles.heroMascotWrap, isCompactHero ? styles.heroMascotWrapCompact : null]}
-          >
-            <View
-              style={[
-                styles.heroMascotCircle,
-                isCompactHero ? styles.heroMascotCircleCompact : null,
-              ]}
-            >
-              {spot.collected ? (
-                <AppText variant="title" tone="brand">
-                  ✓
-                </AppText>
-              ) : (
-                <Mascot size={isCompactHero ? 92 : 108} mood="happy" />
-              )}
-            </View>
-            <AppText
-              variant="micro"
-              tone="inkMuted"
-              style={styles.heroMascotLabel}
-              numberOfLines={1}
-            >
-              {spot.collected ? '수집 완료된 스탬프' : '도장 찍기 전'}
-            </AppText>
           </View>
         </Surface>
 
@@ -160,27 +154,31 @@ export function TourSpotDetailView({
 
         <Surface elevation="e1" radius="lg" style={styles.sectionCard}>
           <AppText variant="h3" tone="ink">
-            관광지 소개
+            상세 설명
           </AppText>
-          <AppText variant="body" tone="inkSoft" numberOfLines={3}>
+          <AppText variant="body" tone="inkSoft">
             {intro}
           </AppText>
         </Surface>
 
-        <Surface elevation="e1" radius="lg" style={styles.sectionCard}>
-          <AppText variant="h3" tone="ink">
-            주소
-          </AppText>
-          <AppText variant="body" tone="inkSoft" numberOfLines={3}>
-            {spot.address}
-          </AppText>
-        </Surface>
+        {(spot.address || spot.telephone || spot.homepage) && (
+          <Surface elevation="e1" radius="lg" style={styles.sectionCard}>
+            <AppText variant="h3" tone="ink">
+              관광지 정보
+            </AppText>
+            <View style={styles.detailList}>
+              {spot.address ? <InfoRow label="주소" value={spot.address} /> : null}
+              {spot.telephone ? <InfoRow label="전화" value={spot.telephone} /> : null}
+              {spot.homepage ? <InfoRow label="홈페이지" value={spot.homepage} /> : null}
+            </View>
+          </Surface>
+        )}
 
         <Surface elevation="e1" radius="lg" style={styles.noticeCard}>
           <Badge tone="brand" size="sm">
             도장 인증 안내
           </Badge>
-          <AppText variant="body" tone="inkSoft" numberOfLines={3}>
+          <AppText variant="body" tone="inkSoft">
             실제 도장은 하단 가운데 도장 탭에서만 진행됩니다. 관광지 반경 {STAMP_RADIUS_METERS}m
             이내에서 도장 화면을 열면 인증할 수 있어요.
           </AppText>
@@ -222,6 +220,85 @@ export function TourSpotDetailView({
   );
 }
 
+function InfoRow({ label, value }: { readonly label: string; readonly value: string }) {
+  return (
+    <View style={styles.infoRowItem}>
+      <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
+        {label}
+      </AppText>
+      <AppText variant="body" tone="inkSoft">
+        {value}
+      </AppText>
+    </View>
+  );
+}
+
+function SpotImageCarousel({
+  images,
+  collected,
+  width,
+}: {
+  readonly images: readonly string[];
+  readonly collected: boolean;
+  readonly width: number;
+}) {
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  const handleCarouselScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (width <= 0 || images.length <= 1) {
+      return;
+    }
+
+    const nextIndex = Math.round(event.nativeEvent.contentOffset.x / width);
+    setActiveImageIndex(Math.max(0, Math.min(nextIndex, images.length - 1)));
+  };
+
+  if (images.length === 0) {
+    return (
+      <View style={[styles.carouselFallback, { width }]}>
+        <Mascot size={108} mood={collected ? 'happy' : 'sleeping'} />
+      </View>
+    );
+  }
+
+  return (
+    <>
+      <View style={styles.carouselShell}>
+        <ScrollView
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          onMomentumScrollEnd={handleCarouselScrollEnd}
+          contentContainerStyle={styles.carouselContent}
+        >
+          {images.map((imageUrl, index) => (
+            <View key={`${imageUrl}-${index}`} style={[styles.carouselPage, { width }]}>
+              <Image source={{ uri: imageUrl }} style={styles.carouselImage} resizeMode="cover" />
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+
+      {images.length > 1 ? (
+        <View style={styles.indicatorRow} accessibilityRole="tablist">
+          {images.map((_, index) => (
+            <View
+              key={`indicator-${index}`}
+              style={[
+                styles.indicatorDot,
+                index === activeImageIndex ? styles.indicatorDotActive : null,
+              ]}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: index === activeImageIndex }}
+            />
+          ))}
+        </View>
+      ) : null}
+    </>
+  );
+}
+
 const getIntroText = (title: string, theme: string) => {
   const introByTheme: Record<string, string> = {
     '궁궐 산책':
@@ -240,7 +317,10 @@ const getSpotStatusLabel = (spot: HomeTourSpot) => {
     return '수집 완료';
   }
 
-  if (spot.distanceMeters <= STAMP_RADIUS_METERS) {
+  if (
+    spot.verificationDistanceMeters !== null &&
+    spot.verificationDistanceMeters <= STAMP_RADIUS_METERS
+  ) {
     return '반경 안';
   }
 
@@ -252,7 +332,10 @@ const getStatusTone = (spot: HomeTourSpot): 'done' | 'ready' | 'neutral' => {
     return 'done';
   }
 
-  if (spot.distanceMeters <= STAMP_RADIUS_METERS) {
+  if (
+    spot.verificationDistanceMeters !== null &&
+    spot.verificationDistanceMeters <= STAMP_RADIUS_METERS
+  ) {
     return 'ready';
   }
 
@@ -290,19 +373,48 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   heroCard: {
+    overflow: 'hidden',
+    padding: 0,
+  },
+  carouselShell: {
+    backgroundColor: colors.surfaceSink,
+  },
+  carouselContent: {
+    alignItems: 'stretch',
+  },
+  carouselPage: {
+    aspectRatio: 16 / 10,
+  },
+  carouselImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: colors.surfaceSink,
+  },
+  carouselFallback: {
+    aspectRatio: 16 / 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceSink,
+  },
+  indicatorRow: {
     flexDirection: 'row',
-    gap: spacing.lg,
-    padding: spacing.lg,
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingTop: spacing.sm,
+  },
+  indicatorDot: {
+    width: 7,
+    height: 7,
+    borderRadius: radius.full,
+    backgroundColor: colors.border,
+  },
+  indicatorDotActive: {
+    backgroundColor: colors.ink,
+    width: 18,
   },
   heroCopy: {
-    flex: 1,
-    minWidth: 0,
-    flexShrink: 1,
     gap: spacing.sm,
-  },
-  heroCardCompact: {
-    gap: spacing.md,
-    padding: spacing.md,
+    padding: spacing.lg,
   },
   heroMetaRow: {
     flexDirection: 'row',
@@ -315,34 +427,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.sm,
     gap: 2,
-  },
-  heroMascotWrap: {
-    width: 122,
-    minWidth: 0,
-    alignItems: 'center',
-    gap: spacing.sm,
-    alignSelf: 'center',
-  },
-  heroMascotWrapCompact: {
-    width: 108,
-  },
-  heroMascotCircle: {
-    width: 122,
-    height: 122,
-    borderRadius: 61,
-    backgroundColor: colors.surfaceSink,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroMascotCircleCompact: {
-    width: 108,
-    height: 108,
-    borderRadius: 54,
-  },
-  heroMascotLabel: {
-    textAlign: 'center',
   },
   infoRow: {
     flexDirection: 'row',
@@ -359,6 +443,12 @@ const styles = StyleSheet.create({
   sectionCard: {
     padding: spacing.lg,
     gap: spacing.sm,
+  },
+  detailList: {
+    gap: spacing.sm,
+  },
+  infoRowItem: {
+    gap: 2,
   },
   noticeCard: {
     padding: spacing.lg,

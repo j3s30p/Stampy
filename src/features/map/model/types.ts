@@ -5,8 +5,10 @@ export interface MapSpotPin {
   readonly title: string;
   readonly address: string;
   readonly distanceMeters: number;
+  readonly verificationDistanceMeters: number | null;
   readonly collected: boolean;
   readonly location: Coordinates;
+  readonly thumbnailUrl?: string;
 }
 
 export interface KakaoMapPointPayload {
@@ -39,4 +41,5 @@ export interface KakaoMapDataPayload {
   readonly selectedSpotId: string | null;
   readonly currentLocation: KakaoMapPointPayload | null;
   readonly center: KakaoMapPointPayload;
+  readonly stampRadiusMeters: number;
 }

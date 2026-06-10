@@ -1,15 +1,15 @@
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppText, Badge, Gauge, Mascot, Surface, colors, radius, spacing } from '@shared/ui';
+import { AppText, colors, radius, spacing } from '@shared/ui';
 
 export interface MyStampSummary {
   readonly contentId: string;
   readonly title: string;
   readonly collected: boolean;
   readonly collectedAt?: string;
+  readonly thumbnailUrl?: string;
 }
 
 interface MyPageViewProps {
@@ -19,344 +19,241 @@ interface MyPageViewProps {
 }
 
 export function MyPageView({ stamps, nickname, onSelectStamp }: MyPageViewProps) {
-  const [selectedSetting, setSelectedSetting] = useState<string>('설정을 눌러 보세요');
+  const [selectedSetting, setSelectedSetting] = useState<string | null>(null);
   const collectedCount = stamps.filter((stamp) => stamp.collected).length;
   const totalCount = stamps.length;
-  const remainingCount = totalCount - collectedCount;
-  const expPercent = 62;
-  const latestStamp = useMemo(
-    () =>
-      [...stamps]
-        .filter((stamp) => stamp.collected)
-        .sort((a, b) => (b.collectedAt ?? '').localeCompare(a.collectedAt ?? ''))[0] ?? null,
-    [stamps],
-  );
-  const currentMonth = '2026.06';
-
-  const heroOpacity = useSharedValue(0);
-  const heroTranslateY = useSharedValue(8);
-  // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for entrance animation
-  const heroOpacityRef = useRef(heroOpacity);
-  // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for entrance animation
-  const heroTranslateYRef = useRef(heroTranslateY);
-
-  const heroAnimStyle = useAnimatedStyle(() => ({
-    opacity: heroOpacityRef.current.value,
-    transform: [{ translateY: heroTranslateYRef.current.value }],
-  }));
-
-  useFocusEffect(
-    useCallback(() => {
-      heroOpacityRef.current.value = 0;
-      heroTranslateYRef.current.value = 8;
-      heroOpacityRef.current.value = withTiming(1, { duration: 320 });
-      heroTranslateYRef.current.value = withTiming(0, { duration: 320 });
-    }, []),
-  );
+  const visitedRegions = Math.min(2, Math.max(1, collectedCount));
 
   return (
-    <SafeAreaView style={styles.root}>
+    <SafeAreaView style={styles.root} edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.topbar}>
-          <View style={styles.brandBlock}>
-            <AppText variant="micro" tone="brand" numberOfLines={1}>
-              MY
-            </AppText>
-            <AppText variant="h1" tone="ink" numberOfLines={1}>
-              도장 보관함
-            </AppText>
-            <AppText variant="caption" tone="inkMuted" numberOfLines={2}>
-              내 여행 기록과 성장 정보를 한 번에 확인합니다.
-            </AppText>
-          </View>
-          <View style={styles.avatar}>
-            <Mascot size={42} mood="happy" />
-          </View>
-        </View>
-
-        <Animated.View style={heroAnimStyle}>
-          <Surface elevation="e1" radius="lg" style={styles.hero}>
-            <View style={styles.heroIdentity}>
-              <View style={styles.bigAvatar}>
-                <AppText variant="h2" tone="onDark" numberOfLines={1}>
-                  {nickname.slice(0, 1)}
-                </AppText>
-              </View>
-              <View style={styles.heroText}>
-                <Badge tone="brand" size="sm">
-                  스탬피 여행자
-                </Badge>
-                <AppText variant="h2" tone="ink" numberOfLines={1}>
+        <View style={styles.profileHeader}>
+          <AppText variant="h1" tone="ink" numberOfLines={1}>
+            마이
+          </AppText>
+          <View style={styles.profileRow}>
+            <Avatar label={nickname} size={60} />
+            <View style={styles.profileText}>
+              <View style={styles.nameRow}>
+                <AppText variant="h3" tone="ink" numberOfLines={1}>
                   {nickname}
                 </AppText>
-                <AppText variant="caption" tone="inkMuted" numberOfLines={2}>
-                  LV.3 지역 탐험가 · 이번 달 도장 {collectedCount}개
-                </AppText>
+                <View style={styles.kakaoBadge}>
+                  <AppText variant="micro" style={styles.kakaoText} numberOfLines={1}>
+                    카카오 연동
+                  </AppText>
+                </View>
               </View>
-            </View>
-
-            <Gauge value={expPercent} tone="reward" />
-
-            <View style={styles.heroFootRow}>
               <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
-                다음 레벨까지 380 EXP
-              </AppText>
-              <AppText variant="captionBold" tone="ink" numberOfLines={1}>
-                620 / 1000
+                2026년 5월부터 도장 수집 중
               </AppText>
             </View>
-
-            <View style={styles.heroStatsRow}>
-              <View style={styles.heroStat}>
-                <AppText variant="title" tone="ink" numberOfLines={1}>
-                  {collectedCount}
-                </AppText>
-                <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
-                  획득 스탬프
-                </AppText>
-              </View>
-              <View style={styles.heroStat}>
-                <AppText variant="title" tone="ink" numberOfLines={1}>
-                  {totalCount}
-                </AppText>
-                <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
-                  전체 스팟
-                </AppText>
-              </View>
-              <View style={styles.heroStat}>
-                <AppText variant="title" tone="ink" numberOfLines={1}>
-                  {remainingCount}
-                </AppText>
-                <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
-                  남은 스팟
-                </AppText>
-              </View>
-            </View>
-          </Surface>
-        </Animated.View>
-
-        <View style={styles.sectionHead}>
-          <AppText variant="h2" tone="ink" numberOfLines={1}>
-            나의 여행 요약
-          </AppText>
-          <Badge tone="neutral" size="sm">
-            {currentMonth}
-          </Badge>
+            <Ionicons name="create-outline" size={20} color={colors.inkSubtle} />
+          </View>
         </View>
 
         <View style={styles.statsRow}>
-          <Surface elevation="e1" radius="lg" style={styles.statCard}>
-            <AppText variant="h1" tone="ink" numberOfLines={1}>
-              {collectedCount}
-            </AppText>
-            <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
-              획득 스탬프
-            </AppText>
-          </Surface>
-          <Surface elevation="e1" radius="lg" style={styles.statCard}>
-            <AppText variant="h1" tone="ink" numberOfLines={1}>
-              {totalCount}
-            </AppText>
-            <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
-              전체 스팟
-            </AppText>
-          </Surface>
-          <Surface elevation="e1" radius="lg" style={styles.statCard}>
-            <AppText variant="h1" tone="ink" numberOfLines={1}>
-              {remainingCount}
-            </AppText>
-            <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
-              남은 스팟
-            </AppText>
-          </Surface>
+          <StatCard label="수집한 도장" value={String(collectedCount)} accent />
+          <StatCard label="방문 지역" value={String(visitedRegions)} />
+          <StatCard label="이번 주 랭킹" value="12위" />
         </View>
 
-        <Surface elevation="e1" radius="lg" style={styles.activityCard}>
+        <View style={styles.menu}>
+          {primaryRows.map((row) => (
+            <MenuRow
+              key={row.label}
+              row={row}
+              onPress={() => {
+                setSelectedSetting(row.feedback);
+                if (row.contentId) {
+                  onSelectStamp?.(row.contentId);
+                }
+              }}
+            />
+          ))}
+        </View>
+
+        <View style={styles.menu}>
+          {secondaryRows.map((row) => (
+            <MenuRow key={row.label} row={row} onPress={() => setSelectedSetting(row.feedback)} />
+          ))}
+        </View>
+
+        <View style={styles.recentBlock}>
           <View style={styles.sectionHead}>
-            <AppText variant="h2" tone="ink" numberOfLines={1}>
-              최근 활동
+            <AppText variant="h3" tone="ink" numberOfLines={1}>
+              최근 도장
             </AppText>
-            <Badge tone="neutral" size="sm">
-              최신 1건
-            </Badge>
+            <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
+              {totalCount}개 스팟
+            </AppText>
           </View>
-
-          {latestStamp ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`${latestStamp.title} 도장 상세 보기`}
-              onPress={() => onSelectStamp?.(latestStamp.contentId)}
-              style={({ pressed }) => [styles.activityRow, pressed ? styles.pressed : null]}
-            >
-              <View style={styles.activityStamp}>
-                <AppText variant="captionBold" tone="onDark" numberOfLines={1}>
-                  01
-                </AppText>
-              </View>
-              <View style={styles.activityText}>
-                <AppText variant="bodyBold" tone="ink" numberOfLines={1}>
-                  {latestStamp.title} 스탬프 획득
-                </AppText>
-                <AppText variant="caption" tone="inkMuted" numberOfLines={2}>
-                  {latestStamp.collectedAt
-                    ? `오늘 ${formatTime(latestStamp.collectedAt)} · +10 EXP`
-                    : '방문 기록 없음'}
-                </AppText>
-              </View>
-            </Pressable>
-          ) : (
-            <AppText variant="caption" tone="inkMuted" numberOfLines={2}>
-              아직 최근 활동이 없습니다.
-            </AppText>
-          )}
-        </Surface>
-
-        <View style={styles.sectionHead}>
-          <AppText variant="h2" tone="ink" numberOfLines={1}>
-            대표 배지
-          </AppText>
-          <Badge tone="neutral" size="sm">
-            2개
-          </Badge>
-        </View>
-
-        <View style={styles.badgeGrid}>
-          <Surface elevation="e1" radius="lg" style={styles.badgeCard}>
-            <View style={styles.badgeCircle}>
-              <AppText variant="captionBold" tone="ink" numberOfLines={1}>
-                01
-              </AppText>
-            </View>
-            <AppText variant="bodyBold" tone="ink" numberOfLines={1}>
-              궁궐 탐험가
-            </AppText>
-            <AppText variant="caption" tone="inkMuted" style={styles.badgeMeta} numberOfLines={2}>
-              대표 테마 배지
-            </AppText>
-          </Surface>
-
-          <Surface elevation="e1" radius="lg" style={styles.badgeCard}>
-            <View style={styles.badgeCircle}>
-              <AppText variant="captionBold" tone="ink" numberOfLines={1}>
-                02
-              </AppText>
-            </View>
-            <AppText variant="bodyBold" tone="ink" numberOfLines={1}>
-              행사 참여러
-            </AppText>
-            <AppText variant="caption" tone="inkMuted" style={styles.badgeMeta} numberOfLines={2}>
-              최근 활동 기준
-            </AppText>
-          </Surface>
-        </View>
-
-        <View style={styles.sectionHead}>
-          <AppText variant="h2" tone="ink" numberOfLines={1}>
-            도장 보관함
-          </AppText>
-          <Badge tone="brand" size="sm">
-            전체 보기
-          </Badge>
-        </View>
-
-        <View style={styles.collectionList}>
-          {stamps.map((stamp) => (
+          {stamps.slice(0, 3).map((stamp) => (
             <Pressable
               key={stamp.contentId}
               accessibilityRole="button"
               accessibilityLabel={`${stamp.title} 상세 보기`}
               onPress={() => onSelectStamp?.(stamp.contentId)}
-              style={({ pressed }) => [pressed ? styles.pressed : null]}
+              style={({ pressed }) => [styles.stampRow, pressed ? styles.pressed : null]}
             >
-              <Surface elevation="e1" radius="lg" style={styles.collectionRow}>
-                <View
-                  style={[
-                    styles.collectionIcon,
-                    stamp.collected ? styles.collectionIconDone : styles.collectionIconTodo,
-                  ]}
-                >
-                  <AppText
-                    variant="captionBold"
-                    style={
-                      stamp.collected
-                        ? styles.collectionIconTextDone
-                        : styles.collectionIconTextTodo
-                    }
-                    numberOfLines={1}
-                  >
-                    {stamp.collected ? '✓' : '·'}
-                  </AppText>
-                </View>
-                <View style={styles.collectionText}>
-                  <AppText variant="bodyBold" tone="ink" numberOfLines={1}>
-                    {stamp.title}
-                  </AppText>
-                  <View style={styles.collectionMetaRow}>
-                    <Badge tone={stamp.collected ? 'done' : 'neutral'} size="sm">
-                      {stamp.collected ? '수집 완료' : '아직 방문 전'}
-                    </Badge>
-                    <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
-                      {stamp.collected
-                        ? `수집 완료 · ${formatCollectedAt(stamp.collectedAt)}`
-                        : '위치 확인 중'}
-                    </AppText>
-                  </View>
-                </View>
-              </Surface>
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={styles.sectionHead}>
-          <AppText variant="h2" tone="ink" numberOfLines={1}>
-            설정
-          </AppText>
-        </View>
-
-        <View style={styles.settingsList}>
-          {settingsRows.map((row) => (
-            <Pressable
-              key={row.label}
-              accessibilityRole="button"
-              accessibilityLabel={row.label}
-              onPress={() => setSelectedSetting(row.feedback)}
-              style={({ pressed }) => [pressed ? styles.pressed : null]}
-            >
-              <Surface elevation="e1" radius="lg" style={styles.settingRow}>
+              <View style={[styles.stampDot, stamp.collected ? styles.stampDotDone : null]}>
+                <Ionicons
+                  name={stamp.collected ? 'checkmark' : 'lock-closed'}
+                  size={16}
+                  color={stamp.collected ? colors.surface : colors.inkSubtle}
+                />
+              </View>
+              <View style={styles.stampText}>
                 <AppText variant="bodyBold" tone="ink" numberOfLines={1}>
-                  {row.label}
+                  {stamp.title}
                 </AppText>
-                <AppText variant="h2" tone="inkMuted" numberOfLines={1}>
-                  ›
+                <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
+                  {stamp.collected
+                    ? `수집 완료 · ${formatCollectedAt(stamp.collectedAt)}`
+                    : '아직 방문 전'}
                 </AppText>
-              </Surface>
+              </View>
             </Pressable>
           ))}
         </View>
 
-        <Surface elevation="none" radius="md" style={styles.feedbackCard}>
-          <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
-            선택 상태
-          </AppText>
-          <AppText variant="bodyBold" tone="ink" numberOfLines={2}>
-            {selectedSetting}
-          </AppText>
-        </Surface>
+        <AppText variant="caption" tone="inkMuted" style={styles.logout} numberOfLines={1}>
+          로그아웃
+        </AppText>
+
+        {selectedSetting ? (
+          <View style={styles.feedback}>
+            <AppText variant="captionBold" tone="ink" numberOfLines={2}>
+              {selectedSetting}
+            </AppText>
+          </View>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const formatTime = (value?: string) => {
-  if (!value) {
-    return '날짜 없음';
-  }
+function Avatar({ label, size }: { readonly label: string; readonly size: number }) {
+  return (
+    <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}>
+      <AppText variant="h3" style={styles.avatarText} numberOfLines={1}>
+        {label.slice(0, 2)}
+      </AppText>
+    </View>
+  );
+}
 
-  return new Intl.DateTimeFormat('ko-KR', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value));
-};
+function StatCard({
+  accent = false,
+  label,
+  value,
+}: {
+  readonly accent?: boolean;
+  readonly label: string;
+  readonly value: string;
+}) {
+  return (
+    <View style={styles.statCard}>
+      <AppText variant="micro" tone="inkMuted" numberOfLines={1} style={styles.centerText}>
+        {label}
+      </AppText>
+      <AppText variant="h1" style={accent ? styles.statAccent : styles.statValue} numberOfLines={1}>
+        {value}
+      </AppText>
+    </View>
+  );
+}
+
+function MenuRow({ onPress, row }: { readonly onPress: () => void; readonly row: MenuItem }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={row.label}
+      onPress={onPress}
+      style={({ pressed }) => [styles.menuRow, pressed ? styles.pressed : null]}
+    >
+      <Ionicons name={row.icon} size={20} color={row.color ?? colors.ink} />
+      <AppText variant="body" tone="ink" style={styles.menuLabel} numberOfLines={1}>
+        {row.label}
+      </AppText>
+      {row.trailing ? (
+        <AppText
+          variant="captionBold"
+          style={row.trailingTone === 'green' ? styles.trailingGreen : styles.trailing}
+          numberOfLines={1}
+        >
+          {row.trailing}
+        </AppText>
+      ) : null}
+      {row.toggle ? (
+        <View style={styles.toggle} />
+      ) : (
+        <Ionicons name="chevron-forward" size={16} color="#B8C2D0" />
+      )}
+    </Pressable>
+  );
+}
+
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+
+interface MenuItem {
+  readonly label: string;
+  readonly icon: IoniconName;
+  readonly feedback: string;
+  readonly color?: string;
+  readonly trailing?: string;
+  readonly trailingTone?: 'green';
+  readonly toggle?: boolean;
+  readonly contentId?: string;
+}
+
+const primaryRows: readonly MenuItem[] = [
+  {
+    label: '내 도장 수집 내역',
+    icon: 'ribbon-outline',
+    color: colors.brand,
+    feedback: '내 도장 수집 내역이 선택되었습니다.',
+  },
+  {
+    label: '위치 권한',
+    icon: 'location-outline',
+    color: colors.locationDot,
+    trailing: '항상 허용',
+    trailingTone: 'green',
+    feedback: '위치 권한이 선택되었습니다.',
+  },
+  {
+    label: '근처 스팟 알림',
+    icon: 'notifications-outline',
+    toggle: true,
+    feedback: '근처 스팟 알림이 선택되었습니다.',
+  },
+  {
+    label: '언어',
+    icon: 'language-outline',
+    trailing: '한국어',
+    feedback: '언어 설정이 선택되었습니다.',
+  },
+];
+
+const secondaryRows: readonly MenuItem[] = [
+  {
+    label: '자주 묻는 질문',
+    icon: 'help-circle-outline',
+    feedback: '자주 묻는 질문이 선택되었습니다.',
+  },
+  {
+    label: '약관 및 개인정보 처리방침',
+    icon: 'document-text-outline',
+    feedback: '약관 및 개인정보 처리방침이 선택되었습니다.',
+  },
+  {
+    label: '앱 정보',
+    icon: 'information-circle-outline',
+    trailing: 'v1.0.0',
+    feedback: '앱 정보가 선택되었습니다.',
+  },
+];
 
 const formatCollectedAt = (value?: string) => {
   if (!value) {
@@ -369,200 +266,165 @@ const formatCollectedAt = (value?: string) => {
   }).format(new Date(value));
 };
 
-const settingsRows = [
-  { label: '위치 권한 관리', feedback: '위치 권한 관리가 선택되었습니다.' },
-  { label: '알림 설정', feedback: '알림 설정이 선택되었습니다.' },
-  { label: '계정 정보', feedback: '계정 정보가 선택되었습니다.' },
-] as const;
-
 const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.canvas,
   },
   content: {
+    paddingBottom: spacing.xxl,
+  },
+  profileHeader: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.xxxl,
+    paddingBottom: spacing.lg,
     gap: spacing.md,
+    backgroundColor: colors.surface,
   },
-  topbar: {
+  profileRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    alignItems: 'center',
     gap: spacing.md,
-  },
-  brandBlock: {
-    flex: 1,
-    minWidth: 0,
-    gap: spacing.xs,
   },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.brandSoft,
   },
-  hero: {
-    padding: spacing.lg,
-    gap: spacing.md,
+  avatarText: {
+    color: colors.brandInk,
   },
-  heroIdentity: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  bigAvatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroText: {
+  profileText: {
     flex: 1,
     minWidth: 0,
+    gap: 3,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.xs,
   },
-  heroFootRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  heroStatsRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  heroStat: {
-    flex: 1,
-    minWidth: 0,
-    paddingVertical: spacing.sm,
+  kakaoBadge: {
     paddingHorizontal: spacing.sm,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceSink,
-    gap: 2,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+    backgroundColor: '#FAE54D',
   },
-  sectionHead: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
+  kakaoText: {
+    color: '#3C2A00',
   },
   statsRow: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
     flexDirection: 'row',
     gap: spacing.sm,
   },
   statCard: {
     flex: 1,
-    minWidth: 0,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.md,
+    minHeight: 72,
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: spacing.xs,
+    padding: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
-  activityCard: {
-    padding: spacing.lg,
-    gap: spacing.sm,
-  },
-  activityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  activityStamp: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: colors.rewardSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  activityText: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
-  badgeGrid: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  badgeCard: {
-    flex: 1,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.sm,
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  badgeCircle: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: colors.brandSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeMeta: {
+  centerText: {
     textAlign: 'center',
   },
-  collectionList: {
-    gap: spacing.sm,
+  statValue: {
+    color: colors.ink,
   },
-  collectionRow: {
+  statAccent: {
+    color: colors.brand,
+  },
+  menu: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+  },
+  menuRow: {
+    minHeight: 54,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEF1F6',
   },
-  collectionIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  collectionIconDone: {
-    backgroundColor: colors.ink,
-  },
-  collectionIconTodo: {
-    backgroundColor: colors.surfaceSink,
-  },
-  collectionIconTextDone: {
-    color: colors.surface,
-  },
-  collectionIconTextTodo: {
-    color: colors.inkSoft,
-  },
-  collectionText: {
+  menuLabel: {
     flex: 1,
     minWidth: 0,
-    gap: spacing.xs,
   },
-  collectionMetaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
+  trailing: {
+    color: colors.inkMuted,
   },
-  settingsList: {
+  trailingGreen: {
+    color: colors.stamp,
+  },
+  toggle: {
+    width: 42,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.stamp,
+    borderWidth: 2,
+    borderColor: colors.surface,
+  },
+  recentBlock: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
     gap: spacing.sm,
   },
-  settingRow: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
+  sectionHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    gap: spacing.sm,
+  },
+  stampRow: {
+    minHeight: 58,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
-  feedbackCard: {
+  stampDot: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.canvas,
+  },
+  stampDotDone: {
+    backgroundColor: colors.stamp,
+  },
+  stampText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  logout: {
+    marginTop: spacing.lg,
+    textAlign: 'center',
+  },
+  feedback: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
     padding: spacing.md,
-    gap: spacing.xs,
-    backgroundColor: colors.surfaceSink,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
   },
   pressed: {
-    opacity: 0.85,
+    opacity: 0.86,
   },
 });

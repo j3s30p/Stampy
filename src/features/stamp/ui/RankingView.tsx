@@ -1,9 +1,8 @@
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppText, Mascot, Surface, colors, radius, spacing } from '@shared/ui';
+import { AppText, Surface, colors, radius, spacing } from '@shared/ui';
 
 export interface RankingEntry {
   readonly id: string;
@@ -16,404 +15,487 @@ interface RankingViewProps {
   readonly entries: readonly RankingEntry[];
 }
 
-type RankingTab = 'weekly' | 'region' | 'friends';
-
 export function RankingView({ entries }: RankingViewProps) {
-  const [selectedTab, setSelectedTab] = useState<RankingTab>('weekly');
-  const tabRows = useMemo(() => buildRows(selectedTab, entries), [entries, selectedTab]);
-  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(tabRows[0]?.id ?? null);
-
-  const resolvedSelectedEntryId = tabRows.some((entry) => entry.id === selectedEntryId)
-    ? selectedEntryId
-    : (tabRows.find((entry) => entry.isMe)?.id ?? tabRows[0]?.id ?? null);
-
-  const selectedEntry =
-    tabRows.find((entry) => entry.id === resolvedSelectedEntryId) ??
-    tabRows.find((entry) => entry.isMe) ??
-    tabRows[0] ??
-    null;
-
-  // Hero entrance
-  const heroOpacity = useSharedValue(0);
-  const heroTranslateY = useSharedValue(8);
-  // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for entrance animation
-  const heroOpacityRef = useRef(heroOpacity);
-  // eslint-disable-next-line react-hooks/immutability -- SharedValue refs for entrance animation
-  const heroTranslateYRef = useRef(heroTranslateY);
-
-  const heroAnimStyle = useAnimatedStyle(() => ({
-    opacity: heroOpacityRef.current.value,
-    transform: [{ translateY: heroTranslateYRef.current.value }],
-  }));
-
-  useFocusEffect(
-    useCallback(() => {
-      heroOpacityRef.current.value = 0;
-      heroTranslateYRef.current.value = 8;
-      heroOpacityRef.current.value = withTiming(1, { duration: 350 });
-      heroTranslateYRef.current.value = withTiming(0, { duration: 350 });
-    }, []),
-  );
+  const [activeRange, setActiveRange] = useState<RankingRange>('week');
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const rows = useMemo(() => buildLeaderboard(entries), [entries]);
+  const podium = rows.slice(0, 3);
+  const restRows = rows.slice(3, 7);
+  const meRow = rows.find((entry) => entry.isMe) ?? rows[rows.length - 1] ?? null;
+  const selectedEntry = rows.find((entry) => entry.id === selectedEntryId) ?? rows[0] ?? null;
 
   return (
-    <SafeAreaView style={styles.root}>
+    <SafeAreaView style={styles.root} edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.topbar}>
-          <View style={styles.brandBlock}>
-            <AppText variant="h1">{getTabLabel(selectedTab)}</AppText>
-            <AppText variant="caption" tone="inkMuted">
-              {getTabCaption(selectedTab)}
-            </AppText>
-          </View>
-        </View>
-
-        {/* Hero block — typographic, no gradient */}
-        <Animated.View style={[styles.hero, heroAnimStyle]}>
-          <View style={styles.heroRankRow}>
-            <Mascot size={40} mood="happy" />
-            <View style={styles.heroRankText}>
-              <AppText variant="micro" tone="inkMuted">
-                내 현재 순위
-              </AppText>
-              <AppText variant="title" tone="ink">
-                {getHeroRank(selectedTab)}
-              </AppText>
-            </View>
-          </View>
-          <AppText variant="body" tone="inkSoft">
-            {getHeroSub(selectedTab)}
+        <View style={styles.header}>
+          <AppText variant="h1" tone="ink" numberOfLines={1}>
+            랭킹
           </AppText>
-          <View style={styles.heroBadges}>
-            <View style={styles.heroBadge}>
-              <AppText variant="micro" tone="inkMuted">
-                12 stamps
-              </AppText>
-            </View>
-            <View style={styles.heroBadge}>
-              <AppText variant="micro" tone="inkMuted">
-                620 EXP
-              </AppText>
-            </View>
-          </View>
-        </Animated.View>
-
-        <View style={styles.tabs}>
-          {rankingTabs.map((tab) => {
-            const isActive = tab.key === selectedTab;
-
-            return (
+          <View style={styles.segment}>
+            {rankingRanges.map((range) => (
               <Pressable
-                key={tab.key}
+                key={range.key}
                 accessibilityRole="button"
-                accessibilityLabel={`${tab.label} 랭킹 보기`}
-                accessibilityState={{ selected: isActive }}
-                onPress={() => setSelectedTab(tab.key)}
+                accessibilityLabel={`${range.label} 랭킹 보기`}
+                accessibilityState={{ selected: activeRange === range.key }}
+                onPress={() => setActiveRange(range.key)}
                 style={({ pressed }) => [
-                  styles.tab,
-                  isActive ? styles.tabActive : null,
+                  styles.segmentItem,
+                  activeRange === range.key ? styles.segmentActive : null,
                   pressed ? styles.pressed : null,
                 ]}
               >
                 <AppText
                   variant="captionBold"
-                  style={isActive ? styles.tabTextActive : styles.tabTextInactive}
+                  tone={activeRange === range.key ? 'ink' : 'inkMuted'}
+                  numberOfLines={1}
                 >
-                  {tab.label}
+                  {range.label}
                 </AppText>
               </Pressable>
-            );
-          })}
+            ))}
+          </View>
+          <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
+            {rankingRanges.find((range) => range.key === activeRange)?.subtitle ?? ''}
+          </AppText>
+        </View>
+
+        <View style={styles.podiumRow}>
+          <PodiumCard
+            entry={podium[1]}
+            rank={2}
+            selected={selectedEntry?.id === podium[1]?.id}
+            onPress={() => {
+              if (podium[1]) {
+                setSelectedEntryId(podium[1].id);
+              }
+            }}
+            tone="blue"
+          />
+          <PodiumCard
+            entry={podium[0]}
+            rank={1}
+            selected={selectedEntry?.id === podium[0]?.id}
+            onPress={() => {
+              if (podium[0]) {
+                setSelectedEntryId(podium[0].id);
+              }
+            }}
+            tone="orange"
+            featured
+          />
+          <PodiumCard
+            entry={podium[2]}
+            rank={3}
+            selected={selectedEntry?.id === podium[2]?.id}
+            onPress={() => {
+              if (podium[2]) {
+                setSelectedEntryId(podium[2].id);
+              }
+            }}
+            tone="green"
+          />
+        </View>
+
+        <View style={styles.list}>
+          {restRows.map((entry, index) => (
+            <RankingRow
+              key={entry.id}
+              entry={entry}
+              rank={index + 4}
+              selected={selectedEntry?.id === entry.id}
+              onPress={() => setSelectedEntryId(entry.id)}
+            />
+          ))}
         </View>
 
         {selectedEntry ? (
-          <Surface elevation="none" radius="lg" style={styles.selectedPanel}>
-            <AppText variant="micro" tone="inkMuted" style={styles.selectedLabel}>
-              선택한 참여자
-            </AppText>
-            <AppText variant="h1" tone="ink">
+          <Surface elevation="none" radius="md" style={styles.selectionCard}>
+            <View style={styles.selectionCardRow}>
+              <AppText variant="captionBold" tone="ink" numberOfLines={1}>
+                선택됨
+              </AppText>
+              <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
+                {rangeLabel(activeRange)}
+              </AppText>
+            </View>
+            <AppText variant="bodyBold" tone="ink" numberOfLines={1}>
               {selectedEntry.nickname}
             </AppText>
-            <AppText variant="body" tone="inkSoft">
-              현재 수집 도장 {selectedEntry.stampCount}개
+            <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
+              도장 {selectedEntry.stampCount}개 · {getRank(rows, selectedEntry)}
             </AppText>
           </Surface>
         ) : null}
 
-        <View style={styles.rows}>
-          {tabRows.map((entry, index) => (
-            <Pressable
-              key={entry.id}
-              accessibilityRole="button"
-              accessibilityLabel={`${entry.nickname} 랭킹 선택`}
-              accessibilityState={{ selected: entry.id === selectedEntry?.id }}
-              onPress={() => setSelectedEntryId(entry.id)}
-              style={({ pressed }) => [pressed ? styles.pressed : null]}
-            >
-              <Surface
-                elevation="none"
-                radius="md"
-                style={[
-                  styles.row,
-                  entry.isMe ? styles.meRow : null,
-                  entry.id === selectedEntry?.id ? styles.rowSelected : null,
-                ]}
-              >
-                <View style={[styles.rankBox, index === 0 ? styles.rankBoxTop : null]}>
-                  <AppText
-                    variant="captionBold"
-                    style={[styles.rank, index === 0 ? styles.rankTop : null]}
-                  >
-                    {index + 1}
-                  </AppText>
-                </View>
-                <View style={styles.member}>
-                  <AppText variant="h3">{entry.nickname}</AppText>
-                  <AppText variant="caption" tone="inkMuted">
-                    {getRowMeta(selectedTab, entry)}
-                  </AppText>
-                </View>
-                <AppText variant="captionBold" tone="brand" style={styles.score}>
-                  {getScoreLabel(index, selectedTab)}
-                </AppText>
-              </Surface>
-            </Pressable>
-          ))}
-        </View>
-
-        <Surface elevation="e1" radius="lg" style={styles.missionCard}>
-          <AppText variant="h3">오늘의 미션</AppText>
-          <AppText variant="body" tone="inkSoft">
-            {getMissionText(selectedTab)}
-          </AppText>
-        </Surface>
+        {meRow ? (
+          <View style={styles.myRankRow}>
+            <AppText variant="captionBold" tone="onDark" style={styles.rankCell} numberOfLines={1}>
+              {getRank(rows, meRow)}
+            </AppText>
+            <Avatar label={meRow.nickname} tone="orangeDark" size={36} />
+            <View style={styles.myRankText}>
+              <AppText variant="captionBold" tone="onDark" numberOfLines={1}>
+                {meRow.nickname} · 나
+              </AppText>
+              <AppText variant="micro" style={styles.myRankHint} numberOfLines={1}>
+                5위까지 도장 {Math.max(0, meRow.stampCount - 4)}개
+              </AppText>
+            </View>
+            <AppText variant="captionBold" tone="onDark" numberOfLines={1}>
+              도장 {meRow.stampCount}개
+            </AppText>
+          </View>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const rankingTabs: readonly { readonly key: RankingTab; readonly label: string }[] = [
-  { key: 'weekly', label: '주간' },
-  { key: 'region', label: '지역' },
-  { key: 'friends', label: '친구' },
-];
+function PodiumCard({
+  entry,
+  featured = false,
+  onPress,
+  rank,
+  selected = false,
+  tone,
+}: {
+  readonly entry: RankingEntry | undefined;
+  readonly featured?: boolean;
+  readonly onPress: () => void;
+  readonly rank: number;
+  readonly selected?: boolean;
+  readonly tone: AvatarTone;
+}) {
+  const resolved = entry ?? { id: `empty-${rank}`, nickname: '대기 중', stampCount: 0 };
 
-const buildRows = (tab: RankingTab, entries: readonly RankingEntry[]) => {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${resolved.nickname} ${rank}위 랭킹`}
+      accessibilityState={{ selected }}
+      disabled={!entry}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.podiumPressable,
+        pressed && entry ? styles.pressed : null,
+        !entry ? styles.disabled : null,
+      ]}
+    >
+      <Surface
+        elevation="none"
+        radius="md"
+        style={[
+          styles.podiumCard,
+          featured ? styles.podiumFeatured : null,
+          selected ? styles.podiumSelected : null,
+        ]}
+      >
+        {featured ? <Ionicons name="trophy" size={18} color={colors.brand} /> : null}
+        <Avatar label={resolved.nickname} tone={tone} size={featured ? 56 : 48} />
+        <AppText
+          variant={featured ? 'captionBold' : 'caption'}
+          tone="ink"
+          numberOfLines={1}
+          style={styles.centerText}
+        >
+          {resolved.nickname}
+        </AppText>
+        <AppText variant="micro" tone="inkMuted" numberOfLines={1}>
+          도장 {resolved.stampCount}개
+        </AppText>
+        <View style={[styles.rankPill, featured ? styles.rankPillFeatured : null]}>
+          <AppText variant="captionBold" tone={featured ? 'onDark' : 'inkSoft'} numberOfLines={1}>
+            {rank}위
+          </AppText>
+        </View>
+      </Surface>
+    </Pressable>
+  );
+}
+
+function RankingRow({
+  entry,
+  onPress,
+  rank,
+  selected = false,
+}: {
+  readonly entry: RankingEntry;
+  readonly onPress: () => void;
+  readonly rank: number;
+  readonly selected?: boolean;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${entry.nickname} 랭킹`}
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={({ pressed }) => [styles.rowPressable, pressed ? styles.pressed : null]}
+    >
+      <View style={[styles.row, selected ? styles.rowSelected : null]}>
+        <AppText variant="captionBold" tone="inkSoft" style={styles.rankCell} numberOfLines={1}>
+          {rank}
+        </AppText>
+        <Avatar
+          label={entry.nickname}
+          tone={rowTones[rank % rowTones.length] ?? 'blue'}
+          size={36}
+        />
+        <AppText variant="captionBold" tone="ink" style={styles.rowName} numberOfLines={1}>
+          {entry.nickname}
+        </AppText>
+        <AppText variant="captionBold" tone="ink" numberOfLines={1}>
+          도장 {entry.stampCount}개
+        </AppText>
+      </View>
+    </Pressable>
+  );
+}
+
+type AvatarTone = 'blue' | 'green' | 'pink' | 'purple' | 'yellow' | 'orange' | 'orangeDark';
+type RankingRange = 'week' | 'month' | 'all';
+
+function Avatar({
+  label,
+  size,
+  tone,
+}: {
+  readonly label: string;
+  readonly size: number;
+  readonly tone: AvatarTone;
+}) {
+  const toneStyle = avatarToneStyles[tone];
+
+  return (
+    <View
+      style={[
+        styles.avatar,
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: toneStyle.backgroundColor,
+        },
+      ]}
+    >
+      <AppText
+        variant="captionBold"
+        style={[styles.avatarText, { color: toneStyle.color }]}
+        numberOfLines={1}
+      >
+        {label.slice(0, 2)}
+      </AppText>
+    </View>
+  );
+}
+
+const buildLeaderboard = (entries: readonly RankingEntry[]) => {
   const meEntry =
     entries.find((entry) => entry.isMe) ??
-    ({ id: 'mock-user-1', nickname: '스탬피 테스터', stampCount: 12, isMe: true } as RankingEntry);
+    ({ id: 'mock-user-1', nickname: '재선', stampCount: 3, isMe: true } as RankingEntry);
+  const demoRows: RankingEntry[] = [
+    { id: 'weekly-1', nickname: '도장왕준호', stampCount: 12 },
+    { id: 'weekly-2', nickname: '서울탐험가', stampCount: 9 },
+    { id: 'weekly-3', nickname: '하늘바람', stampCount: 8 },
+    { id: 'weekly-4', nickname: '한옥러버', stampCount: 7 },
+    { id: 'weekly-5', nickname: '길따라도윤', stampCount: 7 },
+    { id: 'weekly-6', nickname: '궁궐지기', stampCount: 6 },
+    { id: 'weekly-7', nickname: '주말여행자', stampCount: 5 },
+  ];
 
-  if (tab === 'region') {
-    return [
-      { id: 'region-1', nickname: '종로궁궐러', stampCount: 18 },
-      { id: 'region-2', nickname: '서울산책러', stampCount: 16 },
-      { id: 'region-3', nickname: '행사수집가', stampCount: 15 },
-      {
-        ...meEntry,
-        id: 'mock-user-1',
-        nickname: meEntry.nickname,
-        stampCount: Math.max(meEntry.stampCount, 12),
-        isMe: true,
-      },
-    ] as RankingEntry[];
-  }
-
-  if (tab === 'friends') {
-    return [
-      { id: 'friend-1', nickname: '한강러너', stampCount: 14 },
-      {
-        ...meEntry,
-        id: 'mock-user-1',
-        nickname: meEntry.nickname,
-        stampCount: Math.max(meEntry.stampCount, 12),
-        isMe: true,
-      },
-      { id: 'friend-2', nickname: '궁궐수집가', stampCount: 11 },
-      { id: 'friend-3', nickname: '골목여행자', stampCount: 9 },
-    ] as RankingEntry[];
-  }
-
-  return [
-    { id: 'weekly-1', nickname: '스탬프마스터', stampCount: 28 },
-    { id: 'weekly-2', nickname: '축제러버', stampCount: 24 },
-    { id: 'weekly-3', nickname: '궁궐탐험가', stampCount: 20 },
-    { id: 'weekly-4', nickname: '도심휴식러', stampCount: 18 },
-    { id: 'weekly-5', nickname: '골목수집가', stampCount: 16 },
-    { id: 'weekly-6', nickname: '사진여행자', stampCount: 14 },
-    { id: 'weekly-7', nickname: '행사탐방러', stampCount: 13 },
-    {
-      ...meEntry,
-      id: 'mock-user-1',
-      nickname: meEntry.nickname,
-      stampCount: Math.max(meEntry.stampCount, 12),
-      isMe: true,
-    },
-  ] as RankingEntry[];
+  return [...demoRows, { ...meEntry, nickname: meEntry.nickname.replace('스탬피 테스터', '재선') }]
+    .sort((a, b) => b.stampCount - a.stampCount)
+    .map((entry, index) => ({
+      ...entry,
+      id: entry.isMe ? 'mock-user-1' : entry.id || `rank-${index}`,
+    }));
 };
 
-const getTabLabel = (tab: RankingTab) => {
-  if (tab === 'region') {
-    return '지역 랭킹';
-  }
-
-  if (tab === 'friends') {
-    return '친구 랭킹';
-  }
-
-  return '주간 랭킹';
+const getRank = (rows: readonly RankingEntry[], entry: RankingEntry) => {
+  const index = rows.findIndex((row) => row.id === entry.id);
+  return index >= 0 ? String(index + 1) : '-';
 };
 
-const getTabCaption = (tab: RankingTab) => {
-  if (tab === 'region') {
-    return '이번 지역에서 가장 많이 찍은 참여자';
-  }
-
-  if (tab === 'friends') {
-    return '친구들과 비교하는 스탬프 경쟁';
-  }
-
-  return '이번 주 가장 많이 걸은 여행자';
+const avatarToneStyles: Record<
+  AvatarTone,
+  { readonly backgroundColor: string; readonly color: string }
+> = {
+  blue: { backgroundColor: '#E6F1FB', color: '#185FA5' },
+  green: { backgroundColor: '#E7F7EE', color: colors.stampInk },
+  pink: { backgroundColor: '#FBEAF0', color: '#993556' },
+  purple: { backgroundColor: '#EEEDFE', color: '#534AB7' },
+  yellow: { backgroundColor: '#FAEEDA', color: '#854F0B' },
+  orange: { backgroundColor: colors.brandSoft, color: colors.brandInk },
+  orangeDark: { backgroundColor: colors.brand, color: colors.surface },
 };
 
-const getHeroRank = (tab: RankingTab) => {
-  if (tab === 'region') {
-    return '종로권 4위';
-  }
+const rowTones: readonly AvatarTone[] = ['pink', 'purple', 'yellow', 'green'];
+const rankingRanges: readonly { key: RankingRange; label: string; subtitle: string }[] = [
+  { key: 'week', label: '이번 주', subtitle: '이번 주 활동 기준으로 보여줘요.' },
+  { key: 'month', label: '이번 달', subtitle: '이번 달 누적 도장 수를 보여줘요.' },
+  { key: 'all', label: '전체', subtitle: '전체 누적 순위를 보여줘요.' },
+];
 
-  if (tab === 'friends') {
-    return '친구 중 2위';
-  }
-
-  return '이번 주 8위';
-};
-
-const getHeroSub = (tab: RankingTab) => {
-  if (tab === 'region') {
-    return '오늘은 지역 랭킹 2칸 상승';
-  }
-
-  if (tab === 'friends') {
-    return '한 명만 더 찍으면 1위';
-  }
-
-  return '스탬프 2개만 더 찍으면 TOP 5';
-};
-
-const getRowMeta = (tab: RankingTab, entry: RankingEntry) => {
-  if (tab === 'region') {
-    return `종로 루트 · 스탬프 ${entry.stampCount}개`;
-  }
-
-  if (tab === 'friends') {
-    return `${entry.isMe ? '나의 현재 순위' : '친구 비교'} · ${entry.stampCount}개`;
-  }
-
-  return `${entry.stampCount} stamps · ${entry.stampCount * 50 + 20} EXP`;
-};
-
-const getScoreLabel = (index: number, tab: RankingTab) => {
-  if (tab === 'friends' && index === 0) {
-    return '1위';
-  }
-
-  if (index === 0) {
-    return '🏆';
-  }
-
-  return `${index + 1}위`;
-};
-
-const getMissionText = (tab: RankingTab) => {
-  if (tab === 'region') {
-    return '같은 지역 스팟 1곳에서 도장을 받으면 지역 랭킹 점수 +20점을 받을 수 있어요.';
-  }
-
-  if (tab === 'friends') {
-    return '친구보다 먼저 도장 탭에서 스탬프를 찍으면 친구 랭킹 순위가 바뀝니다.';
-  }
-
-  return '가운데 도장 탭에서 관광지 스탬프 1개를 획득하면 주간 랭킹 점수 +20점을 받을 수 있어요.';
-};
+const rangeLabel = (range: RankingRange) =>
+  rankingRanges.find((item) => item.key === range)?.label ?? '전체';
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.canvas },
+  root: {
+    flex: 1,
+    backgroundColor: colors.canvas,
+  },
   content: {
+    paddingBottom: spacing.xxl,
+  },
+  header: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.xxxl,
+    paddingBottom: spacing.lg,
     gap: spacing.md,
+    backgroundColor: colors.surface,
   },
-  topbar: {
+  segment: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
+    padding: 3,
+    borderRadius: radius.md,
+    backgroundColor: colors.canvas,
   },
-  brandBlock: { flex: 1, minWidth: 0, gap: 2 },
-  hero: {
-    paddingVertical: spacing.xl,
-    gap: spacing.sm + 2,
-  },
-  heroRankRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  heroRankText: { gap: 2 },
-  heroBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm - 2 },
-  heroBadge: {
-    borderRadius: radius.full,
-    backgroundColor: colors.surfaceSink,
-    paddingHorizontal: spacing.sm + 1,
-    paddingVertical: spacing.xs + 1,
-  },
-  tabs: { flexDirection: 'row', gap: spacing.sm },
-  tab: {
+  segmentItem: {
     flex: 1,
-    borderRadius: radius.full,
-    paddingVertical: 11,
+    minHeight: 34,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+  },
+  segmentActive: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  podiumRow: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing.sm,
+  },
+  podiumPressable: {
+    flex: 1,
+    minWidth: 0,
+  },
+  podiumCard: {
+    minWidth: 0,
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  podiumFeatured: {
+    flex: 1.15,
+    paddingVertical: spacing.lg,
+    borderWidth: 1.5,
+    borderColor: colors.brand,
+  },
+  podiumSelected: {
+    borderColor: colors.ink,
+    backgroundColor: colors.brandSoft,
+  },
+  avatar: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    maxWidth: 40,
+    textAlign: 'center',
+  },
+  centerText: {
+    textAlign: 'center',
+  },
+  rankPill: {
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 2,
+    borderRadius: radius.full,
+    backgroundColor: colors.canvas,
+  },
+  rankPillFeatured: {
+    backgroundColor: colors.brand,
+  },
+  list: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+  },
+  row: {
+    minHeight: 64,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEF1F6',
+    backgroundColor: colors.surface,
+  },
+  rowSelected: {
+    backgroundColor: colors.brandSoft,
+  },
+  rowPressable: {
+    minWidth: 0,
+  },
+  rankCell: {
+    width: 24,
+    textAlign: 'center',
+  },
+  rowName: {
+    flex: 1,
+    minWidth: 0,
+  },
+  selectionCard: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    gap: spacing.xs,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  tabActive: {
-    backgroundColor: colors.brand,
-    borderColor: colors.brand,
+  selectionCardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
-  tabTextInactive: { color: colors.inkSoft },
-  tabTextActive: { color: colors.surface },
-  pressed: { opacity: 0.85 },
-  selectedPanel: {
-    backgroundColor: colors.surfaceSink,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    gap: spacing.xs,
-  },
-  selectedLabel: { letterSpacing: 0.4 },
-  rows: { gap: spacing.sm + 2 },
-  row: {
+  myRankRow: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    minHeight: 62,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: 16,
+    backgroundColor: colors.ink,
   },
-  meRow: { borderColor: colors.brand, backgroundColor: colors.brandSoft },
-  rowSelected: { borderColor: colors.borderStrong },
-  rankBox: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.xs,
-    backgroundColor: colors.surfaceSink,
-    alignItems: 'center',
-    justifyContent: 'center',
+  myRankText: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
   },
-  rankBoxTop: { backgroundColor: colors.reward },
-  rank: { color: colors.ink },
-  rankTop: { color: colors.ink },
-  member: { flex: 1, minWidth: 0, gap: 3 },
-  score: {},
-  missionCard: {
-    padding: spacing.lg,
-    gap: spacing.sm - 2,
+  myRankHint: {
+    color: '#FF9C73',
+  },
+  pressed: {
+    opacity: 0.86,
+  },
+  disabled: {
+    opacity: 0.55,
   },
 });

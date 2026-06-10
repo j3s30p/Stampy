@@ -15,6 +15,7 @@ export default function HomeScreen() {
     <HomeView
       spots={flow?.spots ?? []}
       collectedCount={flow?.collectedCount ?? 0}
+      totalCount={flow?.totalSpotCount ?? 0}
       onSelectSpot={openDetail}
     />
   );

@@ -9,7 +9,7 @@
 
 ## Critical invariants (모든 에이전트가 지켜야)
 
-1. **도장 인증 반경은 100m 고정** (`@shared/config` → `STAMP_RADIUS_METERS`). 코드/문서 어디서도 다른 숫자 등장 금지.
+1. **도장 인증 반경은 100m 고정** (`@shared/config` → `STAMP_RADIUS_METERS`). 관광지 발견/추천 조회 반경은 별도 상수 (`TOUR_DISCOVERY_RADIUS_METERS`, `TOUR_DISCOVERY_LIMIT`)로 분리해 사용한다.
 2. **좌표는 branded `Latitude` / `Longitude` 만 사용**. raw `number` 로 위경도를 다루지 않는다. 변환은 `@shared/types` 의 `asLatitude` / `asLongitude`.
 3. **Kakao Maps 는 WebView 경유 한정**. 네이티브 SDK 도입 금지 — Expo Managed 유지.
 4. **TourAPI 응답은 진입 즉시 `TourSpot` 으로 정규화**. raw DTO/snake_case 필드를 `features/tour/api` 바깥으로 노출 금지.
@@ -40,6 +40,25 @@
 
 **크로스-feature 의존 금지**: `features/A` 가 `features/B` 를 import 하지 않는다. 공유가 필요해지면 `core/` 또는 `shared/` 로 끌어올린다 (ESLint 경계 룰로 강제).
 
+## Codex 작업 루프 (5.5 ↔ mini)
+
+비단순 구현 작업은 Codex 5.5 가 직접 코드를 계속 밀어붙이는 방식으로 처리하지 않는다. 기본 루프는 다음 순서를 따른다.
+
+1. **5.5 = 기획 / PM / master / manager**
+   - 요구사항, 방향성, 작업 범위, 코드 작성법, 품질 기준을 먼저 정리한다.
+   - 기존 코드 구조와 프로젝트 invariant 를 확인한 뒤, mini 가 그대로 실행할 수 있는 지시로 쪼갠다.
+2. **mini = 실 코드 작성**
+   - 5.5 가 넘긴 기획, 방향성, 코드 작성법, 파일 범위에 맞춰 실제 구현을 수행한다.
+   - 임의 redesign, invariant 변경, 소유권 밖 파일 수정은 하지 않는다.
+3. **5.5 = 리뷰**
+   - mini 결과를 다시 읽고 요구사항 충족 여부, 코드 품질, 타입/린트/런타임 위험, 모바일 UX 를 리뷰한다.
+   - 문제를 발견하면 수정 지시를 다시 mini 에 넘긴다.
+4. **5.5 = 최종 판단**
+   - 구현 결과와 리뷰 결과를 근거로 루프를 반복할지 판단한다.
+   - 완료 기준을 충족하면 최종 “가”로 보고하고, 핵심 결함이나 검증 실패가 남으면 “부”로 보고한다.
+
+이 루프는 사용자가 명시적으로 다른 방식을 지시하지 않는 한 기본값이다. 단순 오타 수정, 한 줄 설정 변경, 읽기 전용 확인처럼 분업 비용이 더 큰 작업은 5.5 가 직접 처리할 수 있지만, 그 경우에도 최종 보고에 이유를 짧게 남긴다.
+
 ## Branch / commit convention
 
 - 브랜치: `<area>/<short-slug>` — 예: `stamp/collect-rule`, `map/marker-tap`, `harness/restructure`.
@@ -66,6 +85,14 @@
 - **commit-msg hook** — `commitlint` 가 Conventional Commits + scope 강제 (`feat(stamp): …`). 실패 시 commit 차단.
 - **pre-push hook** — main / master 로의 직접 push 차단.
 - **GitHub Actions CI** (`.github/workflows/ci.yml`) — PR 단위로 `quality:fast` + `harness:check` + commit 메시지 lint + session smoke. 실패 시 머지 차단.
+
+### 앱 화면 검증 원칙
+
+- Stampy 는 **React Native + Expo 모바일 앱**이다. UI/동작 검증 완료 기준은 **반드시 iOS Simulator 또는 Android Emulator** 실행 결과다.
+- `expo start --web`, 브라우저, 인앱 브라우저, localhost web preview 는 빠른 렌더링 참고용일 뿐이다. **웹 preview 만으로 앱 구현/검증 완료라고 보고하지 않는다.**
+- UI 변경, Kakao Maps WebView, 위치 권한/GPS, safe area, 탭 전환, long press/haptics 등 모바일 런타임에 의존하는 흐름은 simulator 에서 확인해야 한다.
+- simulator 실행이 환경 문제로 불가능하면, “simulator 미검증”이라고 명시하고 어떤 명령이 실패했는지 보고한다. 이 경우 검증 상태를 web 확인과 구분해서 적는다.
+- 기본 실행 명령은 `npm run ios` 또는 `npm run android` 이다. 포트/캐시 문제가 있으면 `npm run start -- --clear` 후 Expo CLI 에서 `i` 또는 `a` 로 simulator 를 연다.
 
 ### 위반 시 어디서 찾나
 

@@ -9,7 +9,9 @@ export class MockTourRepository implements TourRepository {
   }
 
   async byId(_contentId: string): Promise<TourSpot | null> {
-    return tourSpotFixtures.find((spot) => spot.contentId === _contentId) ?? null;
+    const spot = tourSpotFixtures.find((candidate) => candidate.contentId === _contentId);
+
+    return spot ? toTourSpot(spot) : null;
   }
 
   async search(_query: string): Promise<TourSpot[]> {
@@ -22,6 +24,10 @@ const toTourSpot = (spot: (typeof tourSpotFixtures)[number]): TourSpot => ({
   title: spot.title,
   address: spot.address,
   location: spot.location,
-  thumbnailUrl: spot.thumbnailUrl,
+  thumbnailUrl: spot.thumbnailUrl ?? spot.imageUrls[0],
+  imageUrls: spot.imageUrls,
+  overview: spot.overview,
+  homepage: spot.homepage,
+  telephone: spot.telephone,
   contentTypeId: spot.contentTypeId,
 });

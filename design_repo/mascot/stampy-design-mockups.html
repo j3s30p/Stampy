@@ -1,0 +1,2130 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stampy 디자인 시안 v1</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.21.0/dist/tabler-icons.min.css"
+    />
+    <style>
+      :root {
+        --navy: #112033;
+        --bg: #f3f6fb;
+        --white: #ffffff;
+        --orange: #ff7a45;
+        --green: #18a968;
+        --blue: #2f6bff;
+        --green-bg: #e7f7ee;
+        --green-tx: #0e7a4b;
+        --orange-bg: #fff1ea;
+        --orange-tx: #c2521f;
+        --tx2: #445064;
+        --tx3: #6b7686;
+        --tx4: #8a94a3;
+        --line: #e3e8f0;
+        --line2: #d6dee9;
+        --lock: #b8c2d0;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 36px 24px;
+        background: #e8ecf2;
+        color: var(--navy);
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR',
+          sans-serif;
+      }
+      .doc {
+        max-width: 1320px;
+        margin: 0 auto;
+      }
+      .doc-h {
+        font-size: 24px;
+        font-weight: 600;
+        margin: 0;
+      }
+      .doc-s {
+        font-size: 14px;
+        color: var(--tx3);
+        margin: 6px 0 20px;
+      }
+      .tokens {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 36px;
+      }
+      .tok {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        background: #fff;
+        border: 1px solid var(--line2);
+        border-radius: 10px;
+        padding: 7px 12px;
+        font-size: 12px;
+      }
+      .tok i {
+        width: 16px;
+        height: 16px;
+        border-radius: 5px;
+        display: inline-block;
+      }
+      .grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 44px;
+        justify-content: center;
+      }
+      .screen {
+        width: 372px;
+      }
+      .screen > h2 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 4px;
+      }
+      .screen > p {
+        font-size: 12.5px;
+        color: var(--tx3);
+        line-height: 1.55;
+        margin: 10px 0 0;
+      }
+      .phone {
+        width: 372px;
+        height: 806px;
+        background: #fff;
+        border-radius: 44px;
+        border: 1px solid #c9d2de;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 8px 28px rgba(17, 32, 51, 0.1);
+      }
+      .phone.bgray {
+        background: var(--bg);
+      }
+      /* 상태바 / 홈 인디케이터 */
+      .sb {
+        height: 44px;
+        flex: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 26px;
+        background: #fff;
+        position: relative;
+        z-index: 5;
+      }
+      .sb b {
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .notch {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        top: 9px;
+        width: 108px;
+        height: 26px;
+        background: var(--navy);
+        border-radius: 13px;
+      }
+      .sbi {
+        display: flex;
+        gap: 5px;
+        font-size: 14px;
+        color: var(--navy);
+      }
+      .hbar {
+        flex: none;
+        height: 20px;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .hbar i {
+        width: 120px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--navy);
+        display: block;
+      }
+      /* 헤더 */
+      .hdr {
+        flex: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 16px 10px;
+        background: #fff;
+        position: relative;
+        z-index: 5;
+      }
+      .hdr.line {
+        border-bottom: 1px solid var(--line);
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 18px;
+        font-weight: 600;
+      }
+      .logo i {
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        background: var(--orange);
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+      }
+      .cnt {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: var(--orange-bg);
+        color: var(--orange-tx);
+        font-size: 12px;
+        font-weight: 600;
+        padding: 5px 10px;
+        border-radius: 999px;
+      }
+      .ttl {
+        font-size: 18px;
+        font-weight: 600;
+      }
+      /* 탭바 */
+      .tabbar {
+        flex: none;
+        background: #fff;
+        border-top: 1px solid var(--line);
+        padding: 8px 6px 4px;
+        display: flex;
+        position: relative;
+        z-index: 5;
+      }
+      .tab {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        color: var(--tx4);
+        font-size: 11px;
+      }
+      .tab i {
+        font-size: 21px;
+      }
+      .tab.on {
+        color: var(--orange);
+        font-weight: 600;
+      }
+      /* 칩 / 배지 */
+      .chips {
+        display: flex;
+        gap: 6px;
+      }
+      .chip {
+        background: #fff;
+        color: var(--navy);
+        font-size: 12px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--line2);
+      }
+      .chip.on {
+        background: var(--navy);
+        color: #fff;
+        border-color: var(--navy);
+        font-weight: 600;
+      }
+      .bdg {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        padding: 4px 9px;
+        border-radius: 999px;
+      }
+      .bdg.g {
+        background: var(--green-bg);
+        color: var(--green-tx);
+        font-weight: 600;
+      }
+      .bdg.n {
+        background: var(--bg);
+        color: var(--tx2);
+      }
+      /* 버튼 */
+      .cta {
+        height: 48px;
+        border-radius: 14px;
+        background: var(--orange);
+        color: #fff;
+        font-size: 16px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+      }
+      .btn-sq {
+        width: 48px;
+        height: 48px;
+        flex: none;
+        border-radius: 14px;
+        border: 1px solid var(--line2);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+      }
+      /* 카드 공통 */
+      .card {
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        padding: 12px;
+      }
+      /* 도장 원형 */
+      .stamp {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+      }
+      .stamp.c {
+        background: var(--green-bg);
+        border: 2px solid var(--green);
+        color: var(--green-tx);
+      }
+      .stamp.l {
+        background: var(--bg);
+        border: 1.5px dashed var(--lock);
+        color: #9aa7b8;
+      }
+      /* 진행률 바 */
+      .bar {
+        height: 7px;
+        border-radius: 4px;
+        background: var(--line);
+        overflow: hidden;
+      }
+      .bar.dk {
+        background: #2a3a4e;
+        height: 8px;
+      }
+      .bar > i {
+        display: block;
+        height: 100%;
+        background: var(--orange);
+        border-radius: 4px;
+      }
+      /* 메뉴 리스트 */
+      .menu {
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        overflow: hidden;
+      }
+      .mi {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px;
+        font-size: 14px;
+      }
+      .mi + .mi {
+        border-top: 1px solid #eef1f6;
+      }
+      .mi > i:first-child {
+        font-size: 19px;
+      }
+      .mi .chev {
+        font-size: 16px;
+        color: var(--lock);
+      }
+      .mi .sub {
+        font-size: 12px;
+        color: var(--tx3);
+      }
+      .fx1 {
+        flex: 1;
+        min-width: 0;
+      }
+      .toggle {
+        width: 42px;
+        height: 24px;
+        border-radius: 12px;
+        background: var(--green);
+        position: relative;
+        display: inline-block;
+      }
+      .toggle::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #fff;
+      }
+      /* 랭킹 아바타 */
+      .av {
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="doc">
+      <h1 class="doc-h">Stampy 디자인 시안 v1</h1>
+      <p class="doc-s">
+        한국관광공사 TourAPI + Kakao Maps 기반 관광지 방문 인증 앱 · iPhone 15 (372×806) ·
+        2026.06.10
+      </p>
+      <div class="tokens">
+        <span class="tok"><i style="background: #112033"></i>#112033 텍스트/네이비</span>
+        <span class="tok"
+          ><i style="background: #f3f6fb; border: 1px solid #d6dee9"></i>#F3F6FB 배경</span
+        >
+        <span class="tok"
+          ><i style="background: #ffffff; border: 1px solid #d6dee9"></i>#FFFFFF 서피스</span
+        >
+        <span class="tok"><i style="background: #ff7a45"></i>#FF7A45 포인트/CTA</span>
+        <span class="tok"><i style="background: #18a968"></i>#18A968 인증/수집</span>
+        <span class="tok"><i style="background: #2f6bff"></i>#2F6BFF 현재 위치</span>
+      </div>
+
+      <div class="grid">
+        <!-- ============ 1. 홈 ============ -->
+        <div class="screen">
+          <h2>1. 홈</h2>
+          <div class="phone bgray">
+            <div class="sb">
+              <b>9:41</b>
+              <div class="notch"></div>
+              <span class="sbi"
+                ><i class="ti ti-antenna-bars-5"></i><i class="ti ti-wifi"></i
+                ><i class="ti ti-battery-3"></i
+              ></span>
+            </div>
+            <div class="hdr">
+              <span class="logo"><i class="ti ti-rubber-stamp"></i>Stampy</span
+              ><i class="ti ti-bell" style="font-size: 20px"></i>
+            </div>
+            <div style="flex: 1; overflow: hidden; padding: 14px 16px 0">
+              <p style="margin: 0; font-size: 20px; font-weight: 600; line-height: 1.35">
+                안녕하세요, 재선님<br />오늘은 종로에서 도장 모아볼까요?
+              </p>
+              <div
+                style="background: #112033; border-radius: 18px; padding: 16px; margin-top: 14px"
+              >
+                <div style="display: flex; justify-content: space-between; align-items: center">
+                  <span style="font-size: 13px; color: #aab6c6">서울 스탬프 투어</span
+                  ><span style="font-size: 13px; color: #fff; font-weight: 600">도장 3/12</span>
+                </div>
+                <div class="bar dk" style="margin-top: 10px"><i style="width: 25%"></i></div>
+                <div style="display: flex; justify-content: space-between; margin-top: 10px">
+                  <span style="font-size: 12px; color: #aab6c6">다음 보상까지 도장 2개</span
+                  ><span style="font-size: 12px; color: #ff9c73; font-weight: 600"
+                    >컬렉션 보기</span
+                  >
+                </div>
+              </div>
+              <div
+                class="card"
+                style="
+                  border: 1.5px solid #18a968;
+                  border-radius: 18px;
+                  padding: 14px;
+                  margin-top: 12px;
+                "
+              >
+                <div style="display: flex; align-items: center; gap: 6px">
+                  <span
+                    style="width: 8px; height: 8px; border-radius: 50%; background: #18a968"
+                  ></span
+                  ><span style="font-size: 12px; font-weight: 600; color: #0e7a4b"
+                    >지금 인증 가능</span
+                  >
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px; margin-top: 10px">
+                  <svg
+                    width="56"
+                    height="56"
+                    style="border-radius: 12px; flex: none"
+                    viewBox="0 0 56 56"
+                  >
+                    <rect width="56" height="56" fill="#CFE0F5" />
+                    <rect y="34" width="56" height="22" fill="#7FA86E" />
+                    <path d="M10 34 L28 21 L46 34 Z" fill="#3E5C46" />
+                    <rect x="16" y="34" width="24" height="11" fill="#B4543A" />
+                  </svg>
+                  <div class="fx1">
+                    <p style="margin: 0; font-size: 15px; font-weight: 600">경복궁</p>
+                    <p style="margin: 2px 0 0; font-size: 12px; color: #0e7a4b">
+                      100m 안에 있어요 · 62m
+                    </p>
+                  </div>
+                  <span
+                    style="
+                      background: #ff7a45;
+                      color: #fff;
+                      font-size: 13px;
+                      font-weight: 600;
+                      padding: 9px 14px;
+                      border-radius: 12px;
+                      flex: none;
+                    "
+                    >도장 찍기</span
+                  >
+                </div>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-top: 18px;
+                "
+              >
+                <span style="font-size: 15px; font-weight: 600">추천 코스</span
+                ><span style="font-size: 12px; color: var(--tx3)">전체 보기</span>
+              </div>
+              <div style="display: flex; gap: 10px; margin-top: 10px">
+                <div class="card" style="flex: 1; padding: 0; overflow: hidden">
+                  <svg width="100%" height="64" viewBox="0 0 160 64" preserveAspectRatio="none">
+                    <rect width="160" height="64" fill="#CFE0F5" />
+                    <rect y="40" width="160" height="24" fill="#7FA86E" />
+                    <path d="M40 40 L80 18 L120 40 Z" fill="#3E5C46" />
+                  </svg>
+                  <div style="padding: 10px 12px">
+                    <p style="margin: 0; font-size: 13px; font-weight: 600">고궁 한 바퀴</p>
+                    <p style="margin: 3px 0 0; font-size: 11px; color: var(--tx3)">
+                      스팟 4곳 · 약 2시간
+                    </p>
+                  </div>
+                </div>
+                <div class="card" style="flex: 1; padding: 0; overflow: hidden">
+                  <svg width="100%" height="64" viewBox="0 0 160 64" preserveAspectRatio="none">
+                    <rect width="160" height="64" fill="#F5E3D0" />
+                    <rect x="18" y="26" width="34" height="38" fill="#B4543A" />
+                    <rect x="64" y="18" width="34" height="46" fill="#8A6248" />
+                    <rect x="110" y="30" width="34" height="34" fill="#B4543A" />
+                  </svg>
+                  <div style="padding: 10px 12px">
+                    <p style="margin: 0; font-size: 13px; font-weight: 600">북촌 골목길</p>
+                    <p style="margin: 3px 0 0; font-size: 11px; color: var(--tx3)">
+                      스팟 3곳 · 약 1시간
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-top: 18px;
+                "
+              >
+                <span style="font-size: 15px; font-weight: 600">최근 수집한 도장</span
+                ><span style="font-size: 12px; color: var(--tx3)">6월</span>
+              </div>
+              <div style="display: flex; gap: 10px; margin-top: 10px">
+                <div class="card" style="flex: 1; padding: 10px; text-align: center">
+                  <span class="stamp c" style="width: 44px; height: 44px; font-size: 16px">村</span>
+                  <p style="margin: 6px 0 0; font-size: 12px; font-weight: 600">북촌한옥마을</p>
+                  <p style="margin: 2px 0 0; font-size: 11px; color: var(--tx4)">6.08</p>
+                </div>
+                <div class="card" style="flex: 1; padding: 10px; text-align: center">
+                  <span class="stamp c" style="width: 44px; height: 44px; font-size: 16px">宮</span>
+                  <p style="margin: 6px 0 0; font-size: 12px; font-weight: 600">창덕궁</p>
+                  <p style="margin: 2px 0 0; font-size: 11px; color: var(--tx4)">6.05</p>
+                </div>
+                <div class="card" style="flex: 1; padding: 10px; text-align: center">
+                  <span class="stamp c" style="width: 44px; height: 44px; font-size: 16px">塔</span>
+                  <p style="margin: 6px 0 0; font-size: 12px; font-weight: 600">N서울타워</p>
+                  <p style="margin: 2px 0 0; font-size: 11px; color: var(--tx4)">6.01</p>
+                </div>
+              </div>
+            </div>
+            <div class="tabbar">
+              <span class="tab on"><i class="ti ti-home"></i><span>홈</span></span>
+              <span class="tab"><i class="ti ti-map-2"></i><span>지도</span></span>
+              <span class="tab"><i class="ti ti-rubber-stamp"></i><span>도장</span></span>
+              <span class="tab"><i class="ti ti-trophy"></i><span>랭킹</span></span>
+              <span class="tab"><i class="ti ti-user"></i><span>마이</span></span>
+            </div>
+            <div class="hbar"><i></i></div>
+          </div>
+          <p>
+            expo-location 1회 측위 → TourAPI locationBasedList1 → "지금 인증 가능" 카드
+            파생(geolib). 추천 코스: 가로 FlatList. 진행률: 컬렉션 API + TanStack Query.
+          </p>
+        </div>
+
+        <!-- ============ 2. 지도 (Kakao Maps) ============ -->
+        <div class="screen">
+          <h2>2. 지도 — Kakao Maps</h2>
+          <div class="phone">
+            <div class="sb">
+              <b>9:41</b>
+              <div class="notch"></div>
+              <span class="sbi"
+                ><i class="ti ti-antenna-bars-5"></i><i class="ti ti-wifi"></i
+                ><i class="ti ti-battery-3"></i
+              ></span>
+            </div>
+            <div class="hdr line">
+              <span class="logo"><i class="ti ti-rubber-stamp"></i>Stampy</span
+              ><span class="cnt"
+                ><i class="ti ti-rubber-stamp" style="font-size: 13px"></i>도장 3/12</span
+              >
+            </div>
+            <div style="flex: 1; position: relative; background: #f3f6fb; overflow: hidden">
+              <svg
+                viewBox="0 0 372 430"
+                width="372"
+                height="430"
+                style="position: absolute; inset: 0"
+              >
+                <rect width="372" height="430" fill="#F3F6FB" />
+                <path
+                  d="M0 318 C 70 300, 130 332, 200 318 C 270 304, 320 326, 372 312 L372 352 C 320 366, 270 344, 200 358 C 130 372, 70 340, 0 358 Z"
+                  fill="#CFE2F8"
+                />
+                <rect x="22" y="28" width="118" height="92" rx="6" fill="#DFEAD9" />
+                <rect x="252" y="150" width="96" height="66" rx="6" fill="#DFEAD9" />
+                <g stroke="#FFFFFF" stroke-width="10" fill="none">
+                  <path d="M-10 150 H382" />
+                  <path d="M-10 246 H382" />
+                  <path d="M86 -10 V440" />
+                  <path d="M186 -10 V440" />
+                  <path d="M286 -10 V440" />
+                  <path d="M-10 60 H382" />
+                </g>
+                <g stroke="#FFFFFF" stroke-width="5" fill="none">
+                  <path d="M-10 105 H382" />
+                  <path d="M-10 198 H382" />
+                  <path d="M40 -10 V440" />
+                  <path d="M136 -10 V440" />
+                  <path d="M236 -10 V440" />
+                  <path d="M332 -10 V440" />
+                  <path d="M186 246 L286 318" />
+                </g>
+                <g fill="#E2E7EF">
+                  <rect x="96" y="70" width="32" height="26" rx="3" />
+                  <rect x="146" y="112" width="30" height="30" rx="3" />
+                  <rect x="196" y="68" width="34" height="28" rx="3" />
+                  <rect x="244" y="110" width="32" height="32" rx="3" />
+                  <rect x="96" y="160" width="30" height="28" rx="3" />
+                  <rect x="196" y="158" width="32" height="30" rx="3" />
+                  <rect x="296" y="68" width="28" height="28" rx="3" />
+                  <rect x="48" y="160" width="28" height="28" rx="3" />
+                  <rect x="146" y="206" width="30" height="30" rx="3" />
+                  <rect x="296" y="252" width="28" height="26" rx="3" />
+                  <rect x="48" y="256" width="28" height="26" rx="3" />
+                </g>
+                <text x="81" y="78" font-size="11" fill="#6E8466" text-anchor="middle">
+                  삼청공원
+                </text>
+                <text x="300" y="186" font-size="11" fill="#6E8466" text-anchor="middle">종묘</text>
+                <text x="44" y="340" font-size="11" fill="#4D7AB5">청계천</text>
+                <circle
+                  cx="150"
+                  cy="150"
+                  r="86"
+                  fill="#18A968"
+                  fill-opacity="0.10"
+                  stroke="#18A968"
+                  stroke-width="1.5"
+                  stroke-dasharray="5 4"
+                />
+                <rect
+                  x="118"
+                  y="222"
+                  width="92"
+                  height="18"
+                  rx="9"
+                  fill="#FFFFFF"
+                  stroke="#BFD8C9"
+                  stroke-width="0.5"
+                />
+                <text
+                  x="164"
+                  y="235"
+                  font-size="11"
+                  fill="#0E7A4B"
+                  text-anchor="middle"
+                  font-weight="600"
+                >
+                  인증 반경 100m
+                </text>
+                <g>
+                  <circle cx="196" cy="196" r="14" fill="#2F6BFF" fill-opacity="0.18" />
+                  <circle
+                    cx="196"
+                    cy="196"
+                    r="7"
+                    fill="#2F6BFF"
+                    stroke="#FFFFFF"
+                    stroke-width="2.5"
+                  />
+                  <path
+                    d="M196 196 L210 182 A20 20 0 0 0 188 178 Z"
+                    fill="#2F6BFF"
+                    fill-opacity="0.25"
+                  />
+                </g>
+                <g>
+                  <path
+                    d="M150 122 C 136 122, 128 132, 128 142 C 128 156, 150 174, 150 174 C 150 174, 172 156, 172 142 C 172 132, 164 122, 150 122 Z"
+                    fill="#FF7A45"
+                    stroke="#FFFFFF"
+                    stroke-width="2.5"
+                  />
+                  <circle cx="150" cy="142" r="11" fill="#FFFFFF" />
+                  <text
+                    x="150"
+                    y="147"
+                    font-size="12"
+                    fill="#FF7A45"
+                    text-anchor="middle"
+                    font-weight="600"
+                  >
+                    宮
+                  </text>
+                  <rect x="118" y="178" width="64" height="19" rx="5" fill="#112033" />
+                  <text x="150" y="191" font-size="11" fill="#FFFFFF" text-anchor="middle">
+                    경복궁
+                  </text>
+                </g>
+                <g>
+                  <path
+                    d="M258 64 C 247 64, 241 72, 241 80 C 241 91, 258 105, 258 105 C 258 105, 275 91, 275 80 C 275 72, 269 64, 258 64 Z"
+                    fill="#18A968"
+                    stroke="#FFFFFF"
+                    stroke-width="2.5"
+                  />
+                  <circle cx="258" cy="80" r="9" fill="#FFFFFF" />
+                  <path
+                    d="M254 80 L257 83 L263 76"
+                    stroke="#18A968"
+                    stroke-width="2"
+                    fill="none"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <rect
+                    x="222"
+                    y="108"
+                    width="84"
+                    height="18"
+                    rx="5"
+                    fill="#FFFFFF"
+                    stroke="#D6DEE9"
+                    stroke-width="0.5"
+                  />
+                  <text x="264" y="121" font-size="11" fill="#112033" text-anchor="middle">
+                    북촌한옥마을
+                  </text>
+                </g>
+                <g>
+                  <path
+                    d="M306 280 C 295 280, 289 288, 289 296 C 289 307, 306 321, 306 321 C 306 321, 323 307, 323 296 C 323 288, 317 280, 306 280 Z"
+                    fill="#9AA7B8"
+                    stroke="#FFFFFF"
+                    stroke-width="2.5"
+                  />
+                  <circle cx="306" cy="296" r="9" fill="#FFFFFF" />
+                  <text x="306" y="300" font-size="10" fill="#5C6B7E" text-anchor="middle">川</text>
+                  <rect
+                    x="282"
+                    y="324"
+                    width="50"
+                    height="18"
+                    rx="5"
+                    fill="#FFFFFF"
+                    stroke="#D6DEE9"
+                    stroke-width="0.5"
+                  />
+                  <text x="307" y="337" font-size="11" fill="#112033" text-anchor="middle">
+                    청계천
+                  </text>
+                </g>
+                <g>
+                  <path
+                    d="M66 226 C 55 226, 49 234, 49 242 C 49 253, 66 267, 66 267 C 66 267, 83 253, 83 242 C 83 234, 77 226, 66 226 Z"
+                    fill="#9AA7B8"
+                    stroke="#FFFFFF"
+                    stroke-width="2.5"
+                  />
+                  <circle cx="66" cy="242" r="9" fill="#FFFFFF" />
+                  <text x="66" y="246" font-size="10" fill="#5C6B7E" text-anchor="middle">門</text>
+                </g>
+              </svg>
+              <div class="chips" style="position: absolute; top: 12px; left: 12px">
+                <span class="chip on">전체</span><span class="chip">고궁</span
+                ><span class="chip">미수집</span>
+              </div>
+              <div
+                style="
+                  position: absolute;
+                  top: 12px;
+                  right: 12px;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 8px;
+                "
+              >
+                <span
+                  style="
+                    width: 38px;
+                    height: 38px;
+                    border-radius: 12px;
+                    background: #fff;
+                    border: 1px solid var(--line2);
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                  "
+                  ><i class="ti ti-current-location" style="font-size: 19px; color: #2f6bff"></i
+                ></span>
+                <span
+                  style="
+                    width: 38px;
+                    height: 38px;
+                    border-radius: 12px;
+                    background: #fff;
+                    border: 1px solid var(--line2);
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                  "
+                  ><i class="ti ti-filter" style="font-size: 18px"></i
+                ></span>
+              </div>
+            </div>
+            <div
+              style="
+                flex: none;
+                background: #fff;
+                border-radius: 20px 20px 0 0;
+                margin-top: -20px;
+                position: relative;
+                z-index: 4;
+                border-top: 1px solid var(--line);
+                padding: 8px 16px 12px;
+              "
+            >
+              <div
+                style="
+                  width: 38px;
+                  height: 4px;
+                  border-radius: 2px;
+                  background: var(--line2);
+                  margin: 0 auto 12px;
+                "
+              ></div>
+              <div style="display: flex; gap: 12px; align-items: flex-start">
+                <div
+                  style="
+                    width: 78px;
+                    height: 78px;
+                    border-radius: 14px;
+                    flex: none;
+                    position: relative;
+                    overflow: hidden;
+                  "
+                >
+                  <svg viewBox="0 0 78 78" width="78" height="78">
+                    <rect width="78" height="78" fill="#CFE0F5" />
+                    <rect y="46" width="78" height="32" fill="#7FA86E" />
+                    <path d="M14 46 L39 30 L64 46 Z" fill="#3E5C46" />
+                    <rect x="22" y="46" width="34" height="16" fill="#B4543A" />
+                    <rect x="35" y="50" width="8" height="12" fill="#5C3A2E" />
+                  </svg>
+                  <span
+                    style="
+                      position: absolute;
+                      top: 5px;
+                      left: 5px;
+                      background: #ff7a45;
+                      color: #fff;
+                      font-size: 11px;
+                      font-weight: 600;
+                      padding: 2px 6px;
+                      border-radius: 6px;
+                    "
+                    >고궁</span
+                  >
+                </div>
+                <div class="fx1">
+                  <div style="display: flex; align-items: center; justify-content: space-between">
+                    <span style="font-size: 17px; font-weight: 600">경복궁</span
+                    ><i class="ti ti-share" style="font-size: 17px; color: var(--tx4)"></i>
+                  </div>
+                  <p style="margin: 3px 0 0; font-size: 12px; color: var(--tx3)">
+                    서울 종로구 사직로 161 · 한국관광공사 인증 스팟
+                  </p>
+                  <div style="display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap">
+                    <span class="bdg g"
+                      ><i class="ti ti-map-pin-check" style="font-size: 13px"></i>100m 안에
+                      있어요</span
+                    >
+                    <span class="bdg n"
+                      ><i class="ti ti-walk" style="font-size: 13px"></i>62m · 도보 1분</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  background: var(--bg);
+                  border-radius: 12px;
+                  padding: 9px 12px;
+                  margin-top: 12px;
+                "
+              >
+                <span style="font-size: 12px; color: var(--tx2)"
+                  >미수집 도장 · GPS 위치 인증 후 수집 가능</span
+                ><span style="font-size: 12px; color: #2f6bff; font-weight: 600">상세 보기</span>
+              </div>
+              <div style="display: flex; gap: 8px; margin-top: 12px">
+                <span class="btn-sq"><i class="ti ti-route"></i></span>
+                <span class="cta" style="flex: 1"
+                  ><i class="ti ti-rubber-stamp" style="font-size: 19px"></i>도장 찍기</span
+                >
+              </div>
+            </div>
+            <div class="tabbar">
+              <span class="tab"><i class="ti ti-home"></i><span>홈</span></span>
+              <span class="tab on"><i class="ti ti-map-2"></i><span>지도</span></span>
+              <span class="tab"><i class="ti ti-rubber-stamp"></i><span>도장</span></span>
+              <span class="tab"><i class="ti ti-trophy"></i><span>랭킹</span></span>
+              <span class="tab"><i class="ti ti-user"></i><span>마이</span></span>
+            </div>
+            <div class="hbar"><i></i></div>
+          </div>
+          <p>
+            @react-native-kakao/map (네이티브 앱 키, EAS dev build 필수). 마커: LabelLayer 상태별
+            3종. 100m 반경: Circle 오버레이. 현재 위치: expo-location watchPositionAsync → zustand.
+            바텀시트: @gorhom/bottom-sheet, 인증가능 = geolib.getDistance ≤ 100 selector. TourAPI
+            mapx=경도/mapy=위도 주의.
+          </p>
+        </div>
+
+        <!-- ============ 3. 도장 컬렉션 ============ -->
+        <div class="screen">
+          <h2>3. 도장 컬렉션</h2>
+          <div class="phone bgray">
+            <div class="sb">
+              <b>9:41</b>
+              <div class="notch"></div>
+              <span class="sbi"
+                ><i class="ti ti-antenna-bars-5"></i><i class="ti ti-wifi"></i
+                ><i class="ti ti-battery-3"></i
+              ></span>
+            </div>
+            <div style="flex: none; background: #fff; padding: 8px 16px 14px">
+              <div style="display: flex; align-items: center; justify-content: space-between">
+                <span class="ttl">도장 컬렉션</span
+                ><i class="ti ti-search" style="font-size: 20px"></i>
+              </div>
+              <div
+                style="
+                  background: var(--bg);
+                  border-radius: 14px;
+                  padding: 12px 14px;
+                  margin-top: 12px;
+                "
+              >
+                <div style="display: flex; justify-content: space-between; align-items: center">
+                  <span style="font-size: 13px; color: var(--tx2)">서울 스탬프 투어 진행률</span
+                  ><span style="font-size: 13px; font-weight: 600; color: #ff7a45">3/12 · 25%</span>
+                </div>
+                <div class="bar" style="margin-top: 8px"><i style="width: 25%"></i></div>
+              </div>
+              <div class="chips" style="margin-top: 12px">
+                <span class="chip on">전체</span><span class="chip">수집 완료</span
+                ><span class="chip">종로구</span><span class="chip">중구</span>
+              </div>
+            </div>
+            <div style="flex: 1; overflow: hidden; padding: 14px 16px 0">
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px">
+                <div class="card" style="padding: 12px 8px; text-align: center">
+                  <span class="stamp c" style="transform: rotate(-8deg)">村</span>
+                  <p style="margin: 7px 0 0; font-size: 12px; font-weight: 600">북촌한옥마을</p>
+                  <p style="margin: 2px 0 0; font-size: 11px; color: #18a968">6.08 수집</p>
+                </div>
+                <div class="card" style="padding: 12px 8px; text-align: center">
+                  <span class="stamp c" style="transform: rotate(5deg)">宮</span>
+                  <p style="margin: 7px 0 0; font-size: 12px; font-weight: 600">창덕궁</p>
+                  <p style="margin: 2px 0 0; font-size: 11px; color: #18a968">6.05 수집</p>
+                </div>
+                <div class="card" style="padding: 12px 8px; text-align: center">
+                  <span class="stamp c" style="transform: rotate(-4deg)">塔</span>
+                  <p style="margin: 7px 0 0; font-size: 12px; font-weight: 600">N서울타워</p>
+                  <p style="margin: 2px 0 0; font-size: 11px; color: #18a968">6.01 수집</p>
+                </div>
+                <div class="card" style="padding: 12px 8px; text-align: center">
+                  <span class="stamp l"><i class="ti ti-lock"></i></span>
+                  <p style="margin: 7px 0 0; font-size: 12px; font-weight: 600; color: var(--tx2)">
+                    경복궁
+                  </p>
+                  <p style="margin: 2px 0 0; font-size: 11px; color: var(--tx4)">62m · 인증 가능</p>
+                </div>
+                <div class="card" style="padding: 12px 8px; text-align: center">
+                  <span class="stamp l"><i class="ti ti-lock"></i></span>
+                  <p style="margin: 7px 0 0; font-size: 12px; font-weight: 600; color: var(--tx2)">
+                    청계천
+                  </p>
+                  <p style="margin: 2px 0 0; font-size: 11px; color: var(--tx4)">1.2km</p>
+                </div>
+                <div class="card" style="padding: 12px 8px; text-align: center">
+                  <span class="stamp l"><i class="ti ti-lock"></i></span>
+                  <p style="margin: 7px 0 0; font-size: 12px; font-weight: 600; color: var(--tx2)">
+                    덕수궁
+                  </p>
+                  <p style="margin: 2px 0 0; font-size: 11px; color: var(--tx4)">2.1km</p>
+                </div>
+                <div class="card" style="padding: 12px 8px; text-align: center">
+                  <span class="stamp l"><i class="ti ti-lock"></i></span>
+                  <p style="margin: 7px 0 0; font-size: 12px; font-weight: 600; color: var(--tx2)">
+                    광장시장
+                  </p>
+                  <p style="margin: 2px 0 0; font-size: 11px; color: var(--tx4)">1.8km</p>
+                </div>
+                <div class="card" style="padding: 12px 8px; text-align: center">
+                  <span class="stamp l"><i class="ti ti-lock"></i></span>
+                  <p style="margin: 7px 0 0; font-size: 12px; font-weight: 600; color: var(--tx2)">
+                    명동성당
+                  </p>
+                  <p style="margin: 2px 0 0; font-size: 11px; color: var(--tx4)">2.6km</p>
+                </div>
+                <div class="card" style="padding: 12px 8px; text-align: center">
+                  <span class="stamp l"><i class="ti ti-lock"></i></span>
+                  <p style="margin: 7px 0 0; font-size: 12px; font-weight: 600; color: var(--tx2)">
+                    서울숲
+                  </p>
+                  <p style="margin: 2px 0 0; font-size: 11px; color: var(--tx4)">4.3km</p>
+                </div>
+              </div>
+            </div>
+            <div class="tabbar">
+              <span class="tab"><i class="ti ti-home"></i><span>홈</span></span>
+              <span class="tab"><i class="ti ti-map-2"></i><span>지도</span></span>
+              <span class="tab on"><i class="ti ti-rubber-stamp"></i><span>도장</span></span>
+              <span class="tab"><i class="ti ti-trophy"></i><span>랭킹</span></span>
+              <span class="tab"><i class="ti ti-user"></i><span>마이</span></span>
+            </div>
+            <div class="hbar"><i></i></div>
+          </div>
+          <p>
+            FlashList numColumns=3. 컬렉션 API 원본 + expo-sqlite/MMKV 캐시(오프라인 표시). 획득 시
+            reanimated entering 애니메이션. 미수집 카드는 잠금 + 거리 표기.
+          </p>
+        </div>
+
+        <!-- ============ 4. 랭킹 ============ -->
+        <div class="screen">
+          <h2>4. 랭킹</h2>
+          <div class="phone bgray">
+            <div class="sb">
+              <b>9:41</b>
+              <div class="notch"></div>
+              <span class="sbi"
+                ><i class="ti ti-antenna-bars-5"></i><i class="ti ti-wifi"></i
+                ><i class="ti ti-battery-3"></i
+              ></span>
+            </div>
+            <div style="flex: none; background: #fff; padding: 8px 16px 14px">
+              <span class="ttl">랭킹</span>
+              <div
+                style="
+                  display: flex;
+                  background: var(--bg);
+                  border-radius: 12px;
+                  padding: 3px;
+                  margin-top: 12px;
+                "
+              >
+                <span
+                  style="
+                    flex: 1;
+                    text-align: center;
+                    font-size: 13px;
+                    font-weight: 600;
+                    background: #fff;
+                    border-radius: 10px;
+                    padding: 8px 0;
+                    border: 1px solid var(--line);
+                  "
+                  >이번 주</span
+                >
+                <span
+                  style="
+                    flex: 1;
+                    text-align: center;
+                    font-size: 13px;
+                    color: var(--tx3);
+                    padding: 8px 0;
+                  "
+                  >이번 달</span
+                >
+                <span
+                  style="
+                    flex: 1;
+                    text-align: center;
+                    font-size: 13px;
+                    color: var(--tx3);
+                    padding: 8px 0;
+                  "
+                  >전체</span
+                >
+              </div>
+            </div>
+            <div style="flex: 1; overflow: hidden; padding: 16px 16px 0">
+              <div style="display: flex; align-items: flex-end; gap: 10px">
+                <div class="card" style="flex: 1; padding: 12px 8px; text-align: center">
+                  <span
+                    class="av"
+                    style="
+                      width: 48px;
+                      height: 48px;
+                      background: #e6f1fb;
+                      color: #185fa5;
+                      font-size: 15px;
+                    "
+                    >민지</span
+                  >
+                  <p style="margin: 6px 0 0; font-size: 12px; font-weight: 600">서울탐험가</p>
+                  <p style="margin: 2px 0 0; font-size: 11px; color: var(--tx3)">도장 9개</p>
+                  <span
+                    style="
+                      display: inline-block;
+                      margin-top: 6px;
+                      background: var(--bg);
+                      color: var(--tx2);
+                      font-size: 12px;
+                      font-weight: 600;
+                      padding: 2px 10px;
+                      border-radius: 999px;
+                    "
+                    >2위</span
+                  >
+                </div>
+                <div
+                  class="card"
+                  style="
+                    flex: 1.15;
+                    border: 1.5px solid #ff7a45;
+                    border-radius: 18px;
+                    padding: 16px 8px;
+                    text-align: center;
+                  "
+                >
+                  <i class="ti ti-crown" style="font-size: 18px; color: #ff7a45"></i>
+                  <div style="margin-top: 4px">
+                    <span
+                      class="av"
+                      style="
+                        width: 56px;
+                        height: 56px;
+                        background: #fff1ea;
+                        color: #c2521f;
+                        font-size: 16px;
+                      "
+                      >준호</span
+                    >
+                  </div>
+                  <p style="margin: 6px 0 0; font-size: 13px; font-weight: 600">도장왕준호</p>
+                  <p style="margin: 2px 0 0; font-size: 11px; color: var(--tx3)">
+                    도장 12개 · 전체 달성
+                  </p>
+                  <span
+                    style="
+                      display: inline-block;
+                      margin-top: 6px;
+                      background: #ff7a45;
+                      color: #fff;
+                      font-size: 12px;
+                      font-weight: 600;
+                      padding: 2px 12px;
+                      border-radius: 999px;
+                    "
+                    >1위</span
+                  >
+                </div>
+                <div class="card" style="flex: 1; padding: 12px 8px; text-align: center">
+                  <span
+                    class="av"
+                    style="
+                      width: 48px;
+                      height: 48px;
+                      background: #e7f7ee;
+                      color: #0e7a4b;
+                      font-size: 15px;
+                    "
+                    >하늘</span
+                  >
+                  <p style="margin: 6px 0 0; font-size: 12px; font-weight: 600">하늘바람</p>
+                  <p style="margin: 2px 0 0; font-size: 11px; color: var(--tx3)">도장 8개</p>
+                  <span
+                    style="
+                      display: inline-block;
+                      margin-top: 6px;
+                      background: var(--bg);
+                      color: var(--tx2);
+                      font-size: 12px;
+                      font-weight: 600;
+                      padding: 2px 10px;
+                      border-radius: 999px;
+                    "
+                    >3위</span
+                  >
+                </div>
+              </div>
+              <div class="menu" style="margin-top: 14px">
+                <div class="mi">
+                  <span
+                    style="
+                      width: 24px;
+                      font-size: 13px;
+                      font-weight: 600;
+                      color: var(--tx2);
+                      text-align: center;
+                    "
+                    >4</span
+                  ><span
+                    class="av"
+                    style="
+                      width: 36px;
+                      height: 36px;
+                      background: #fbeaf0;
+                      color: #993556;
+                      font-size: 13px;
+                    "
+                    >유나</span
+                  ><span class="fx1" style="font-size: 13px">한옥러버</span
+                  ><span style="font-size: 13px; font-weight: 600">도장 7개</span>
+                </div>
+                <div class="mi">
+                  <span
+                    style="
+                      width: 24px;
+                      font-size: 13px;
+                      font-weight: 600;
+                      color: var(--tx2);
+                      text-align: center;
+                    "
+                    >5</span
+                  ><span
+                    class="av"
+                    style="
+                      width: 36px;
+                      height: 36px;
+                      background: #eeedfe;
+                      color: #534ab7;
+                      font-size: 13px;
+                    "
+                    >도윤</span
+                  ><span class="fx1" style="font-size: 13px">길따라도윤</span
+                  ><span style="font-size: 13px; font-weight: 600">도장 7개</span>
+                </div>
+                <div class="mi">
+                  <span
+                    style="
+                      width: 24px;
+                      font-size: 13px;
+                      font-weight: 600;
+                      color: var(--tx2);
+                      text-align: center;
+                    "
+                    >6</span
+                  ><span
+                    class="av"
+                    style="
+                      width: 36px;
+                      height: 36px;
+                      background: #faeeda;
+                      color: #854f0b;
+                      font-size: 13px;
+                    "
+                    >서연</span
+                  ><span class="fx1" style="font-size: 13px">궁궐지기</span
+                  ><span style="font-size: 13px; font-weight: 600">도장 6개</span>
+                </div>
+                <div class="mi">
+                  <span
+                    style="
+                      width: 24px;
+                      font-size: 13px;
+                      font-weight: 600;
+                      color: var(--tx2);
+                      text-align: center;
+                    "
+                    >7</span
+                  ><span
+                    class="av"
+                    style="
+                      width: 36px;
+                      height: 36px;
+                      background: #e1f5ee;
+                      color: #0f6e56;
+                      font-size: 13px;
+                    "
+                    >태오</span
+                  ><span class="fx1" style="font-size: 13px">주말여행자</span
+                  ><span style="font-size: 13px; font-weight: 600">도장 5개</span>
+                </div>
+              </div>
+              <div
+                style="
+                  background: #112033;
+                  border-radius: 16px;
+                  margin-top: 12px;
+                  display: flex;
+                  align-items: center;
+                  gap: 12px;
+                  padding: 13px 14px;
+                "
+              >
+                <span
+                  style="
+                    width: 24px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #fff;
+                    text-align: center;
+                  "
+                  >12</span
+                >
+                <span
+                  class="av"
+                  style="
+                    width: 36px;
+                    height: 36px;
+                    background: #ff7a45;
+                    color: #fff;
+                    font-size: 13px;
+                  "
+                  >재선</span
+                >
+                <span class="fx1" style="font-size: 13px; color: #fff"
+                  >재선 <span style="color: #aab6c6; font-size: 12px">· 나</span></span
+                >
+                <span style="font-size: 12px; color: #ff9c73">5위까지 도장 4개</span>
+                <span style="font-size: 13px; font-weight: 600; color: #fff">도장 3개</span>
+              </div>
+            </div>
+            <div class="tabbar">
+              <span class="tab"><i class="ti ti-home"></i><span>홈</span></span>
+              <span class="tab"><i class="ti ti-map-2"></i><span>지도</span></span>
+              <span class="tab"><i class="ti ti-rubber-stamp"></i><span>도장</span></span>
+              <span class="tab on"><i class="ti ti-trophy"></i><span>랭킹</span></span>
+              <span class="tab"><i class="ti ti-user"></i><span>마이</span></span>
+            </div>
+            <div class="hbar"><i></i></div>
+          </div>
+          <p>
+            리더보드 API 커서 페이지네이션 + useInfiniteQuery + FlashList. 내 순위 행은 리스트 밖
+            하단 고정. 주간 집계는 서버 배치/뷰로 사전 계산.
+          </p>
+        </div>
+
+        <!-- ============ 5. 마이 ============ -->
+        <div class="screen">
+          <h2>5. 마이</h2>
+          <div class="phone bgray">
+            <div class="sb">
+              <b>9:41</b>
+              <div class="notch"></div>
+              <span class="sbi"
+                ><i class="ti ti-antenna-bars-5"></i><i class="ti ti-wifi"></i
+                ><i class="ti ti-battery-3"></i
+              ></span>
+            </div>
+            <div style="flex: none; background: #fff; padding: 8px 16px 16px">
+              <span class="ttl">마이</span>
+              <div style="display: flex; align-items: center; gap: 14px; margin-top: 14px">
+                <span
+                  class="av"
+                  style="
+                    width: 60px;
+                    height: 60px;
+                    background: #fff1ea;
+                    color: #c2521f;
+                    font-size: 18px;
+                  "
+                  >재선</span
+                >
+                <div class="fx1">
+                  <div style="display: flex; align-items: center; gap: 6px">
+                    <span style="font-size: 16px; font-weight: 600">재선</span
+                    ><span
+                      style="
+                        background: #fae54d;
+                        color: #3c2a00;
+                        font-size: 11px;
+                        font-weight: 600;
+                        padding: 2px 8px;
+                        border-radius: 999px;
+                      "
+                      >카카오 연동</span
+                    >
+                  </div>
+                  <p style="margin: 3px 0 0; font-size: 12px; color: var(--tx3)">
+                    2026년 5월부터 도장 수집 중
+                  </p>
+                </div>
+                <i class="ti ti-edit" style="font-size: 18px; color: var(--tx4)"></i>
+              </div>
+            </div>
+            <div style="flex: 1; overflow: hidden; padding: 14px 16px 0">
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px">
+                <div class="card" style="padding: 12px 10px; text-align: center">
+                  <p style="margin: 0; font-size: 11px; color: var(--tx3)">수집한 도장</p>
+                  <p style="margin: 4px 0 0; font-size: 20px; font-weight: 600; color: #ff7a45">
+                    3
+                  </p>
+                </div>
+                <div class="card" style="padding: 12px 10px; text-align: center">
+                  <p style="margin: 0; font-size: 11px; color: var(--tx3)">방문 지역</p>
+                  <p style="margin: 4px 0 0; font-size: 20px; font-weight: 600">2</p>
+                </div>
+                <div class="card" style="padding: 12px 10px; text-align: center">
+                  <p style="margin: 0; font-size: 11px; color: var(--tx3)">이번 주 랭킹</p>
+                  <p style="margin: 4px 0 0; font-size: 20px; font-weight: 600">12위</p>
+                </div>
+              </div>
+              <div class="menu" style="margin-top: 14px">
+                <div class="mi">
+                  <i class="ti ti-rubber-stamp" style="color: #ff7a45"></i
+                  ><span class="fx1">내 도장 수집 내역</span
+                  ><i class="ti ti-chevron-right chev"></i>
+                </div>
+                <div class="mi">
+                  <i class="ti ti-map-pin" style="color: #2f6bff"></i
+                  ><span class="fx1">위치 권한</span
+                  ><span style="font-size: 12px; color: #18a968; font-weight: 600">항상 허용</span
+                  ><i class="ti ti-chevron-right chev"></i>
+                </div>
+                <div class="mi">
+                  <i class="ti ti-bell"></i><span class="fx1">근처 스팟 알림</span
+                  ><span class="toggle"></span>
+                </div>
+                <div class="mi">
+                  <i class="ti ti-language"></i><span class="fx1">언어</span
+                  ><span class="sub">한국어</span><i class="ti ti-chevron-right chev"></i>
+                </div>
+              </div>
+              <div class="menu" style="margin-top: 12px">
+                <div class="mi">
+                  <i class="ti ti-help-circle"></i><span class="fx1">자주 묻는 질문</span
+                  ><i class="ti ti-chevron-right chev"></i>
+                </div>
+                <div class="mi">
+                  <i class="ti ti-file-text"></i><span class="fx1">약관 및 개인정보 처리방침</span
+                  ><i class="ti ti-chevron-right chev"></i>
+                </div>
+                <div class="mi">
+                  <i class="ti ti-info-circle"></i><span class="fx1">앱 정보</span
+                  ><span class="sub">v1.0.0</span>
+                </div>
+              </div>
+              <p style="text-align: center; margin: 14px 0 0; font-size: 13px; color: var(--tx4)">
+                로그아웃
+              </p>
+            </div>
+            <div class="tabbar">
+              <span class="tab"><i class="ti ti-home"></i><span>홈</span></span>
+              <span class="tab"><i class="ti ti-map-2"></i><span>지도</span></span>
+              <span class="tab"><i class="ti ti-rubber-stamp"></i><span>도장</span></span>
+              <span class="tab"><i class="ti ti-trophy"></i><span>랭킹</span></span>
+              <span class="tab on"><i class="ti ti-user"></i><span>마이</span></span>
+            </div>
+            <div class="hbar"><i></i></div>
+          </div>
+          <p>
+            @react-native-kakao/user 카카오 로그인, 토큰은 expo-secure-store. 알림:
+            expo-notifications + Location.startGeofencingAsync(TaskManager). 권한 상태는 화면 포커스
+            시 재조회.
+          </p>
+        </div>
+
+        <!-- ============ 6. 도장 수집 완료 모달 ============ -->
+        <div class="screen">
+          <h2>6. 도장 수집 완료 모달</h2>
+          <div class="phone bgray" style="position: relative; display: block">
+            <svg
+              viewBox="0 0 372 806"
+              width="372"
+              height="806"
+              style="position: absolute; inset: 0"
+            >
+              <rect width="372" height="806" fill="#F3F6FB" />
+              <path
+                d="M0 540 C 90 520, 180 560, 280 540 C 330 530, 360 545, 372 540 L372 590 C 300 600, 200 575, 100 595 C 60 602, 20 590, 0 598 Z"
+                fill="#CFE2F8"
+              />
+              <rect x="30" y="120" width="130" height="100" rx="6" fill="#DFEAD9" />
+              <g stroke="#FFFFFF" stroke-width="10" fill="none">
+                <path d="M-10 300 H382" />
+                <path d="M-10 460 H382" />
+                <path d="M96 -10 V816" />
+                <path d="M216 -10 V816" />
+                <path d="M316 -10 V816" />
+              </g>
+              <g stroke="#FFFFFF" stroke-width="5" fill="none">
+                <path d="M-10 220 H382" />
+                <path d="M-10 380 H382" />
+                <path d="M156 -10 V816" />
+                <path d="M266 -10 V816" />
+              </g>
+              <circle
+                cx="170"
+                cy="300"
+                r="110"
+                fill="#18A968"
+                fill-opacity="0.10"
+                stroke="#18A968"
+                stroke-width="1.5"
+                stroke-dasharray="5 4"
+              />
+              <circle cx="210" cy="350" r="8" fill="#2F6BFF" stroke="#FFFFFF" stroke-width="2.5" />
+            </svg>
+            <div
+              style="
+                position: absolute;
+                inset: 0;
+                background: rgba(17, 32, 51, 0.55);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <div
+                style="
+                  width: 296px;
+                  background: #fff;
+                  border-radius: 24px;
+                  padding: 26px 22px 20px;
+                  text-align: center;
+                "
+              >
+                <div style="position: relative; display: inline-block">
+                  <span
+                    class="stamp c"
+                    style="
+                      width: 108px;
+                      height: 108px;
+                      border-width: 3px;
+                      font-size: 38px;
+                      transform: rotate(-7deg);
+                    "
+                    >宮</span
+                  >
+                  <span
+                    style="
+                      position: absolute;
+                      right: -6px;
+                      bottom: -2px;
+                      width: 34px;
+                      height: 34px;
+                      border-radius: 50%;
+                      background: #18a968;
+                      border: 3px solid #fff;
+                      display: inline-flex;
+                      align-items: center;
+                      justify-content: center;
+                    "
+                    ><i class="ti ti-check" style="font-size: 18px; color: #fff"></i
+                  ></span>
+                </div>
+                <p style="margin: 16px 0 0; font-size: 19px; font-weight: 600">
+                  경복궁 도장을 획득했어요!
+                </p>
+                <p style="margin: 6px 0 0; font-size: 13px; color: var(--tx3)">
+                  GPS 위치 인증 완료 · 2026.06.10 오전 9:41
+                </p>
+                <div
+                  style="
+                    background: var(--bg);
+                    border-radius: 14px;
+                    padding: 12px 14px;
+                    margin-top: 16px;
+                  "
+                >
+                  <div style="display: flex; justify-content: space-between; align-items: center">
+                    <span style="font-size: 12px; color: var(--tx2)">서울 스탬프 투어</span
+                    ><span style="font-size: 12px; font-weight: 600; color: #ff7a45"
+                      >도장 4/12</span
+                    >
+                  </div>
+                  <div class="bar" style="margin-top: 8px"><i style="width: 33%"></i></div>
+                  <p style="margin: 8px 0 0; font-size: 12px; color: var(--tx3); text-align: left">
+                    다음 보상 <b style="color: var(--navy)">고궁 마스터 배지</b>까지 도장 1개
+                  </p>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 16px">
+                  <span
+                    style="
+                      flex: 1;
+                      height: 46px;
+                      border-radius: 13px;
+                      border: 1px solid var(--line2);
+                      font-size: 14px;
+                      display: inline-flex;
+                      align-items: center;
+                      justify-content: center;
+                    "
+                    >공유하기</span
+                  >
+                  <span
+                    style="
+                      flex: 1.4;
+                      height: 46px;
+                      border-radius: 13px;
+                      background: #ff7a45;
+                      color: #fff;
+                      font-size: 14px;
+                      font-weight: 600;
+                      display: inline-flex;
+                      align-items: center;
+                      justify-content: center;
+                    "
+                    >컬렉션 보기</span
+                  >
+                </div>
+                <p style="margin: 12px 0 0; font-size: 13px; color: var(--tx4)">계속 둘러보기</p>
+              </div>
+            </div>
+          </div>
+          <p>
+            클라이언트는 UX 판정(거리 ≤ 100m → 버튼 활성), 서버가 좌표·타임스탬프 최종 검증. Android
+            mocked 플래그로 가짜 GPS 1차 차단, 재인증 쿨다운은 서버 처리. 성공 시 expo-haptics +
+            reanimated 스프링 도장 연출.
+          </p>
+        </div>
+
+        <!-- ============ 7. 도장 찍기 — 꾹 누르기 인터랙션 (실제 동작) ============ -->
+        <div class="screen">
+          <h2>7. 도장 찍기 — 꾹 누르기 인터랙션</h2>
+          <div class="phone bgray" style="user-select: none; -webkit-user-select: none">
+            <div class="sb">
+              <b>9:41</b>
+              <div class="notch"></div>
+              <span class="sbi"
+                ><i class="ti ti-antenna-bars-5"></i><i class="ti ti-wifi"></i
+                ><i class="ti ti-battery-3"></i
+              ></span>
+            </div>
+            <div
+              style="
+                flex: none;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 8px 16px 10px;
+                background: #fff;
+                border-bottom: 1px solid var(--line);
+              "
+            >
+              <i class="ti ti-chevron-left" style="font-size: 22px"></i>
+              <div class="fx1">
+                <p style="margin: 0; font-size: 16px; font-weight: 600">도장 찍기</p>
+                <p style="margin: 1px 0 0; font-size: 12px; color: var(--tx3)">
+                  경복궁 · 서울 종로구
+                </p>
+              </div>
+              <span class="bdg g"
+                ><i class="ti ti-gps" style="font-size: 13px"></i>62m · 인증됨</span
+              >
+            </div>
+            <div
+              style="
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                padding: 18px 16px 0;
+                overflow: hidden;
+              "
+            >
+              <div
+                id="paper"
+                style="
+                  flex: 1;
+                  background: #fbf7ef;
+                  border: 1px solid #e8dfcc;
+                  border-radius: 20px;
+                  position: relative;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  padding: 22px 16px 0;
+                  overflow: hidden;
+                "
+              >
+                <div
+                  style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 10px;
+                    background: repeating-linear-gradient(90deg, #ff7a45 0 24px, #112033 24px 48px);
+                    opacity: 0.85;
+                  "
+                ></div>
+                <p style="margin: 14px 0 0; font-size: 12px; letter-spacing: 3px; color: #9c8e72">
+                  서울 스탬프 투어
+                </p>
+                <p style="margin: 6px 0 0; font-size: 26px; font-weight: 600">경복궁</p>
+                <p style="margin: 4px 0 0; font-size: 12px; color: #9c8e72">
+                  2026. 06. 10 · 한국관광공사 인증 스팟
+                </p>
+                <div
+                  id="target"
+                  style="
+                    position: relative;
+                    width: 192px;
+                    height: 192px;
+                    margin-top: 26px;
+                    touch-action: none;
+                    cursor: pointer;
+                  "
+                >
+                  <svg
+                    viewBox="0 0 192 192"
+                    width="192"
+                    height="192"
+                    style="position: absolute; inset: 0"
+                  >
+                    <circle
+                      cx="96"
+                      cy="96"
+                      r="86"
+                      fill="#FFFFFF"
+                      stroke="#D9CDB4"
+                      stroke-width="1.5"
+                      stroke-dasharray="6 6"
+                    />
+                    <circle
+                      id="ring"
+                      cx="96"
+                      cy="96"
+                      r="86"
+                      fill="none"
+                      stroke="#FF7A45"
+                      stroke-width="6"
+                      stroke-linecap="round"
+                      stroke-dasharray="540.4"
+                      stroke-dashoffset="540.4"
+                      transform="rotate(-90 96 96)"
+                    />
+                  </svg>
+                  <div
+                    id="hint"
+                    style="
+                      position: absolute;
+                      inset: 0;
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      justify-content: center;
+                      gap: 6px;
+                      color: #9c8e72;
+                    "
+                  >
+                    <i class="ti ti-hand-click" style="font-size: 34px"></i>
+                    <span style="font-size: 13px; font-weight: 600">여기를 꾹 누르세요</span>
+                    <span id="pct" style="font-size: 12px; color: #c2b69a"
+                      >길게 누르면 도장이 찍혀요</span
+                    >
+                  </div>
+                  <svg
+                    id="burst"
+                    viewBox="0 0 192 192"
+                    width="192"
+                    height="192"
+                    style="position: absolute; inset: 0; opacity: 0"
+                  >
+                    <g stroke="#FF7A45" stroke-width="4" stroke-linecap="round">
+                      <path d="M96 6 V26" />
+                      <path d="M96 166 V186" />
+                      <path d="M6 96 H26" />
+                      <path d="M166 96 H186" />
+                      <path d="M33 33 L47 47" />
+                      <path d="M145 145 L159 159" />
+                      <path d="M159 33 L145 47" />
+                      <path d="M47 145 L33 159" />
+                    </g>
+                  </svg>
+                  <div
+                    id="stamp"
+                    style="
+                      position: absolute;
+                      inset: 0;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      opacity: 0;
+                      pointer-events: none;
+                    "
+                  >
+                    <span
+                      style="
+                        width: 148px;
+                        height: 148px;
+                        border-radius: 50%;
+                        border: 5px solid #c2402a;
+                        color: #c2402a;
+                        display: inline-flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        background: rgba(194, 64, 42, 0.06);
+                      "
+                    >
+                      <span style="font-size: 52px; line-height: 1">宮</span>
+                      <span
+                        style="
+                          font-size: 13px;
+                          font-weight: 600;
+                          letter-spacing: 2px;
+                          margin-top: 4px;
+                        "
+                        >경복궁</span
+                      >
+                      <span style="font-size: 11px; letter-spacing: 1px">2026.06.10</span>
+                    </span>
+                  </div>
+                  <div
+                    id="kwang"
+                    style="
+                      position: absolute;
+                      top: -6px;
+                      right: -10px;
+                      font-size: 30px;
+                      font-weight: 700;
+                      color: #ff7a45;
+                      opacity: 0;
+                      transform: rotate(12deg);
+                    "
+                  >
+                    쾅!
+                  </div>
+                </div>
+                <p
+                  id="gauge-label"
+                  style="margin: 16px 0 0; font-size: 13px; color: #9c8e72; min-height: 20px"
+                >
+                  도장 영역을 꾹 누르고 있으면 게이지가 차올라요
+                </p>
+              </div>
+              <div style="flex: none; padding: 14px 0 16px">
+                <div
+                  id="panel-hold"
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    background: #fff;
+                    border: 1px solid var(--line);
+                    border-radius: 14px;
+                    padding: 12px 14px;
+                  "
+                >
+                  <i class="ti ti-vibrate" style="font-size: 20px; color: #ff7a45"></i>
+                  <span style="font-size: 13px; color: var(--tx2)"
+                    >누르는 동안 진동이 점점 강해지고, 게이지가 다 차면 도장이 찍혀요</span
+                  >
+                </div>
+                <div id="panel-done" style="display: none; animation: rise 0.35s ease-out">
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 10px;
+                      background: var(--green-bg);
+                      border-radius: 14px;
+                      padding: 12px 14px;
+                    "
+                  >
+                    <span
+                      style="
+                        width: 30px;
+                        height: 30px;
+                        border-radius: 50%;
+                        background: #18a968;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        flex: none;
+                      "
+                      ><i class="ti ti-check" style="font-size: 17px; color: #fff"></i
+                    ></span>
+                    <div class="fx1">
+                      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #0e7a4b">
+                        도장 찍기 완료!
+                      </p>
+                      <p style="margin: 1px 0 0; font-size: 12px; color: #0e7a4b">
+                        경복궁 도장을 수집했어요 · 도장 4/12
+                      </p>
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 8px; margin-top: 10px">
+                    <button
+                      id="retry"
+                      style="
+                        flex: 1;
+                        height: 46px;
+                        border-radius: 13px;
+                        border: 1px solid var(--line2);
+                        background: #fff;
+                        color: var(--navy);
+                        font-size: 14px;
+                        font-family: inherit;
+                        cursor: pointer;
+                      "
+                    >
+                      다시 해보기
+                    </button>
+                    <span
+                      style="
+                        flex: 1.4;
+                        height: 46px;
+                        border-radius: 13px;
+                        background: #ff7a45;
+                        color: #fff;
+                        font-size: 14px;
+                        font-weight: 600;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                      "
+                      >컬렉션 보기</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="hbar" style="background: var(--bg)"><i></i></div>
+          </div>
+          <p>
+            Gesture Handler 수동 제스처 + reanimated withTiming(1500ms) 게이지. 진동: expo-haptics
+            impactAsync Light→Medium→Heavy 램프, 완료 시 notificationAsync(Success). 도장 슬램:
+            withSpring(scale 2.6→1, rotate -7°) + 종이 셰이크. 100% 도달 시 서버 인증 API 호출 →
+            성공 응답 후 완료 패널.
+          </p>
+        </div>
+      </div>
+    </div>
+    <style>
+      @keyframes slam {
+        0% {
+          transform: scale(2.6) rotate(-18deg);
+          opacity: 0;
+        }
+        55% {
+          transform: scale(0.9) rotate(-7deg);
+          opacity: 1;
+        }
+        75% {
+          transform: scale(1.06) rotate(-7deg);
+        }
+        100% {
+          transform: scale(1) rotate(-7deg);
+          opacity: 1;
+        }
+      }
+      @keyframes pshake {
+        0%,
+        100% {
+          transform: translate(0, 0);
+        }
+        20% {
+          transform: translate(-3px, 2px);
+        }
+        40% {
+          transform: translate(3px, -2px);
+        }
+        60% {
+          transform: translate(-2px, -2px);
+        }
+        80% {
+          transform: translate(2px, 2px);
+        }
+      }
+      @keyframes burstA {
+        0% {
+          transform: scale(0.4);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1.5);
+          opacity: 0;
+        }
+      }
+      @keyframes rise {
+        0% {
+          transform: translateY(16px);
+          opacity: 0;
+        }
+        100% {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+      .slammed {
+        animation: slam 0.42s cubic-bezier(0.2, 1.4, 0.4, 1) forwards;
+      }
+      .pshaking {
+        animation: pshake 0.3s linear 1;
+      }
+    </style>
+    <script>
+      (function () {
+        var ring = document.getElementById('ring'),
+          target = document.getElementById('target'),
+          hint = document.getElementById('hint'),
+          pct = document.getElementById('pct'),
+          stamp = document.getElementById('stamp'),
+          burst = document.getElementById('burst'),
+          kwang = document.getElementById('kwang'),
+          paper = document.getElementById('paper'),
+          label = document.getElementById('gauge-label'),
+          pHold = document.getElementById('panel-hold'),
+          pDone = document.getElementById('panel-done'),
+          retry = document.getElementById('retry');
+        if (!target) return;
+        var C = 540.4,
+          DUR = 1500,
+          raf = null,
+          start = 0,
+          prog = 0,
+          done = false,
+          lastBuzz = 0;
+        function setRing(p) {
+          ring.setAttribute('stroke-dashoffset', String(C * (1 - p)));
+        }
+        function jitter(p) {
+          var a = p * 2.4;
+          target.style.transform =
+            'translate(' +
+            ((Math.random() * 2 - 1) * a).toFixed(1) +
+            'px,' +
+            ((Math.random() * 2 - 1) * a).toFixed(1) +
+            'px)';
+        }
+        function buzz(p) {
+          if (!navigator.vibrate) return;
+          var now = performance.now(),
+            gap = 120 - p * 80;
+          if (now - lastBuzz > gap) {
+            navigator.vibrate(8 + Math.round(p * 22));
+            lastBuzz = now;
+          }
+        }
+        function loop(t) {
+          prog = Math.min((t - start) / DUR, 1);
+          setRing(prog);
+          jitter(prog);
+          buzz(prog);
+          pct.textContent = Math.round(prog * 100) + '%';
+          if (prog >= 1) {
+            finish();
+            return;
+          }
+          raf = requestAnimationFrame(loop);
+        }
+        function press(e) {
+          if (done) return;
+          e.preventDefault();
+          hint.style.color = '#FF7A45';
+          start = performance.now();
+          raf = requestAnimationFrame(loop);
+        }
+        function release() {
+          if (done || raf === null) return;
+          cancelAnimationFrame(raf);
+          raf = null;
+          target.style.transform = '';
+          hint.style.color = '#9C8E72';
+          var from = prog,
+            t0 = performance.now();
+          (function back(t) {
+            var k = Math.min((t - t0) / 250, 1);
+            setRing(from * (1 - k));
+            if (k < 1) requestAnimationFrame(back);
+            else pct.textContent = '길게 누르면 도장이 찍혀요';
+          })(t0);
+          label.textContent = '조금만 더! 게이지가 다 찰 때까지 눌러주세요';
+        }
+        function finish() {
+          done = true;
+          raf = null;
+          target.style.transform = '';
+          hint.style.display = 'none';
+          if (navigator.vibrate) navigator.vibrate([20, 40, 90]);
+          stamp.style.opacity = '1';
+          stamp.classList.add('slammed');
+          paper.classList.add('pshaking');
+          kwang.style.opacity = '1';
+          burst.style.opacity = '1';
+          burst.style.animation = 'burstA .5s ease-out forwards';
+          setRing(1);
+          label.textContent = '';
+          setTimeout(function () {
+            pHold.style.display = 'none';
+            pDone.style.display = 'block';
+          }, 420);
+        }
+        function reset() {
+          done = false;
+          prog = 0;
+          setRing(0);
+          stamp.classList.remove('slammed');
+          stamp.style.opacity = '0';
+          paper.classList.remove('pshaking');
+          kwang.style.opacity = '0';
+          burst.style.opacity = '0';
+          burst.style.animation = '';
+          hint.style.display = 'flex';
+          hint.style.color = '#9C8E72';
+          pct.textContent = '길게 누르면 도장이 찍혀요';
+          label.textContent = '도장 영역을 꾹 누르고 있으면 게이지가 차올라요';
+          pDone.style.display = 'none';
+          pHold.style.display = 'flex';
+        }
+        target.addEventListener('pointerdown', press);
+        window.addEventListener('pointerup', release);
+        target.addEventListener('pointerleave', release);
+        retry.addEventListener('click', reset);
+      })();
+    </script>
+  </body>
+</html>

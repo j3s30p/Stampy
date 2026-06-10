@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import type { WebViewMessageEvent } from 'react-native-webview';
+import { STAMP_RADIUS_METERS } from '@shared/config';
 import type { Coordinates } from '@shared/types';
 import { AppText, colors, spacing } from '@shared/ui';
 import type {
@@ -20,7 +21,7 @@ interface KakaoMapWebViewProps {
   readonly onMapError?: (message: string) => void;
 }
 
-const MOCK_CENTER = { lat: 37.5796, lng: 126.977 };
+const SEOUL_CITY_HALL_CENTER = { lat: 37.5665, lng: 126.978 };
 
 export function KakaoMapWebView({
   kakaoJsKey,
@@ -51,6 +52,7 @@ export function KakaoMapWebView({
           }
         : null,
       center,
+      stampRadiusMeters: STAMP_RADIUS_METERS,
     };
   }, [currentLocation, selectedSpotId, spots]);
 
@@ -159,7 +161,7 @@ const resolveCenter = (spots: readonly MapSpotPin[], currentLocation: Coordinate
     };
   }
 
-  return MOCK_CENTER;
+  return SEOUL_CITY_HALL_CENTER;
 };
 
 const toKakaoMapSpotPayload = (spot: MapSpotPin): KakaoMapSpotPayload => ({
@@ -233,6 +235,7 @@ const buildHtml = (kakaoJsKey: string) => {
         var map = null;
         var latestData = null;
         var spotMarkers = [];
+        var stampRadiusCircle = null;
         var currentLocationMarker = null;
         var lastErrorSignature = null;
 
@@ -342,6 +345,36 @@ const buildHtml = (kakaoJsKey: string) => {
 
             clearMarkers(spotMarkers);
 
+            if (stampRadiusCircle) {
+              stampRadiusCircle.setMap(null);
+              stampRadiusCircle = null;
+            }
+
+            var selectedSpot = null;
+            latestData.spots.forEach(function (spot) {
+              if (spot.contentId === latestData.selectedSpotId) {
+                selectedSpot = spot;
+              }
+            });
+
+            if (!selectedSpot && latestData.spots.length > 0) {
+              selectedSpot = latestData.spots[0];
+            }
+
+            if (selectedSpot) {
+              stampRadiusCircle = new kakao.maps.Circle({
+                center: toLatLng(selectedSpot.location),
+                radius: latestData.stampRadiusMeters,
+                strokeWeight: 2,
+                strokeColor: '#18A968',
+                strokeOpacity: 0.9,
+                strokeStyle: 'dash',
+                fillColor: '#18A968',
+                fillOpacity: 0.12,
+                map: map,
+              });
+            }
+
             latestData.spots.forEach(function (spot) {
               var isSelected = latestData.selectedSpotId === spot.contentId;
               var marker = new kakao.maps.Marker({
@@ -410,7 +443,7 @@ const buildHtml = (kakaoJsKey: string) => {
             }
 
             map = new kakao.maps.Map(mapContainer, {
-              center: toLatLng(latestData ? latestData.center : { lat: 37.5796, lng: 126.977 }),
+              center: toLatLng(latestData ? latestData.center : { lat: 37.5665, lng: 126.978 }),
               level: 4,
             });
 
