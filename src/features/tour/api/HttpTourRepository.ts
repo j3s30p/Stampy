@@ -25,6 +25,9 @@ interface TourApiItem {
   readonly addr2?: string;
   readonly firstimage?: string;
   readonly firstimage2?: string;
+  readonly overview?: string;
+  readonly homepage?: string;
+  readonly tel?: string;
   readonly mapx?: string | number;
   readonly mapy?: string | number;
 }
@@ -37,6 +40,7 @@ interface TourApiHeader {
 const TOUR_APP_NAME = 'Stampy';
 const TOUR_MOBILE_OS = 'ETC';
 const DEFAULT_ROWS = 20;
+const ALLOWED_CONTENT_TYPE_ID = '12';
 
 export class HttpTourRepository implements TourRepository {
   constructor(
@@ -48,6 +52,7 @@ export class HttpTourRepository implements TourRepository {
     const response = await this.httpClient.get<TourApiResponse>('locationBasedList2', {
       ...this.defaultParams(),
       arrange: 'E',
+      contentTypeId: ALLOWED_CONTENT_TYPE_ID,
       mapX: center.longitude,
       mapY: center.latitude,
       radius: radiusMeters,
@@ -69,7 +74,7 @@ export class HttpTourRepository implements TourRepository {
     const response = await this.httpClient.get<TourApiResponse>('searchKeyword2', {
       ...this.defaultParams(),
       arrange: 'A',
-      contentTypeId: 12,
+      contentTypeId: ALLOWED_CONTENT_TYPE_ID,
       keyword: query,
     });
 
@@ -117,11 +122,20 @@ const normalizeItems = (response: TourApiResponse): readonly TourApiItem[] => {
 const toTourSpot = (item: TourApiItem): TourSpot | null => {
   const contentId = toNonEmptyString(item.contentid);
   const title = toNonEmptyString(item.title);
+  const contentTypeId = toNonEmptyString(item.contenttypeid);
   const mapx = toFiniteNumber(item.mapx);
   const mapy = toFiniteNumber(item.mapy);
-  const thumbnailUrl = toNonEmptyString(item.firstimage) ?? toNonEmptyString(item.firstimage2);
+  const imageUrls = toUniqueStrings([item.firstimage, item.firstimage2]);
+  const thumbnailUrl = imageUrls[0];
 
-  if (!contentId || !title || mapx === null || mapy === null) {
+  if (
+    !contentId ||
+    !title ||
+    !isAllowedContentTypeId(contentTypeId) ||
+    mapx === null ||
+    mapy === null ||
+    imageUrls.length === 0
+  ) {
     return null;
   }
 
@@ -129,13 +143,21 @@ const toTourSpot = (item: TourApiItem): TourSpot | null => {
     contentId,
     title,
     address: [item.addr1, item.addr2].map(toNonEmptyString).filter(Boolean).join(' '),
-    contentTypeId: toNonEmptyString(item.contenttypeid) ?? '12',
+    contentTypeId,
     location: {
       latitude: asLatitude(mapy),
       longitude: asLongitude(mapx),
     },
-    thumbnailUrl: thumbnailUrl ?? undefined,
+    thumbnailUrl,
+    imageUrls,
+    overview: toNormalizedText(item.overview) ?? undefined,
+    homepage: toHomepageText(item.homepage) ?? undefined,
+    telephone: toNormalizedText(item.tel) ?? undefined,
   };
+};
+
+const isAllowedContentTypeId = (value: string | null): value is typeof ALLOWED_CONTENT_TYPE_ID => {
+  return value === ALLOWED_CONTENT_TYPE_ID;
 };
 
 const toNonEmptyString = (value: string | number | undefined): string | null => {
@@ -156,6 +178,48 @@ const toFiniteNumber = (value: string | number | undefined): number | null => {
 
   const parsed = Number(text);
   return Number.isFinite(parsed) ? parsed : null;
+};
+
+const toUniqueStrings = (values: readonly (string | number | undefined)[]): readonly string[] => {
+  const unique = new Set<string>();
+
+  for (const value of values) {
+    const text = toNonEmptyString(value);
+    if (text) {
+      unique.add(text);
+    }
+  }
+
+  return [...unique];
+};
+
+const toNormalizedText = (value: string | number | undefined): string | null => {
+  const text = toNonEmptyString(value);
+  if (!text) {
+    return null;
+  }
+
+  return text
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+const toHomepageText = (value: string | number | undefined): string | null => {
+  const rawText = toNonEmptyString(value);
+  if (!rawText) {
+    return null;
+  }
+
+  const hrefMatch = rawText.match(/href\s*=\s*["']([^"']+)["']/i);
+  if (hrefMatch?.[1]) {
+    return hrefMatch[1].trim();
+  }
+
+  return rawText
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 };
 
 const isNoDataResult = (header: TourApiHeader | undefined): boolean => {

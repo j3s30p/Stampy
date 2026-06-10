@@ -14,13 +14,14 @@ export default function MapScreen() {
 
   const openStamp = (contentId: string) => {
     selectSpot(contentId);
-    router.push('/stamp');
+    router.push('/stamp-capture');
   };
 
   return (
     <MapView
       kakaoJsKey={env.kakaoJsKey}
       spots={flow?.spots ?? []}
+      totalCount={flow?.totalSpotCount ?? 0}
       selectedSpotId={flow?.selectedSpotId ?? null}
       currentLocation={currentLocation}
       locationStatus={locationStatus}
