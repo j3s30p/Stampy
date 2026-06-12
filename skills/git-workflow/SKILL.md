@@ -111,12 +111,12 @@ Feat(stamp): ...                # type 대문자
 
 ## Hook 자동 강제 지점
 
-| Hook         | 시점                           | 동작                                                               |
-| ------------ | ------------------------------ | ------------------------------------------------------------------ |
-| `pre-commit` | `git commit`                   | `lint-staged` 가 staged 파일에 `eslint --fix` + `prettier --write` |
-| `commit-msg` | `git commit`                   | `commitlint` 가 위 형식 검사                                       |
-| `pre-push`   | `git push`                     | `refs/heads/main` 또는 `refs/heads/master` 로의 push 거부          |
-| CI on PR     | draft PR 생성 / PR branch push | typecheck + lint + format check + commitlint (PR 의 모든 commit)   |
+| Hook         | 시점                           | 동작                                                                |
+| ------------ | ------------------------------ | ------------------------------------------------------------------- |
+| `pre-commit` | `git commit`                   | `lint-staged` 가 staged 파일에 `eslint --fix` + `prettier --write`  |
+| `commit-msg` | `git commit`                   | `commitlint` 가 위 형식 검사                                        |
+| `pre-push`   | `git push`                     | `refs/heads/main` 또는 `refs/heads/master` 로의 push 거부           |
+| CI on PR     | draft PR 생성 / PR branch push | typecheck + lint + format check + jest + harness:check + commitlint |
 
 위 hook 의 어떤 실패도 commit/push 가 차단되어야 한다. 우회 (`--no-verify` 등) 는 위 "절대 금지 명령" 표 참조.
 
