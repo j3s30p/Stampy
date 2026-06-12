@@ -1,8 +1,8 @@
 import { distanceMetersBetween } from '@core/location';
 import type { HttpClient } from '@core/network';
+import type { EventRepository } from '@features/event/api';
+import type { TourEvent } from '@features/event/model';
 import { asLatitude, asLongitude, type Coordinates } from '@shared/types';
-import type { TourEvent } from '../model';
-import type { EventRepository } from './EventRepository';
 
 interface TourApiResponse {
   readonly response?: {
