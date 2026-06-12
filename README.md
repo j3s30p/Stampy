@@ -40,10 +40,10 @@ npm start
 
 처음 클론한 사람·AI 가 "지금 뭐가 돌아가는지" 5분 안에 파악하기 위한 진입점.
 
-### 인간 (팀원 첫날)
+### 인간 (처음 보는 날)
 
 1. 이 README — 스택 / 레이아웃 / Documentation map 훑기.
-2. [`AGENTS.md`](./AGENTS.md) — invariants + Phase 1 분담 + commit/branch 규약. **여기가 핵심 계약.**
+2. [`AGENTS.md`](./AGENTS.md) — invariants + Mock-first 작업 순서 + commit/branch 규약. **여기가 핵심 계약.**
 3. [Milestones](https://github.com/j3s30p/Stampy/milestones) — 마일스톤별 진행 상태. closed = 완료, open = 진행/예정.
 4. [Issues (open)](https://github.com/j3s30p/Stampy/issues) — 현재 할당된/대기 중인 작업. 본인 영역 라벨 (`area/<slug>`) 로 필터.
 5. [Pull Requests (open)](https://github.com/j3s30p/Stampy/pulls) — 머지 대기 중인 변경.

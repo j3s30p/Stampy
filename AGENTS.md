@@ -12,31 +12,33 @@
 1. **도장 인증 반경은 100m 고정** (`@shared/config` → `STAMP_RADIUS_METERS`). 관광지 발견/추천 조회 반경은 별도 상수 (`TOUR_DISCOVERY_RADIUS_METERS`, `TOUR_DISCOVERY_LIMIT`)로 분리해 사용한다.
 2. **좌표는 branded `Latitude` / `Longitude` 만 사용**. raw `number` 로 위경도를 다루지 않는다. 변환은 `@shared/types` 의 `asLatitude` / `asLongitude`.
 3. **Kakao Maps 는 WebView 경유 한정**. 네이티브 SDK 도입 금지 — Expo Managed 유지.
-4. **TourAPI 응답은 진입 즉시 `TourSpot` 으로 정규화**. raw DTO/snake_case 필드를 `features/tour/api` 바깥으로 노출 금지.
+4. **TourAPI 응답은 진입 즉시 도메인 타입으로 정규화**. raw DTO/snake_case 필드를 `features/tour/api`·`features/event/api` 바깥으로 노출 금지.
 5. **ESLint 룰 위반 suppress 금지**. 정당한 예외라도 룰 ID 와 근거 주석 필요 ([`skills/static-analysis-guide/SKILL.md`](./skills/static-analysis-guide/SKILL.md)).
 
-## File ownership (병렬 PR 충돌 회피)
+## Work order ownership (Mock-first 충돌 회피)
 
-| Area                                                      | Touch when                                                | Phase 1 owner        |
-| --------------------------------------------------------- | --------------------------------------------------------- | -------------------- |
-| `app/`                                                    | 라우트 추가/수정                                          | **Frontend**         |
-| `src/features/stamp/ui/`, `model/`                        | 도장 수집·인증 UI/도메인                                  | **Frontend**         |
-| `src/features/stamp/api/`                                 | `StampRepository` interface + `MockStampRepository`       | **Frontend**         |
-| `src/features/map/`                                       | Kakao WebView 브리지·마커 표현                            | **Frontend**         |
-| `src/features/tour/ui/`, `model/`                         | 관광지 카드·검색 UI/도메인                                | **Frontend**         |
-| `src/features/tour/api/` interface + Mock                 | `TourRepository` interface + `MockTourRepository`         | **Frontend**         |
-| `src/features/tour/api/Http*Repository.ts` (real impl)    | TourAPI HTTP 호출·DTO 매핑                                | **Backend teammate** |
-| `src/core/network/`                                       | HTTP 클라이언트·재시도                                    | **Backend teammate** |
-| `src/core/location/`                                      | GPS·권한·Haversine                                        | **Frontend**         |
-| `src/core/storage/` interface + Mock                      | `StorageRepository` interface + Mock                      | **Frontend**         |
-| `src/core/storage/AsyncStorage*Repository.ts` (real impl) | AsyncStorage·키 네임스페이스                              | **Backend teammate** |
-| `src/core/auth/` interface + Mock                         | `AuthRepository` interface + Mock                         | **Frontend**         |
-| `src/core/auth/Http*Repository.ts` (real impl)            | 사용자 식별·세션                                          | **Backend teammate** |
-| `src/shared/`                                             | brand 타입, 상수, ui-kit                                  | **Frontend**         |
-| `src/shared/mocks/`                                       | 모든 fixture 데이터 (production import 금지, ESLint 강제) | **Frontend**         |
-| `app.json`, `package.json`, harness 스크립트              | 단독 PR 권장                                              | **Frontend**         |
+| Area                                                      | Work order contract                                       | Layer               |
+| --------------------------------------------------------- | --------------------------------------------------------- | ------------------- |
+| `app/`                                                    | 라우트 추가/수정                                          | App shell           |
+| `src/features/stamp/ui/`, `model/`                        | 도장 수집·인증 UI/도메인                                  | Feature UI/domain   |
+| `src/features/stamp/api/`                                 | `StampRepository` interface + `MockStampRepository` 먼저  | Repository contract |
+| `src/features/map/`                                       | Kakao WebView 브리지·마커 표현                            | Feature integration |
+| `src/features/tour/ui/`, `model/`                         | 관광지 카드·검색 UI/도메인                                | Feature UI/domain   |
+| `src/features/tour/api/` interface + Mock                 | `TourRepository` interface + `MockTourRepository` 먼저    | Repository contract |
+| `src/features/event/api/` interface + Mock                | `EventRepository` interface + `MockEventRepository` 먼저  | Repository contract |
+| `src/features/tour/api/Http*Repository.ts` (real impl)    | 같은 interface 에 붙이는 TourAPI 연결 단계                | Backend integration |
+| `src/features/event/api/HttpEventRepository.ts`           | 같은 interface 에 붙이는 행사 TourAPI 연결 단계           | Backend integration |
+| `src/core/network/`                                       | real API 연결 단계에서 HTTP 클라이언트·재시도 구현        | Backend integration |
+| `src/core/location/`                                      | GPS·권한·Haversine                                        | Core runtime        |
+| `src/core/storage/` interface + Mock                      | `StorageRepository` interface + Mock 먼저                 | Repository contract |
+| `src/core/storage/AsyncStorage*Repository.ts` (real impl) | 같은 interface 에 붙이는 AsyncStorage 연결 단계           | Backend integration |
+| `src/core/auth/` interface + Mock                         | `AuthRepository` interface + Mock 먼저                    | Repository contract |
+| `src/core/auth/Http*Repository.ts` (real impl)            | 같은 interface 에 붙이는 사용자 식별·세션 연결 단계       | Backend integration |
+| `src/shared/`                                             | brand 타입, 상수, ui-kit                                  | Shared foundation   |
+| `src/shared/mocks/`                                       | 모든 fixture 데이터 (production import 금지, ESLint 강제) | Mock data boundary  |
+| `app.json`, `package.json`, harness 스크립트              | 단독 PR 권장                                              | Project tooling     |
 
-**Phase 1 분담 원칙** — 프론트(사용자)는 모든 repository **interface 와 Mock 구현체** 를 정의하고 UI 를 단독 진행. 백엔드(팀원)는 같은 인터페이스에 대해 **real impl** 만 추가하며 도메인 타입(`TourSpot` 등)을 그대로 따른다. 상세는 [`docs/04-team-split-and-mocks.md`](./docs/04-team-split-and-mocks.md).
+**Mock-first 원칙** — 2026-06-12 이후 Stampy 는 1인 개발 체제다. 모든 repository 는 **interface + Mock 구현체** 를 먼저 만들고 기본 주입한다. `Http*Repository`, `AsyncStorage*Repository` 같은 real impl 은 백엔드 연결 단계에서 같은 interface 에 추가한다. 도메인 타입(`TourSpot` 등)이 contract 이며, Mock 과 real impl 은 같은 타입을 반환해야 한다. 상세는 [`docs/04-team-split-and-mocks.md`](./docs/04-team-split-and-mocks.md).
 
 **크로스-feature 의존 금지**: `features/A` 가 `features/B` 를 import 하지 않는다. 공유가 필요해지면 `core/` 또는 `shared/` 로 끌어올린다 (ESLint 경계 룰로 강제).
 
@@ -93,7 +95,7 @@ ESLint 룰 ID 또는 tsc TS 코드 → [`skills/static-analysis-guide/SKILL.md`]
 
 ## Work tracking — 진행 상태 / 다음 할 일
 
-세션이 끊겨도 / 다른 모델로 바꿔도 / 팀원이 git pull 해도 같은 컨텍스트로 재진입할 수 있도록 **GitHub 의 Issues + Milestones + Labels** 가 단일 사실 출처다. 별도 ROADMAP/STATUS 파일은 의도적으로 두지 않는다 (drift 방지).
+세션이 끊겨도 / 다른 모델로 바꿔도 / 나중에 git pull 해도 같은 컨텍스트로 재진입할 수 있도록 **GitHub 의 Issues + Milestones + Labels** 가 단일 사실 출처다. 별도 ROADMAP/STATUS 파일은 의도적으로 두지 않는다 (drift 방지).
 
 - **세션 시작 시 한 줄**: `npm run session` — branch / open PR / open milestone / labels 스냅샷.
 - **Milestones** — 마일스톤 단위. closed = 완료, open = 진행/예정.
