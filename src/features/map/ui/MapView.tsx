@@ -74,7 +74,7 @@ export function MapView({
   const filteredEvents = useMemo(() => filterEvents(events, activeFilter), [activeFilter, events]);
   const collectedCount = spots.filter((spot) => spot.collected).length;
   const displayTotalCount = Math.max(totalCount, spots.length, collectedCount, 1);
-  const shouldShowFallbackMap = !kakaoJsKey.trim();
+  const shouldShowFallbackMap = !kakaoJsKey.trim() || Boolean(mapErrorMessage);
   const locationStatusLabel = getLocationStatusLabel(locationStatus, {
     currentLocation,
     useRealApi,

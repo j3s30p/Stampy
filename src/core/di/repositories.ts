@@ -1,26 +1,34 @@
 import { FetchHttpClient } from '@core/network';
-import { HttpEventRepository, type EventRepository } from '@features/event/api';
-import { HttpTourRepository, type TourRepository } from '@features/tour/api';
+import {
+  HttpEventRepository,
+  MockEventRepository,
+  type EventRepository,
+} from '@features/event/api';
+import { HttpTourRepository, MockTourRepository, type TourRepository } from '@features/tour/api';
 import { TOUR_API_BASE_URL, env } from '@shared/config';
 
-const requireTourApiKey = () => {
-  if (!env.tourApiKey) {
-    throw new Error('EXPO_PUBLIC_TOUR_API_KEY is required');
+const createTourRepository = (): TourRepository => {
+  if (!env.useRealApi) {
+    return new MockTourRepository();
   }
 
-  return env.tourApiKey;
-};
+  if (!env.tourApiKey) {
+    throw new Error('EXPO_PUBLIC_USE_REAL_API=true requires EXPO_PUBLIC_TOUR_API_KEY');
+  }
 
-const createTourRepository = (): TourRepository => {
-  const tourApiKey = requireTourApiKey();
-
-  return new HttpTourRepository(new FetchHttpClient(TOUR_API_BASE_URL), tourApiKey);
+  return new HttpTourRepository(new FetchHttpClient(TOUR_API_BASE_URL), env.tourApiKey);
 };
 
 const createEventRepository = (): EventRepository => {
-  const tourApiKey = requireTourApiKey();
+  if (!env.useRealApi) {
+    return new MockEventRepository();
+  }
 
-  return new HttpEventRepository(new FetchHttpClient(TOUR_API_BASE_URL), tourApiKey);
+  if (!env.tourApiKey) {
+    throw new Error('EXPO_PUBLIC_USE_REAL_API=true requires EXPO_PUBLIC_TOUR_API_KEY');
+  }
+
+  return new HttpEventRepository(new FetchHttpClient(TOUR_API_BASE_URL), env.tourApiKey);
 };
 
 export const tourRepository: TourRepository = createTourRepository();
