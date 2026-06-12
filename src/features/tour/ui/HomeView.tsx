@@ -626,7 +626,7 @@ const styles = StyleSheet.create({
     color: '#AAB6C6',
   },
   progressAction: {
-    color: '#FF9C73',
+    color: colors.brandLight,
   },
   progressFoot: {
     flexDirection: 'row',
@@ -787,7 +787,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0E6D6',
   },
   spotMarkFallbackDone: {
-    backgroundColor: '#E7F7EE',
+    backgroundColor: colors.stampSoft,
   },
   spotCopy: {
     flex: 1,
@@ -812,7 +812,7 @@ const styles = StyleSheet.create({
   placeThumb: {
     flex: 0,
     overflow: 'hidden',
-    backgroundColor: '#CFE0F5',
+    backgroundColor: colors.skySoft,
   },
   thumbImage: {
     width: '100%',
@@ -820,7 +820,7 @@ const styles = StyleSheet.create({
   },
   thumbSky: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#CFE0F5',
+    backgroundColor: colors.skySoft,
   },
   thumbHill: {
     position: 'absolute',
@@ -881,12 +881,12 @@ const styles = StyleSheet.create({
   stampDone: {
     borderWidth: 2,
     borderColor: colors.stamp,
-    backgroundColor: '#E7F7EE',
+    backgroundColor: colors.stampSoft,
   },
   stampLocked: {
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: '#B8C2D0',
+    borderColor: colors.borderMuted,
     backgroundColor: colors.surfaceSink,
   },
   stampDoneText: {

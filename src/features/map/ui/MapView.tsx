@@ -1165,7 +1165,7 @@ const styles = StyleSheet.create({
     height: 78,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#CFE0F5',
+    backgroundColor: colors.skySoft,
   },
   eventThumb: {
     width: 78,
@@ -1197,7 +1197,7 @@ const styles = StyleSheet.create({
   },
   thumbSky: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#CFE0F5',
+    backgroundColor: colors.skySoft,
   },
   thumbHill: {
     position: 'absolute',
@@ -1350,7 +1350,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EFE7D6',
   },
   fallbackRowMarkDone: {
-    backgroundColor: '#E7F7EE',
+    backgroundColor: colors.stampSoft,
   },
   fallbackRowCopy: {
     flex: 1,
