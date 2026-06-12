@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import {
   Image,
+  type GestureResponderHandlers,
   Linking,
   PanResponder,
   Pressable,
@@ -14,54 +15,70 @@ import type { CurrentLocationStatus } from '@core/location';
 import { STAMP_RADIUS_METERS } from '@shared/config';
 import type { Coordinates } from '@shared/types';
 import { AppText, Badge, Button, Surface, colors, radius, shadow, spacing } from '@shared/ui';
-import type { MapSpotPin } from '../model';
+import type { MapEventPin, MapSpotPin } from '../model';
 import { KakaoMapWebView } from './KakaoMapWebView';
 
 interface MapViewProps {
   readonly kakaoJsKey: string;
   readonly spots: readonly MapSpotPin[];
+  readonly events: readonly MapEventPin[];
   readonly totalCount: number;
   readonly selectedSpotId: string | null;
   readonly currentLocation: Coordinates | null;
   readonly locationStatus: CurrentLocationStatus;
+  readonly useRealApi?: boolean;
   readonly onSelectSpot?: (contentId: string) => void;
+  readonly onSelectEvent?: (contentId: string) => void;
+  readonly onOpenEventDetail?: (contentId: string) => void;
   readonly onOpenSpotDetail?: (contentId: string) => void;
   readonly onOpenStamp?: (contentId: string) => void;
 }
 
 export function MapView({
   kakaoJsKey,
+  events = [],
   spots,
   totalCount,
-  selectedSpotId,
   currentLocation,
   locationStatus,
+  useRealApi = false,
+  onSelectEvent,
   onSelectSpot,
+  onOpenEventDetail,
   onOpenSpotDetail,
   onOpenStamp,
 }: MapViewProps) {
-  const [internalSelectedSpotId, setInternalSelectedSpotId] = useState<string | null>(
-    selectedSpotId ?? spots[0]?.contentId ?? null,
-  );
+  const [internalSelectedSpotId, setInternalSelectedSpotId] = useState<string | null>(null);
+  const [internalSelectedEventId, setInternalSelectedEventId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<MapFilter>('all');
   const [directionMessage, setDirectionMessage] = useState('GPS 위치 인증 후 수집 가능');
   const [mapErrorMessage, setMapErrorMessage] = useState<string | null>(null);
   const [sheetExpanded, setSheetExpanded] = useState(false);
 
-  const effectiveSelectedSpotId = resolveEffectiveSelectedSpotId(
-    spots,
-    selectedSpotId,
-    internalSelectedSpotId,
-  );
+  const effectiveSelectedSpotId = resolveEffectiveSelectedSpotId(spots, internalSelectedSpotId);
 
   const selectedSpot = useMemo(() => {
     return resolveSelectedSpot(spots, effectiveSelectedSpotId);
   }, [effectiveSelectedSpotId, spots]);
+  const selectedEvent = useMemo(() => {
+    return events.find((event) => event.contentId === internalSelectedEventId) ?? null;
+  }, [events, internalSelectedEventId]);
+  const selectedKind: 'spot' | 'event' | null = selectedEvent
+    ? 'event'
+    : selectedSpot
+      ? 'spot'
+      : null;
+  const selectedMapContentId = selectedEvent?.contentId ?? effectiveSelectedSpotId;
 
   const filteredSpots = useMemo(() => filterSpots(spots, activeFilter), [activeFilter, spots]);
+  const filteredEvents = useMemo(() => filterEvents(events, activeFilter), [activeFilter, events]);
   const collectedCount = spots.filter((spot) => spot.collected).length;
   const displayTotalCount = Math.max(totalCount, spots.length, collectedCount, 1);
-  const shouldShowFallbackMap = !kakaoJsKey.trim() || mapErrorMessage !== null;
+  const shouldShowFallbackMap = !kakaoJsKey.trim();
+  const locationStatusLabel = getLocationStatusLabel(locationStatus, {
+    currentLocation,
+    useRealApi,
+  });
   const sheetPanResponder = useMemo(
     () =>
       PanResponder.create({
@@ -81,10 +98,32 @@ export function MapView({
   );
 
   const handleSelectSpot = (contentId: string) => {
+    const nextEvent = events.find((event) => event.contentId === contentId) ?? null;
+
+    if (nextEvent) {
+      setInternalSelectedEventId(contentId);
+      setDirectionMessage(`${nextEvent.title} 행사 선택됨`);
+      onSelectEvent?.(contentId);
+      return;
+    }
+
     setInternalSelectedSpotId(contentId);
+    setInternalSelectedEventId(null);
     const nextSpot = spots.find((spot) => spot.contentId === contentId) ?? null;
     setDirectionMessage(nextSpot ? `${nextSpot.title} 선택됨` : 'GPS 위치 인증 후 수집 가능');
     onSelectSpot?.(contentId);
+  };
+
+  const handleMapTap = () => {
+    setInternalSelectedEventId(null);
+    setInternalSelectedSpotId(null);
+    setSheetExpanded(false);
+    setDirectionMessage('GPS 위치 인증 후 수집 가능');
+  };
+
+  const handleFilterChange = (filter: MapFilter) => {
+    setActiveFilter(filter);
+    handleMapTap();
   };
 
   const handleOpenDirections = async () => {
@@ -129,29 +168,36 @@ export function MapView({
         ) : (
           <KakaoMapWebView
             kakaoJsKey={kakaoJsKey}
-            spots={spots}
-            selectedSpotId={effectiveSelectedSpotId}
+            events={filteredEvents}
+            spots={filteredSpots}
+            selectedSpotId={selectedMapContentId}
             currentLocation={currentLocation}
             onMarkerTap={handleSelectSpot}
+            onMapTap={handleMapTap}
             onMapReady={() => setMapErrorMessage(null)}
             onMapError={setMapErrorMessage}
           />
         )}
 
-        <View style={styles.filterRow}>
+        <View style={styles.filterPanel}>
           {mapFilters.map((filter) => (
             <Pressable
               key={filter.key}
               accessibilityRole="button"
               accessibilityLabel={`${filter.label} 스팟 보기`}
               accessibilityState={{ selected: activeFilter === filter.key }}
-              onPress={() => setActiveFilter(filter.key)}
+              onPress={() => handleFilterChange(filter.key)}
               style={({ pressed }) => [
-                styles.filterChip,
-                activeFilter === filter.key ? styles.filterChipActive : null,
+                styles.filterOption,
+                activeFilter === filter.key ? styles.filterOptionActive : null,
                 pressed ? styles.pressed : null,
               ]}
             >
+              <Ionicons
+                name={filter.icon}
+                size={16}
+                color={activeFilter === filter.key ? colors.surface : colors.inkSoft}
+              />
               <AppText
                 variant="captionBold"
                 tone={activeFilter === filter.key ? 'onDark' : 'ink'}
@@ -168,24 +214,24 @@ export function MapView({
             icon="locate"
             color={colors.locationDot}
             label="현재 위치"
-            onPress={() => setDirectionMessage(getLocationStatusLabel(locationStatus))}
+            onPress={() => setDirectionMessage(locationStatusLabel)}
           />
           <IconButton
             icon="filter"
             color={colors.ink}
             label="필터"
-            onPress={() => setActiveFilter(activeFilter === 'all' ? 'uncollected' : 'all')}
+            onPress={() => handleFilterChange(activeFilter === 'all' ? 'uncollected' : 'all')}
           />
         </View>
 
         <View style={styles.locationPill}>
           <View style={styles.locationDot} />
           <AppText variant="captionBold" tone="ink" numberOfLines={1}>
-            {getLocationStatusLabel(locationStatus)}
+            {locationStatusLabel}
           </AppText>
         </View>
 
-        {mapErrorMessage && !shouldShowFallbackMap ? (
+        {mapErrorMessage ? (
           <View style={styles.mapError}>
             <AppText variant="captionBold" tone="ink" numberOfLines={2}>
               {mapErrorMessage}
@@ -194,18 +240,27 @@ export function MapView({
         ) : null}
       </View>
 
-      {selectedSpot ? (
+      {selectedKind === 'event' && selectedEvent ? (
         <View style={[styles.sheet, sheetExpanded ? styles.sheetExpanded : null]}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={sheetExpanded ? '지도 시트 접기' : '지도 시트 펼치기'}
-            accessibilityState={{ expanded: sheetExpanded }}
-            onPress={() => setSheetExpanded((expanded) => !expanded)}
-            style={styles.sheetGrabberTouch}
-            {...sheetPanResponder.panHandlers}
-          >
-            <View style={styles.sheetGrabber} />
-          </Pressable>
+          <SheetGrabber
+            sheetExpanded={sheetExpanded}
+            setSheetExpanded={setSheetExpanded}
+            sheetPanHandlers={sheetPanResponder.panHandlers}
+          />
+          <EventSheetContent
+            event={selectedEvent}
+            onOpenStamp={onOpenStamp}
+            onOpenEventDetail={onOpenEventDetail}
+            directionMessage={directionMessage}
+          />
+        </View>
+      ) : selectedSpot ? (
+        <View style={[styles.sheet, sheetExpanded ? styles.sheetExpanded : null]}>
+          <SheetGrabber
+            sheetExpanded={sheetExpanded}
+            setSheetExpanded={setSheetExpanded}
+            sheetPanHandlers={sheetPanResponder.panHandlers}
+          />
           <View style={styles.sheetMain}>
             <PlaceThumb thumbnailUrl={selectedSpot.thumbnailUrl} />
             <View style={styles.sheetCopy}>
@@ -424,6 +479,130 @@ function FallbackMapStage({
   );
 }
 
+function SheetGrabber({
+  setSheetExpanded,
+  sheetExpanded,
+  sheetPanHandlers,
+}: {
+  readonly setSheetExpanded: Dispatch<SetStateAction<boolean>>;
+  readonly sheetExpanded: boolean;
+  readonly sheetPanHandlers: GestureResponderHandlers;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={sheetExpanded ? '지도 시트 접기' : '지도 시트 펼치기'}
+      accessibilityState={{ expanded: sheetExpanded }}
+      onPress={() => setSheetExpanded((expanded) => !expanded)}
+      style={styles.sheetGrabberTouch}
+      {...sheetPanHandlers}
+    >
+      <View style={styles.sheetGrabber} />
+    </Pressable>
+  );
+}
+
+function EventSheetContent({
+  directionMessage,
+  event,
+  onOpenEventDetail,
+  onOpenStamp,
+}: {
+  readonly directionMessage: string;
+  readonly event: MapEventPin;
+  readonly onOpenEventDetail?: (contentId: string) => void;
+  readonly onOpenStamp?: (contentId: string) => void;
+}) {
+  return (
+    <>
+      <View style={styles.sheetMain}>
+        <EventThumb thumbnailUrl={event.thumbnailUrl} />
+        <View style={styles.sheetCopy}>
+          <View style={styles.sheetTitleRow}>
+            <AppText variant="h2" tone="ink" numberOfLines={1}>
+              {event.title}
+            </AppText>
+            <Ionicons name="ticket-outline" size={18} color={colors.locationDot} />
+          </View>
+          <AppText variant="caption" tone="inkMuted" numberOfLines={2}>
+            {event.address} · 기간이 있는 행사 도장
+          </AppText>
+          <View style={styles.badgeRow}>
+            <Badge tone={event.collected ? 'done' : 'ready'} size="sm">
+              {event.collected ? '수집 완료' : getEventStatusLabel(event)}
+            </Badge>
+            <Badge tone="neutral" size="sm">
+              {formatEventPeriod(event)}
+            </Badge>
+            <Badge tone="neutral" size="sm">
+              {event.distanceMeters}m
+            </Badge>
+          </View>
+        </View>
+      </View>
+
+      <Surface elevation="none" radius="md" style={styles.sheetNotice}>
+        <AppText variant="caption" tone="inkSoft" numberOfLines={1}>
+          {directionMessage}
+        </AppText>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${event.title} 행사 상세 보기`}
+          onPress={() => onOpenEventDetail?.(event.contentId)}
+        >
+          <AppText variant="captionBold" style={styles.detailText} numberOfLines={1}>
+            상세 보기
+          </AppText>
+        </Pressable>
+      </Surface>
+
+      <View style={styles.actionRow}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${event.title} 행사 상세 보기`}
+          onPress={() => onOpenEventDetail?.(event.contentId)}
+          style={styles.routeButton}
+        >
+          <Ionicons name="information-circle-outline" size={21} color={colors.locationDot} />
+        </Pressable>
+        <Button
+          variant="primary"
+          size="md"
+          fullWidth
+          onPress={() => onOpenStamp?.(event.contentId)}
+          accessibilityLabel={`${event.title} 행사 도장 찍기`}
+        >
+          행사 도장 찍기
+        </Button>
+      </View>
+    </>
+  );
+}
+
+function EventThumb({ thumbnailUrl }: { readonly thumbnailUrl?: string }) {
+  return (
+    <View style={styles.eventThumb}>
+      {thumbnailUrl ? (
+        <>
+          <Image source={{ uri: thumbnailUrl }} style={styles.thumbImage} resizeMode="cover" />
+          <View style={styles.eventThumbLabel}>
+            <AppText variant="micro" tone="onDark" numberOfLines={1}>
+              행사
+            </AppText>
+          </View>
+        </>
+      ) : (
+        <View style={styles.eventThumbFallback}>
+          <Ionicons name="calendar-clear-outline" size={28} color={colors.surface} />
+          <AppText variant="micro" tone="onDark" numberOfLines={1}>
+            행사
+          </AppText>
+        </View>
+      )}
+    </View>
+  );
+}
+
 function IconButton({
   color,
   icon,
@@ -550,7 +729,17 @@ const getSpotStatusTone = (spot: MapSpotPin): 'done' | 'ready' | 'neutral' => {
   return 'neutral';
 };
 
-const getLocationStatusLabel = (status: CurrentLocationStatus) => {
+const getLocationStatusLabel = (
+  status: CurrentLocationStatus,
+  context: {
+    readonly currentLocation: Coordinates | null;
+    readonly useRealApi: boolean;
+  },
+) => {
+  if (context.useRealApi && status !== 'loading' && !context.currentLocation) {
+    return '위치를 찾을 수 없음';
+  }
+
   switch (status) {
     case 'granted':
       return 'GPS 양호';
@@ -565,40 +754,91 @@ const getLocationStatusLabel = (status: CurrentLocationStatus) => {
 
 const resolveEffectiveSelectedSpotId = (
   spots: readonly MapSpotPin[],
-  selectedSpotId: string | null,
   internalSelectedSpotId: string | null,
 ) => {
-  const candidateSpotId = selectedSpotId ?? internalSelectedSpotId;
+  const candidateSpotId = internalSelectedSpotId;
 
   if (candidateSpotId && spots.some((spot) => spot.contentId === candidateSpotId)) {
     return candidateSpotId;
   }
 
-  return spots[0]?.contentId ?? null;
+  return null;
 };
 
 const resolveSelectedSpot = (spots: readonly MapSpotPin[], selectedSpotId: string | null) => {
-  return spots.find((spot) => spot.contentId === selectedSpotId) ?? spots[0] ?? null;
+  if (!selectedSpotId) {
+    return null;
+  }
+
+  return spots.find((spot) => spot.contentId === selectedSpotId) ?? null;
 };
 
-type MapFilter = 'all' | 'palace' | 'uncollected';
+type MapFilter = 'all' | 'spot' | 'event' | 'uncollected';
 
-const mapFilters: readonly { readonly key: MapFilter; readonly label: string }[] = [
-  { key: 'all', label: '전체' },
-  { key: 'palace', label: '고궁' },
-  { key: 'uncollected', label: '미수집' },
+const mapFilters: readonly {
+  readonly key: MapFilter;
+  readonly label: string;
+  readonly icon: keyof typeof Ionicons.glyphMap;
+}[] = [
+  { key: 'all', label: '전체', icon: 'layers-outline' },
+  { key: 'spot', label: '관광지', icon: 'image-outline' },
+  { key: 'event', label: '행사', icon: 'calendar-clear-outline' },
+  { key: 'uncollected', label: '미수집', icon: 'lock-open-outline' },
 ];
 
 const filterSpots = (spots: readonly MapSpotPin[], activeFilter: MapFilter) => {
+  if (activeFilter === 'event') {
+    return [];
+  }
+
   if (activeFilter === 'uncollected') {
     return spots.filter((spot) => !spot.collected);
   }
 
-  if (activeFilter === 'palace') {
-    return spots.filter((spot) => spot.title.includes('궁') || spot.title.includes('한옥'));
+  return spots;
+};
+
+const filterEvents = (events: readonly MapEventPin[], activeFilter: MapFilter) => {
+  if (activeFilter === 'spot' || activeFilter === 'uncollected') {
+    return [];
   }
 
-  return spots;
+  return events;
+};
+
+const formatEventPeriod = (event: MapEventPin) => {
+  return `${formatCompactDate(event.startDate)}-${formatCompactDate(event.endDate)}`;
+};
+
+const formatCompactDate = (value: string) => {
+  if (value.length !== 8) {
+    return value;
+  }
+
+  return `${Number(value.slice(4, 6))}.${Number(value.slice(6, 8))}`;
+};
+
+const getEventStatusLabel = (event: MapEventPin) => {
+  const today = getTodayCompactDate();
+
+  if (today < event.startDate) {
+    return '예정 행사';
+  }
+
+  if (today > event.endDate) {
+    return '종료 행사';
+  }
+
+  return '진행 중';
+};
+
+const getTodayCompactDate = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+
+  return `${year}${month}${day}`;
 };
 
 const styles = StyleSheet.create({
@@ -799,25 +1039,36 @@ const styles = StyleSheet.create({
   centerText: {
     textAlign: 'center',
   },
-  filterRow: {
+  filterPanel: {
     position: 'absolute',
     top: spacing.md,
     left: spacing.md,
+    right: 76,
     flexDirection: 'row',
-    gap: spacing.xs,
-    zIndex: 3,
-  },
-  filterChip: {
-    minHeight: 32,
-    paddingHorizontal: spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.full,
+    gap: 4,
+    minHeight: 60,
+    padding: 5,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    zIndex: 3,
+    ...shadow.e1,
   },
-  filterChipActive: {
+  filterOption: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 50,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    paddingHorizontal: 2,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  filterOptionActive: {
     borderColor: colors.ink,
     backgroundColor: colors.ink,
   },
@@ -915,6 +1166,30 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     backgroundColor: '#CFE0F5',
+  },
+  eventThumb: {
+    width: 78,
+    height: 78,
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: colors.locationDot,
+  },
+  eventThumbFallback: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  eventThumbLabel: {
+    position: 'absolute',
+    left: 6,
+    right: 6,
+    bottom: 6,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(19, 34, 51, 0.72)',
   },
   thumbImage: {
     width: '100%',

@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import type { WebViewMessageEvent } from 'react-native-webview';
@@ -8,39 +9,57 @@ import type {
   KakaoBridgeMessage,
   KakaoMapDataPayload,
   KakaoMapSpotPayload,
+  MapEventPin,
   MapSpotPin,
 } from '../model';
 
 interface KakaoMapWebViewProps {
   readonly kakaoJsKey: string;
   readonly spots: readonly MapSpotPin[];
+  readonly events: readonly MapEventPin[];
   readonly selectedSpotId: string | null;
   readonly currentLocation: Coordinates | null;
   readonly onMarkerTap?: (spotId: string) => void;
+  readonly onMapTap?: () => void;
   readonly onMapReady?: () => void;
   readonly onMapError?: (message: string) => void;
 }
 
 const SEOUL_CITY_HALL_CENTER = { lat: 37.5665, lng: 126.978 };
 
+const resolveKakaoMapPageUri = (kakaoJsKey: string): string | null => {
+  const hostUri =
+    Constants.expoConfig?.hostUri ??
+    Constants.manifest2?.extra?.expoClient?.hostUri ??
+    Constants.manifest?.debuggerHost;
+  const host = hostUri?.replace(/^https?:\/\//, '').split('/')[0];
+
+  if (!host) {
+    return null;
+  }
+
+  return `http://${host}/kakao-map.html?appkey=${encodeURIComponent(kakaoJsKey)}`;
+};
+
 export function KakaoMapWebView({
   kakaoJsKey,
+  events = [],
   spots,
   selectedSpotId,
   currentLocation,
   onMarkerTap,
+  onMapTap,
   onMapReady,
   onMapError,
 }: KakaoMapWebViewProps) {
   const webViewRef = useRef<{ injectJavaScript: (script: string) => void } | null>(null);
-  const hasNotifiedReady = useRef(false);
   const isLoadedRef = useRef(false);
   const [syncTick, setSyncTick] = useState(0);
   const isWeb = Platform.OS === 'web';
 
   const payload = useMemo<KakaoMapDataPayload>(() => {
-    const center = resolveCenter(spots, currentLocation);
-    const mapSpots = spots.map(toKakaoMapSpotPayload);
+    const center = resolveCenter(spots, selectedSpotId, currentLocation);
+    const mapSpots = [...spots.map(toKakaoMapSpotPayload), ...events.map(toKakaoMapEventPayload)];
 
     return {
       spots: mapSpots,
@@ -54,16 +73,19 @@ export function KakaoMapWebView({
       center,
       stampRadiusMeters: STAMP_RADIUS_METERS,
     };
-  }, [currentLocation, selectedSpotId, spots]);
+  }, [currentLocation, events, selectedSpotId, spots]);
 
-  const html = useMemo(() => buildHtml(kakaoJsKey), [kakaoJsKey]);
+  const kakaoMapPageUri = useMemo(() => resolveKakaoMapPageUri(kakaoJsKey), [kakaoJsKey]);
   const webViewSource = useMemo(
-    () => ({
-      html,
-      baseUrl: 'https://stampy.local/',
-    }),
-    [html],
+    () => (kakaoMapPageUri ? { uri: kakaoMapPageUri } : null),
+    [kakaoMapPageUri],
   );
+
+  useEffect(() => {
+    if (!isWeb && !kakaoMapPageUri) {
+      onMapError?.('Expo 개발 서버 주소를 확인하지 못했습니다');
+    }
+  }, [isWeb, kakaoMapPageUri, onMapError]);
 
   useEffect(() => {
     if (isWeb || !isLoadedRef.current || !webViewRef.current) {
@@ -71,7 +93,7 @@ export function KakaoMapWebView({
     }
 
     webViewRef.current.injectJavaScript(
-      `window.__STAMPY_MAP__?.setData(${JSON.stringify(payload)}); true;`,
+      `window.__STAMPY_KAKAO_MAP__?.setData(${JSON.stringify(payload)}); true;`,
     );
   }, [isWeb, payload, syncTick]);
 
@@ -83,17 +105,22 @@ export function KakaoMapWebView({
     }
 
     if (message.kind === 'ready') {
-      if (!hasNotifiedReady.current) {
-        hasNotifiedReady.current = true;
-        onMapReady?.();
-      }
-
       setSyncTick((value) => value + 1);
+      return;
+    }
+
+    if (message.kind === 'tiles:loaded') {
+      onMapReady?.();
       return;
     }
 
     if (message.kind === 'marker:tap') {
       onMarkerTap?.(message.spotId);
+      return;
+    }
+
+    if (message.kind === 'map:tap') {
+      onMapTap?.();
       return;
     }
 
@@ -103,6 +130,10 @@ export function KakaoMapWebView({
   };
 
   const renderNativeWebView = () => {
+    if (!webViewSource) {
+      return null;
+    }
+
     const NativeWebView = require('react-native-webview').default as any;
 
     return (
@@ -144,11 +175,24 @@ export function KakaoMapWebView({
   );
 }
 
-const resolveCenter = (spots: readonly MapSpotPin[], currentLocation: Coordinates | null) => {
+const resolveCenter = (
+  spots: readonly MapSpotPin[],
+  selectedSpotId: string | null,
+  currentLocation: Coordinates | null,
+) => {
   if (currentLocation) {
     return {
       lat: currentLocation.latitude,
       lng: currentLocation.longitude,
+    };
+  }
+
+  const selectedSpot = spots.find((spot) => spot.contentId === selectedSpotId)?.location;
+
+  if (selectedSpot) {
+    return {
+      lat: selectedSpot.latitude,
+      lng: selectedSpot.longitude,
     };
   }
 
@@ -165,6 +209,7 @@ const resolveCenter = (spots: readonly MapSpotPin[], currentLocation: Coordinate
 };
 
 const toKakaoMapSpotPayload = (spot: MapSpotPin): KakaoMapSpotPayload => ({
+  kind: 'spot',
   contentId: spot.contentId,
   title: spot.title,
   address: spot.address,
@@ -173,6 +218,19 @@ const toKakaoMapSpotPayload = (spot: MapSpotPin): KakaoMapSpotPayload => ({
   location: {
     lat: spot.location.latitude,
     lng: spot.location.longitude,
+  },
+});
+
+const toKakaoMapEventPayload = (event: MapEventPin): KakaoMapSpotPayload => ({
+  kind: 'event',
+  contentId: event.contentId,
+  title: event.title,
+  address: event.address,
+  distanceMeters: event.distanceMeters,
+  collected: event.collected,
+  location: {
+    lat: event.location.latitude,
+    lng: event.location.longitude,
   },
 });
 
@@ -186,9 +244,10 @@ const parseBridgeMessage = (raw: string): KakaoBridgeMessage | null => {
 
     if (
       parsed.kind !== 'ready' &&
+      parsed.kind !== 'tiles:loaded' &&
       parsed.kind !== 'error' &&
-      parsed.kind !== 'marker:tap' &&
-      parsed.kind !== 'camera:move'
+      parsed.kind !== 'map:tap' &&
+      parsed.kind !== 'marker:tap'
     ) {
       return null;
     }
@@ -197,298 +256,6 @@ const parseBridgeMessage = (raw: string): KakaoBridgeMessage | null => {
   } catch {
     return null;
   }
-};
-
-const buildHtml = (kakaoJsKey: string) => {
-  const safeSdkUrlLabel = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=[redacted]&autoload=false';
-  const sdkUrl = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(
-    kakaoJsKey,
-  )}&autoload=false`;
-
-  return `<!doctype html>
-<html lang="ko">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self' data: https://dapi.kakao.com https://*.kakao.com https://*.daumcdn.net; img-src 'self' data: https://dapi.kakao.com https://*.kakao.com https://*.daumcdn.net; style-src 'self' 'unsafe-inline' https://dapi.kakao.com https://*.kakao.com https://*.daumcdn.net; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://dapi.kakao.com https://*.kakao.com https://*.daumcdn.net; connect-src 'self' https://dapi.kakao.com https://*.kakao.com https://*.daumcdn.net;"
-    />
-    <style>
-      html, body, #map {
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        background: #f8f7f4;
-      }
-      #map {
-        position: relative;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="map"></div>
-    <script>
-      (function () {
-        var map = null;
-        var latestData = null;
-        var spotMarkers = [];
-        var stampRadiusCircle = null;
-        var currentLocationMarker = null;
-        var lastErrorSignature = null;
-
-        function postMessage(message) {
-          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
-            window.ReactNativeWebView.postMessage(JSON.stringify(message));
-          }
-        }
-
-        function normalizeErrorMessage(prefix, error, context) {
-          var parts = [prefix];
-
-          if (context) {
-            parts.push('[' + context + ']');
-          }
-
-          if (error && typeof error === 'object') {
-            var message = error.message || error.reason || error.type || '알 수 없는 오류';
-            parts.push(String(message));
-
-            if (error.filename || error.sourceURL) {
-              parts.push('@ ' + (error.filename || error.sourceURL));
-            }
-
-            if (typeof error.lineno === 'number' || typeof error.colno === 'number') {
-              parts.push('(' + (error.lineno || '?') + ':' + (error.colno || '?') + ')');
-            }
-
-            if (error.stack) {
-              parts.push(String(error.stack));
-            }
-          } else if (error !== undefined && error !== null) {
-            parts.push(String(error));
-          } else {
-            parts.push('알 수 없는 오류');
-          }
-
-          return parts.join(' ');
-        }
-
-        function postError(prefix, error, context) {
-          var message = normalizeErrorMessage(prefix, error, context);
-
-          if (message === lastErrorSignature) {
-            return;
-          }
-
-          lastErrorSignature = message;
-          postMessage({ kind: 'error', message: message });
-        }
-
-        function reportWindowError(event) {
-          var target = event && event.target ? event.target : null;
-          var context =
-            (event && event.message) ||
-            (target && (target.src || target.href || target.tagName)) ||
-            null;
-
-          postError('WebView window.error', event && (event.error || event), context);
-        }
-
-        function reportUnhandledRejection(event) {
-          postError('WebView unhandledrejection', event && (event.reason || event), null);
-        }
-
-        function reportSecurityPolicyViolation(event) {
-          postError(
-            'WebView CSP error',
-            {
-              message: event.violatedDirective + ' blocked ' + event.blockedURI,
-              filename: event.sourceFile,
-              lineno: event.lineNumber,
-              colno: event.columnNumber,
-            },
-            event.originalPolicy || 'securitypolicyviolation',
-          );
-        }
-
-        window.addEventListener('error', reportWindowError, true);
-        window.addEventListener('unhandledrejection', reportUnhandledRejection);
-        window.addEventListener('securitypolicyviolation', reportSecurityPolicyViolation);
-
-        function markerImage(color) {
-          var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="40" viewBox="0 0 28 40"><path d="M14 39C14 39 25 24 25 15C25 8.9 20.1 4 14 4C7.9 4 3 8.9 3 15C3 24 14 39 14 39Z" fill="' + color + '" stroke="#ffffff" stroke-width="2"/><circle cx="14" cy="15" r="5" fill="#ffffff"/></svg>';
-          return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
-        }
-
-        function toLatLng(point) {
-          return new kakao.maps.LatLng(point.lat, point.lng);
-        }
-
-        function clearMarkers(markers) {
-          markers.forEach(function (marker) {
-            marker.setMap(null);
-          });
-          markers.length = 0;
-        }
-
-        function render() {
-          if (!map || !latestData) {
-            return;
-          }
-
-          try {
-            var center = toLatLng(latestData.center);
-            map.setCenter(center);
-
-            clearMarkers(spotMarkers);
-
-            if (stampRadiusCircle) {
-              stampRadiusCircle.setMap(null);
-              stampRadiusCircle = null;
-            }
-
-            var selectedSpot = null;
-            latestData.spots.forEach(function (spot) {
-              if (spot.contentId === latestData.selectedSpotId) {
-                selectedSpot = spot;
-              }
-            });
-
-            if (!selectedSpot && latestData.spots.length > 0) {
-              selectedSpot = latestData.spots[0];
-            }
-
-            if (selectedSpot) {
-              stampRadiusCircle = new kakao.maps.Circle({
-                center: toLatLng(selectedSpot.location),
-                radius: latestData.stampRadiusMeters,
-                strokeWeight: 2,
-                strokeColor: '#18A968',
-                strokeOpacity: 0.9,
-                strokeStyle: 'dash',
-                fillColor: '#18A968',
-                fillOpacity: 0.12,
-                map: map,
-              });
-            }
-
-            latestData.spots.forEach(function (spot) {
-              var isSelected = latestData.selectedSpotId === spot.contentId;
-              var marker = new kakao.maps.Marker({
-                map: map,
-                position: toLatLng(spot.location),
-                title: spot.title,
-                zIndex: isSelected ? 20 : 10,
-                image: new kakao.maps.MarkerImage(
-                  markerImage(isSelected ? '#e54848' : spot.collected ? '#1f7aea' : '#6b7280'),
-                  new kakao.maps.Size(28, 40),
-                  { offset: new kakao.maps.Point(14, 40) }
-                ),
-              });
-
-              kakao.maps.event.addListener(marker, 'click', function () {
-                postMessage({ kind: 'marker:tap', spotId: spot.contentId });
-              });
-
-              spotMarkers.push(marker);
-            });
-
-            if (currentLocationMarker) {
-              currentLocationMarker.setMap(null);
-              currentLocationMarker = null;
-            }
-
-            if (latestData.currentLocation) {
-              currentLocationMarker = new kakao.maps.Marker({
-                map: map,
-                position: toLatLng(latestData.currentLocation),
-                title: '현재 위치',
-                zIndex: 30,
-                image: new kakao.maps.MarkerImage(
-                  markerImage('#2563eb'),
-                  new kakao.maps.Size(24, 34),
-                  { offset: new kakao.maps.Point(12, 34) }
-                ),
-              });
-            }
-          } catch (error) {
-            postError('WebView render error', error, 'render');
-          }
-        }
-
-        function applyData(data) {
-          latestData = data;
-
-          if (!map) {
-            return;
-          }
-
-          render();
-        }
-
-        function initMap() {
-          if (map) {
-            return;
-          }
-
-          try {
-            var mapContainer = document.getElementById('map');
-
-            if (!mapContainer) {
-              postError('WebView init error', new Error('map container를 찾을 수 없습니다.'), 'initMap');
-              return;
-            }
-
-            map = new kakao.maps.Map(mapContainer, {
-              center: toLatLng(latestData ? latestData.center : { lat: 37.5665, lng: 126.978 }),
-              level: 4,
-            });
-
-            render();
-            postMessage({ kind: 'ready' });
-          } catch (error) {
-            postError('WebView init error', error, 'initMap');
-          }
-        }
-
-        window.__STAMPY_MAP__ = {
-          setData: applyData,
-        };
-
-        var sdk = document.createElement('script');
-        sdk.src = '${sdkUrl}';
-        sdk.async = true;
-        sdk.onload = function () {
-          if (!window.kakao || !window.kakao.maps) {
-            postError(
-              'WebView SDK error',
-              new Error('Kakao Maps SDK를 찾을 수 없습니다.'),
-              '${safeSdkUrlLabel}'
-            );
-            return;
-          }
-
-          try {
-            kakao.maps.load(initMap);
-          } catch (error) {
-            postError('WebView SDK error', error, 'kakao.maps.load');
-          }
-        };
-        sdk.onerror = function () {
-          postError(
-            'WebView SDK error',
-            new Error('Kakao Maps SDK를 불러오지 못했습니다.'),
-            '${safeSdkUrlLabel}'
-          );
-        };
-        document.head.appendChild(sdk);
-      })();
-    </script>
-  </body>
-</html>`;
 };
 
 const styles = StyleSheet.create({

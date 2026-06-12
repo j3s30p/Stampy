@@ -5,15 +5,25 @@ import { env } from '@shared/config';
 
 export default function MapScreen() {
   const router = useRouter();
-  const { flow, selectSpot, currentLocation, locationStatus } = useMockFlow();
+  const { flow, selectEvent, selectSpot, currentLocation, locationStatus } = useMockFlow();
 
   const openDetail = (contentId: string) => {
     selectSpot(contentId);
     router.push({ pathname: '/spot-detail', params: { contentId } });
   };
 
+  const openEventDetail = (contentId: string) => {
+    selectEvent(contentId);
+    router.push({ pathname: '/event-detail', params: { contentId } });
+  };
+
   const openStamp = (contentId: string) => {
-    selectSpot(contentId);
+    if (flow?.events.some((event) => event.contentId === contentId)) {
+      selectEvent(contentId);
+    } else {
+      selectSpot(contentId);
+    }
+
     router.push('/stamp-capture');
   };
 
@@ -21,11 +31,15 @@ export default function MapScreen() {
     <MapView
       kakaoJsKey={env.kakaoJsKey}
       spots={flow?.spots ?? []}
+      events={flow?.events ?? []}
       totalCount={flow?.totalSpotCount ?? 0}
       selectedSpotId={flow?.selectedSpotId ?? null}
       currentLocation={currentLocation}
       locationStatus={locationStatus}
+      useRealApi={env.useRealApi}
+      onSelectEvent={selectEvent}
       onSelectSpot={selectSpot}
+      onOpenEventDetail={openEventDetail}
       onOpenSpotDetail={openDetail}
       onOpenStamp={openStamp}
     />
