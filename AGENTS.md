@@ -40,24 +40,9 @@
 
 **크로스-feature 의존 금지**: `features/A` 가 `features/B` 를 import 하지 않는다. 공유가 필요해지면 `core/` 또는 `shared/` 로 끌어올린다 (ESLint 경계 룰로 강제).
 
-## Codex 작업 루프 (5.5 ↔ mini)
+## Codex 작업 루프
 
-비단순 구현 작업은 Codex 5.5 가 직접 코드를 계속 밀어붙이는 방식으로 처리하지 않는다. 기본 루프는 다음 순서를 따른다.
-
-1. **5.5 = 기획 / PM / master / manager**
-   - 요구사항, 방향성, 작업 범위, 코드 작성법, 품질 기준을 먼저 정리한다.
-   - 기존 코드 구조와 프로젝트 invariant 를 확인한 뒤, mini 가 그대로 실행할 수 있는 지시로 쪼갠다.
-2. **mini = 실 코드 작성**
-   - 5.5 가 넘긴 기획, 방향성, 코드 작성법, 파일 범위에 맞춰 실제 구현을 수행한다.
-   - 임의 redesign, invariant 변경, 소유권 밖 파일 수정은 하지 않는다.
-3. **5.5 = 리뷰**
-   - mini 결과를 다시 읽고 요구사항 충족 여부, 코드 품질, 타입/린트/런타임 위험, 모바일 UX 를 리뷰한다.
-   - 문제를 발견하면 수정 지시를 다시 mini 에 넘긴다.
-4. **5.5 = 최종 판단**
-   - 구현 결과와 리뷰 결과를 근거로 루프를 반복할지 판단한다.
-   - 완료 기준을 충족하면 최종 “가”로 보고하고, 핵심 결함이나 검증 실패가 남으면 “부”로 보고한다.
-
-이 루프는 사용자가 명시적으로 다른 방식을 지시하지 않는 한 기본값이다. 단순 오타 수정, 한 줄 설정 변경, 읽기 전용 확인처럼 분업 비용이 더 큰 작업은 5.5 가 직접 처리할 수 있지만, 그 경우에도 최종 보고에 이유를 짧게 남긴다.
+Codex 전용 5.5 ↔ mini 분업 루프는 [`CODEX.md`](./CODEX.md) 에 있다. **Codex 만 읽는다** — 다른 에이전트(Claude 등)는 무시한다.
 
 ## Branch / commit convention
 
@@ -74,6 +59,8 @@
 | 명령                    | 검사                                                  | 언제 실행               |
 | ----------------------- | ----------------------------------------------------- | ----------------------- |
 | `npm run quality:fast`  | `tsc --noEmit` + ESLint + Prettier check              | 커밋 전·PR 올리기 전·CI |
+| `npm test`              | jest 단위 테스트 (core/shared 순수 로직 행동 검증)    | PR 올리기 전·CI         |
+| `npm run quality`       | `quality:fast` + `test` + `harness:check` 전체        | PR 올리기 직전 1회      |
 | `npm run lint:fix`      | ESLint 자동 수정 (import/order, type-imports 등)      | 위반 시 1차 시도        |
 | `npm run format`        | Prettier 자동 수정                                    | 포맷 위반 시            |
 | `npm run harness:check` | 하네스 문서·링크·CODEOWNERS·핵심 invariant drift 검사 | 하네스 변경 시·CI       |
@@ -84,6 +71,7 @@
 - **pre-commit hook** (Husky) — `lint-staged` 가 변경된 파일만 `eslint --fix` + `prettier --write`. 실패 시 commit 차단.
 - **commit-msg hook** — `commitlint` 가 Conventional Commits + scope 강제 (`feat(stamp): …`). 실패 시 commit 차단.
 - **pre-push hook** — main / master 로의 직접 push 차단.
+- **Claude PreToolUse guard** (`.claude/settings.json` → `scripts/claude-guard.mjs`) — git-workflow 의 절대 금지 명령(`--no-verify`, force-push, `git reset --hard`, `gh pr merge/ready`, branch protection 완화)을 Bash 실행 직전에 차단.
 - **GitHub Actions CI** (`.github/workflows/ci.yml`) — PR 단위로 `quality:fast` + `harness:check` + commit 메시지 lint + session smoke. 실패 시 머지 차단.
 
 ### 앱 화면 검증 원칙
@@ -126,7 +114,7 @@ ESLint 룰 ID 또는 tsc TS 코드 → [`skills/static-analysis-guide/SKILL.md`]
 
 다른 벤더로의 미러는 의도적으로 두지 않는다. 본 프로젝트는 **Claude Code + Codex 만 사용**.
 
-- Claude Code → `CLAUDE.md` + `AGENTS.md` 자동 로드
-- Codex → `AGENTS.md` 자동 로드 (본 파일 그대로)
+- Claude Code → `CLAUDE.md` + `.claude/rules/*.md` 자동 로드. `AGENTS.md` 는 자동 로드되지 **않으므로** `CLAUDE.md` 의 `@AGENTS.md` import 로 포함한다 (import 존재는 `harness:check` 가 검사).
+- Codex → `AGENTS.md` 자동 로드 (본 파일 그대로) + 작업 루프는 [`CODEX.md`](./CODEX.md)
 
 Cursor/Copilot/Continue 등 다른 도구가 필요해지면 그때 sync 스크립트 재도입.

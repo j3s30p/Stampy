@@ -12,7 +12,9 @@ const sh = (cmd) => execSync(cmd, { encoding: 'utf8', stdio: ['ignore', 'pipe', 
 const trackedFiles = sh('git ls-files -z')
   .split('\0')
   .filter(Boolean)
-  .filter((file) => !file.startsWith('node_modules/') && !file.startsWith('repo/'));
+  .filter((file) => !file.startsWith('node_modules/') && !file.startsWith('repo/'))
+  // dirty tree 에서 추적 파일이 로컬 삭제/이동된 경우 크래시 방지 (CI 는 항상 clean checkout).
+  .filter((file) => existsSync(join(root, file)));
 
 const textExtensions = new Set([
   '',
@@ -32,6 +34,8 @@ const textExtensions = new Set([
 const errors = [];
 const warn = (message) => errors.push(message);
 
+// charCode 로 조립하는 이유: 패턴 문자열을 리터럴로 쓰면 본 스크립트 자신이
+// checkStaleReferences 에 걸린다 (".ai-" prefix 의 폐기된 하네스 디렉터리 잔재 탐지용).
 const stalePrefix = String.fromCharCode(46, 97, 105, 45);
 const staleSkillDir = `${stalePrefix}skills`;
 const staleBackgroundDir = `${stalePrefix}background`;
@@ -129,6 +133,32 @@ function checkSkillFrontmatter() {
   }
 }
 
+function checkClaudeLoadContract() {
+  // Claude Code 는 CLAUDE.md 만 자동 로드한다 — @AGENTS.md import 가 빠지면
+  // 정본 계약(invariants/소유권/품질 게이트)이 Claude 세션에 로드된다는 보장이 사라진다.
+  const claudeMd = read('CLAUDE.md');
+  if (!/^@AGENTS\.md$/m.test(claudeMd)) {
+    warn(
+      'CLAUDE.md: missing "@AGENTS.md" import line — AGENTS.md is not auto-loaded by Claude Code',
+    );
+  }
+
+  // PreToolUse guard 배선 검사 — settings.json 과 guard 스크립트 둘 중 하나만 사라져도 drift.
+  if (!existsSync(join(root, 'scripts/claude-guard.mjs'))) {
+    warn('scripts/claude-guard.mjs: missing — forbidden git/gh commands are no longer enforced');
+  }
+  const settings = JSON.parse(read('.claude/settings.json'));
+  const preToolUseHooks = settings.hooks?.PreToolUse ?? [];
+  const guardWired = preToolUseHooks.some(
+    (entry) =>
+      entry.matcher === 'Bash' &&
+      (entry.hooks ?? []).some((hook) => String(hook.command ?? '').includes('claude-guard.mjs')),
+  );
+  if (!guardWired) {
+    warn('.claude/settings.json: PreToolUse Bash hook must run scripts/claude-guard.mjs');
+  }
+}
+
 function checkCriticalInvariants() {
   const constants = read('src/shared/config/constants.ts');
   if (!/STAMP_RADIUS_METERS\s*=\s*100\b/.test(constants)) {
@@ -194,6 +224,7 @@ function main() {
   checkMarkdownLinks();
   checkCodeowners();
   checkSkillFrontmatter();
+  checkClaudeLoadContract();
   checkCriticalInvariants();
 
   if (errors.length > 0) {

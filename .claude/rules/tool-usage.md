@@ -1,6 +1,6 @@
 # Tool usage — Claude Code 전용
 
-> Claude Code 의 도구 (Edit/Write/Bash 등) 사용 규약. **세션 첫 도구 호출 직전 1회 읽으면 된다.**
+> Claude Code 의 도구 (Edit/Write/Bash 등) 사용 규약. **매 세션 자동 로드된다** — 별도로 읽지 않는다. 항상 컨텍스트에 있으므로 본문은 짧게 유지한다.
 
 ## 파일 편집
 
