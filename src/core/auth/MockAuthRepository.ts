@@ -1,18 +1,28 @@
+import type { StorageRepository } from '@core/storage';
 import type { AuthRepository, UserIdentity } from './AuthRepository';
 
+const CURRENT_USER_KEY = 'stampy:auth:current-user';
+
 export class MockAuthRepository implements AuthRepository {
-  private user: UserIdentity | null = null;
+  constructor(private readonly storageRepository: StorageRepository) {}
 
   async currentUser(): Promise<UserIdentity | null> {
-    return this.user;
+    return (await this.storageRepository.get<UserIdentity>(CURRENT_USER_KEY)) ?? null;
   }
 
   async signInAnonymously(): Promise<UserIdentity> {
-    this.user = { id: 'mock-user-1', nickname: '스탬피 테스터' };
-    return this.user;
+    const existingUser = await this.currentUser();
+
+    if (existingUser) {
+      return existingUser;
+    }
+
+    const user: UserIdentity = { id: 'mock-user-1', nickname: '스탬피 테스터' };
+    await this.storageRepository.set(CURRENT_USER_KEY, user);
+    return user;
   }
 
   async signOut(): Promise<void> {
-    this.user = null;
+    await this.storageRepository.remove(CURRENT_USER_KEY);
   }
 }

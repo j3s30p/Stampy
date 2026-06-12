@@ -1,8 +1,6 @@
-import { eventRepository, tourRepository } from '@core/di';
+import { authRepository, eventRepository, stampRepository, tourRepository } from '@core/di';
 import { distanceMetersBetween } from '@core/location';
 import type { TourEvent } from '@features/event/model';
-import { MockStampRepository } from '@features/stamp/api';
-import type { Stamp } from '@features/stamp/model';
 import type { MyStampSummary, RankingEntry, StampCandidate } from '@features/stamp/ui';
 import type { TourSpot } from '@features/tour/model';
 import type { HomeTourEvent, HomeTourSpot } from '@features/tour/ui';
@@ -13,17 +11,12 @@ import {
 } from '@shared/config';
 import { asLatitude, asLongitude, type Coordinates } from '@shared/types';
 
-const userId = 'mock-user-1';
-
-const stampRepository = new MockStampRepository();
-
 const seoulCityHallCenter = {
   latitude: asLatitude(37.5665),
   longitude: asLongitude(126.978),
 };
 const mockCollectionTotalCount = 12;
 
-let collectedStamps: Stamp[] | null = null;
 let selectedSpotId: string | null = null;
 let selectedEventId: string | null = null;
 const listeners = new Set<() => void>();
@@ -34,9 +27,8 @@ type TourSpotsFallbackResult = {
   readonly distanceOrigin: Coordinates;
 };
 
-const loadCollectedStamps = async () => {
-  collectedStamps ??= await stampRepository.listCollected(userId);
-  return collectedStamps;
+const resolveCurrentUser = async () => {
+  return (await authRepository.currentUser()) ?? (await authRepository.signInAnonymously());
 };
 
 const sortAndLimitTourSpots = (spots: readonly TourSpot[], origin: Coordinates) => {
@@ -55,9 +47,11 @@ const notifyListeners = () => {
 };
 
 export async function getMockFlow(currentLocation: Coordinates | null = null) {
+  const user = await resolveCurrentUser();
+
   const [{ events, spots, distanceOrigin }, stamps] = await Promise.all([
     loadTourSpotsWithFallback(currentLocation),
-    loadCollectedStamps(),
+    stampRepository.listCollected(user.id),
   ]);
   const collectedSpotIds = new Set(stamps.map((stamp) => stamp.spotId));
 
@@ -134,7 +128,7 @@ export async function getMockFlow(currentLocation: Coordinates | null = null) {
   );
   const rankingEntries: RankingEntry[] = [
     { id: 'team-river', nickname: '한강러너', stampCount: 3 },
-    { id: 'mock-user-1', nickname: '스탬피 테스터', stampCount: collectedCount, isMe: true },
+    { id: user.id, nickname: user.nickname, stampCount: collectedCount, isMe: true },
     { id: 'team-palace', nickname: '궁궐수집가', stampCount: 1 },
   ].sort((a, b) => b.stampCount - a.stampCount);
 
@@ -272,19 +266,13 @@ export async function collectMockCandidate(
     return flow;
   }
 
-  const stamps = await loadCollectedStamps();
-  const alreadyCollected = stamps.some((stamp) => stamp.spotId === candidate.contentId);
+  const user = await resolveCurrentUser();
 
-  if (alreadyCollected) {
-    return flow;
-  }
-
-  const nextStamp = await stampRepository.collect(userId, {
+  await stampRepository.collect(user.id, {
     spotId: candidate.contentId,
     location: currentLocation,
   });
 
-  collectedStamps = [...stamps, nextStamp];
   selectedSpotId = null;
   selectedEventId = null;
   notifyListeners();
