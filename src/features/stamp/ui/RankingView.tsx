@@ -322,7 +322,7 @@ const avatarToneStyles: Record<
   { readonly backgroundColor: string; readonly color: string }
 > = {
   blue: { backgroundColor: '#E6F1FB', color: '#185FA5' },
-  green: { backgroundColor: '#E7F7EE', color: colors.stampInk },
+  green: { backgroundColor: colors.stampSoft, color: colors.stampInk },
   pink: { backgroundColor: '#FBEAF0', color: '#993556' },
   purple: { backgroundColor: '#EEEDFE', color: '#534AB7' },
   yellow: { backgroundColor: '#FAEEDA', color: '#854F0B' },
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   myRankHint: {
-    color: '#FF9C73',
+    color: colors.brandLight,
   },
   pressed: {
     opacity: 0.86,

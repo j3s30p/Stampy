@@ -188,7 +188,7 @@ function MenuRow({ onPress, row }: { readonly onPress: () => void; readonly row:
       {row.toggle ? (
         <View style={styles.toggle} />
       ) : (
-        <Ionicons name="chevron-forward" size={16} color="#B8C2D0" />
+        <Ionicons name="chevron-forward" size={16} color={colors.borderMuted} />
       )}
     </Pressable>
   );

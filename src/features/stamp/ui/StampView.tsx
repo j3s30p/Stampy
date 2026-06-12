@@ -640,7 +640,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: radius.full,
-    backgroundColor: '#E7F7EE',
+    backgroundColor: colors.stampSoft,
   },
   header: {
     paddingHorizontal: spacing.lg,
@@ -714,12 +714,12 @@ const styles = StyleSheet.create({
   stampIconDone: {
     borderWidth: 2,
     borderColor: colors.stamp,
-    backgroundColor: '#E7F7EE',
+    backgroundColor: colors.stampSoft,
   },
   stampIconLocked: {
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: '#B8C2D0',
+    borderColor: colors.borderMuted,
     backgroundColor: colors.canvas,
   },
   stampIconText: {
@@ -827,7 +827,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     borderRadius: 14,
-    backgroundColor: '#E7F7EE',
+    backgroundColor: colors.stampSoft,
   },
   verifyIcon: {
     width: 30,
@@ -887,7 +887,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 3,
     borderColor: colors.stamp,
-    backgroundColor: '#E7F7EE',
+    backgroundColor: colors.stampSoft,
     transform: [{ rotate: '-7deg' }],
   },
   successStampGlyph: {
