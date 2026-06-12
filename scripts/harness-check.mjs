@@ -195,9 +195,9 @@ function checkCriticalInvariants() {
       }
     }
 
-    if (!file.startsWith('src/features/tour/api/')) {
+    if (!file.startsWith('src/features/tour/api/') && !file.startsWith('src/features/event/api/')) {
       if (/\b(mapx|mapy|contenttypeid|contentid|addr1|firstimage)\b/.test(content)) {
-        warn(`${file}: raw TourAPI DTO fields must not escape src/features/tour/api`);
+        warn(`${file}: raw TourAPI DTO fields must not escape feature API boundaries`);
       }
     }
 
