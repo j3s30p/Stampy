@@ -12,7 +12,7 @@
 1. **도장 인증 반경은 100m 고정** (`@shared/config` → `STAMP_RADIUS_METERS`). 관광지 발견/추천 조회 반경은 별도 상수 (`TOUR_DISCOVERY_RADIUS_METERS`, `TOUR_DISCOVERY_LIMIT`)로 분리해 사용한다.
 2. **좌표는 branded `Latitude` / `Longitude` 만 사용**. raw `number` 로 위경도를 다루지 않는다. 변환은 `@shared/types` 의 `asLatitude` / `asLongitude`.
 3. **Kakao Maps 는 WebView 경유 한정**. 네이티브 SDK 도입 금지 — Expo Managed 유지.
-4. **TourAPI 응답은 진입 즉시 `TourSpot` 으로 정규화**. raw DTO/snake_case 필드를 `features/tour/api` 바깥으로 노출 금지.
+4. **TourAPI 응답은 진입 즉시 도메인 타입으로 정규화**. raw DTO/snake_case 필드를 `features/tour/api`·`features/event/api` 바깥으로 노출 금지.
 5. **ESLint 룰 위반 suppress 금지**. 정당한 예외라도 룰 ID 와 근거 주석 필요 ([`skills/static-analysis-guide/SKILL.md`](./skills/static-analysis-guide/SKILL.md)).
 
 ## File ownership (병렬 PR 충돌 회피)
@@ -26,6 +26,7 @@
 | `src/features/tour/ui/`, `model/`                         | 관광지 카드·검색 UI/도메인                                | **Frontend**         |
 | `src/features/tour/api/` interface + Mock                 | `TourRepository` interface + `MockTourRepository`         | **Frontend**         |
 | `src/features/tour/api/Http*Repository.ts` (real impl)    | TourAPI HTTP 호출·DTO 매핑                                | **Backend teammate** |
+| `src/features/event/api/`                                 | `EventRepository` + `HttpEventRepository`                 | **Backend teammate** |
 | `src/core/network/`                                       | HTTP 클라이언트·재시도                                    | **Backend teammate** |
 | `src/core/location/`                                      | GPS·권한·Haversine                                        | **Frontend**         |
 | `src/core/storage/` interface + Mock                      | `StorageRepository` interface + Mock                      | **Frontend**         |

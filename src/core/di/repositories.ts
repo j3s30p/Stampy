@@ -1,6 +1,6 @@
 import { FetchHttpClient } from '@core/network';
-import type { EventRepository } from '@features/event/api';
-import { HttpEventRepository, HttpTourRepository, type TourRepository } from '@features/tour/api';
+import { HttpEventRepository, type EventRepository } from '@features/event/api';
+import { HttpTourRepository, type TourRepository } from '@features/tour/api';
 import { TOUR_API_BASE_URL, env } from '@shared/config';
 
 const requireTourApiKey = () => {
