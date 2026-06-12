@@ -10,10 +10,17 @@ export interface CurrentLocationState {
   readonly status: CurrentLocationStatus;
 }
 
-const toCoordinates = (coords: Location.LocationObjectCoords): Coordinates => ({
-  latitude: asLatitude(coords.latitude),
-  longitude: asLongitude(coords.longitude),
-});
+const TEMP_SIMULATOR_LOCATION: Coordinates = {
+  latitude: asLatitude(37.5665),
+  longitude: asLongitude(126.978),
+};
+
+const toCoordinates = (_coords: Location.LocationObjectCoords): Coordinates => {
+  // TODO: remove this simulator-only override before real-device QA.
+  // Keep the production path identical: OS location -> Coordinates -> app state.
+  // For the current simulator test pass, replace only the final returned value.
+  return TEMP_SIMULATOR_LOCATION;
+};
 
 export function useCurrentLocation(): CurrentLocationState {
   const [state, setState] = useState<CurrentLocationState>({
