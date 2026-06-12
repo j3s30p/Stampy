@@ -81,10 +81,19 @@ export default function SpotDetailScreen() {
     router.push('/stamp-capture');
   };
 
+  const goBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace('/');
+  };
+
   return (
     <TourSpotDetailView
       spot={spot}
-      onBack={() => router.back()}
+      onBack={goBack}
       onOpenDirections={() => undefined}
       onOpenStamp={openStamp}
     />

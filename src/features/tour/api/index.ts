@@ -1,3 +1,3 @@
+export * from './HttpEventRepository';
 export * from './HttpTourRepository';
 export * from './TourRepository';
-export * from './MockTourRepository';

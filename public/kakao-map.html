@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <style>
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #f8f7f4;
+      }
+
+      #map {
+        width: 100vw;
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+      (function () {
+        var DEFAULT_CENTER = { lat: 37.5665, lng: 126.978 };
+        var DEFAULT_RADIUS_METERS = 100;
+        var appkey = new URLSearchParams(window.location.search).get('appkey') || '';
+        var map = null;
+        var latestData = null;
+        var spotMarkers = [];
+        var selectedRadiusCircle = null;
+        var currentLocationMarker = null;
+        var postedErrors = {};
+        var ignoreNextMapTap = false;
+
+        function postToReactNative(message) {
+          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+            window.ReactNativeWebView.postMessage(JSON.stringify(message));
+          }
+        }
+
+        function formatError(prefix, error, context) {
+          var details = [prefix];
+
+          if (context) {
+            details.push('[' + context + ']');
+          }
+
+          if (error && typeof error === 'object') {
+            details.push(String(error.message || error.reason || error.type || '알 수 없는 오류'));
+
+            if (error.filename || error.sourceURL) {
+              details.push('@ ' + (error.filename || error.sourceURL));
+            }
+
+            if (typeof error.lineno === 'number' || typeof error.colno === 'number') {
+              details.push('(' + (error.lineno || '?') + ':' + (error.colno || '?') + ')');
+            }
+          } else if (error !== undefined && error !== null) {
+            details.push(String(error));
+          } else {
+            details.push('알 수 없는 오류');
+          }
+
+          return details.join(' ');
+        }
+
+        function postError(prefix, error, context) {
+          var message = formatError(prefix, error, context);
+
+          if (postedErrors[message]) {
+            return;
+          }
+
+          postedErrors[message] = true;
+          postToReactNative({ kind: 'error', message: message });
+        }
+
+        window.addEventListener(
+          'error',
+          function (event) {
+            var target = event && event.target ? event.target : null;
+            var context =
+              (event && event.message) ||
+              (target && (target.src || target.href || target.tagName)) ||
+              null;
+
+            postError('Kakao map window error', event && (event.error || event), context);
+          },
+          true,
+        );
+
+        window.addEventListener('unhandledrejection', function (event) {
+          postError('Kakao map promise error', event && event.reason, null);
+        });
+
+        function toLatLng(point) {
+          var source = point || DEFAULT_CENTER;
+          return new kakao.maps.LatLng(source.lat, source.lng);
+        }
+
+        function clearOverlay(overlay) {
+          if (overlay) {
+            overlay.setMap(null);
+          }
+        }
+
+        function clearMarkers() {
+          spotMarkers.forEach(function (marker) {
+            marker.setMap(null);
+          });
+          spotMarkers = [];
+        }
+
+        function markerImage(color, width, height) {
+          var svg =
+            '<svg xmlns="http://www.w3.org/2000/svg" width="' +
+            width +
+            '" height="' +
+            height +
+            '" viewBox="0 0 28 40"><path d="M14 39C14 39 25 24 25 15C25 8.9 20.1 4 14 4C7.9 4 3 8.9 3 15C3 24 14 39 14 39Z" fill="' +
+            color +
+            '" stroke="#ffffff" stroke-width="2"/><circle cx="14" cy="15" r="5" fill="#ffffff"/></svg>';
+
+          return new kakao.maps.MarkerImage(
+            'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+            new kakao.maps.Size(width, height),
+            { offset: new kakao.maps.Point(width / 2, height) },
+          );
+        }
+
+        function selectedSpotFrom(data) {
+          if (!data || !data.spots || data.spots.length === 0) {
+            return null;
+          }
+
+          for (var index = 0; index < data.spots.length; index += 1) {
+            if (data.spots[index].contentId === data.selectedSpotId) {
+              return data.spots[index];
+            }
+          }
+
+          return null;
+        }
+
+        function renderMapData() {
+          if (!map || !latestData) {
+            return;
+          }
+
+          try {
+            var center = toLatLng(latestData.center);
+            var selectedSpot = selectedSpotFrom(latestData);
+
+            clearMarkers();
+            clearOverlay(selectedRadiusCircle);
+            clearOverlay(currentLocationMarker);
+            selectedRadiusCircle = null;
+            currentLocationMarker = null;
+
+            requestAnimationFrame(function () {
+              if (typeof map.relayout === 'function') {
+                map.relayout();
+              }
+
+              map.setCenter(center);
+            });
+
+            if (selectedSpot) {
+              selectedRadiusCircle = new kakao.maps.Circle({
+                map: map,
+                center: toLatLng(selectedSpot.location),
+                radius: latestData.stampRadiusMeters || DEFAULT_RADIUS_METERS,
+                strokeWeight: 2,
+                strokeColor: '#18A968',
+                strokeOpacity: 0.9,
+                strokeStyle: 'dash',
+                fillColor: '#18A968',
+                fillOpacity: 0.12,
+              });
+            }
+
+            latestData.spots.forEach(function (spot) {
+              var isSelected = selectedSpot && spot.contentId === selectedSpot.contentId;
+              var markerColor = '#6b7280';
+
+              if (spot.kind === 'event') {
+                markerColor = '#7c3aed';
+              } else if (spot.collected) {
+                markerColor = '#1f7aea';
+              }
+
+              var marker = new kakao.maps.Marker({
+                map: map,
+                position: toLatLng(spot.location),
+                title: spot.title,
+                zIndex: isSelected ? 20 : 10,
+                image: markerImage(isSelected ? '#ff7043' : markerColor, 28, 40),
+              });
+
+              kakao.maps.event.addListener(marker, 'click', function () {
+                ignoreNextMapTap = true;
+                postToReactNative({ kind: 'marker:tap', spotId: spot.contentId });
+              });
+
+              spotMarkers.push(marker);
+            });
+
+            if (latestData.currentLocation) {
+              currentLocationMarker = new kakao.maps.Marker({
+                map: map,
+                position: toLatLng(latestData.currentLocation),
+                title: '현재 위치',
+                zIndex: 30,
+                image: markerImage('#2563eb', 24, 34),
+              });
+            }
+          } catch (error) {
+            postError('Kakao map render error', error, 'renderMapData');
+          }
+        }
+
+        function setData(data) {
+          latestData = data;
+          renderMapData();
+        }
+
+        function createMap() {
+          try {
+            var container = document.getElementById('map');
+
+            map = new kakao.maps.Map(container, {
+              center: toLatLng(DEFAULT_CENTER),
+              level: 4,
+            });
+
+            kakao.maps.event.addListener(map, 'tilesloaded', function () {
+              postToReactNative({ kind: 'tiles:loaded' });
+            });
+
+            kakao.maps.event.addListener(map, 'click', function () {
+              if (ignoreNextMapTap) {
+                ignoreNextMapTap = false;
+                return;
+              }
+
+              postToReactNative({ kind: 'map:tap' });
+            });
+
+            window.__STAMPY_KAKAO_MAP__ = {
+              setData: setData,
+            };
+
+            postToReactNative({ kind: 'ready' });
+            renderMapData();
+          } catch (error) {
+            postError('Kakao map init error', error, 'createMap');
+          }
+        }
+
+        window.__STAMPY_KAKAO_MAP__ = {
+          setData: setData,
+        };
+
+        if (!appkey) {
+          postError('Kakao map SDK error', new Error('Kakao JavaScript 키가 없습니다.'), 'appkey');
+          return;
+        }
+
+        var sdk = document.createElement('script');
+        sdk.type = 'text/javascript';
+        sdk.src =
+          'https://dapi.kakao.com/v2/maps/sdk.js?appkey=' +
+          encodeURIComponent(appkey) +
+          '&autoload=false';
+        sdk.onload = function () {
+          if (!window.kakao || !window.kakao.maps) {
+            postError(
+              'Kakao map SDK error',
+              new Error('Kakao Maps SDK 객체를 찾을 수 없습니다.'),
+              'sdk.onload',
+            );
+            return;
+          }
+
+          kakao.maps.load(createMap);
+        };
+        sdk.onerror = function () {
+          postError(
+            'Kakao map SDK error',
+            new Error('Kakao Maps SDK를 불러오지 못했습니다.'),
+            'sdk',
+          );
+        };
+        document.head.appendChild(sdk);
+      })();
+    </script>
+  </body>
+</html>

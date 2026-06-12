@@ -1,7 +1,8 @@
+import { distanceMetersBetween } from '@core/location';
 import type { HttpClient } from '@core/network';
+import type { EventRepository } from '@features/event/api';
+import type { TourEvent } from '@features/event/model';
 import { asLatitude, asLongitude, type Coordinates } from '@shared/types';
-import type { TourSpot } from '../model';
-import type { TourRepository } from './TourRepository';
 
 interface TourApiResponse {
   readonly response?: {
@@ -30,6 +31,8 @@ interface TourApiItem {
   readonly tel?: string;
   readonly mapx?: string | number;
   readonly mapy?: string | number;
+  readonly eventstartdate?: string | number;
+  readonly eventenddate?: string | number;
 }
 
 interface TourApiHeader {
@@ -39,46 +42,46 @@ interface TourApiHeader {
 
 const TOUR_APP_NAME = 'Stampy';
 const TOUR_MOBILE_OS = 'ETC';
-const DEFAULT_ROWS = 20;
-const ALLOWED_CONTENT_TYPE_ID = '12';
+const DEFAULT_ROWS = 100;
+const EVENT_CONTENT_TYPE_ID = '15';
 
-export class HttpTourRepository implements TourRepository {
+export class HttpEventRepository implements EventRepository {
   constructor(
     private readonly httpClient: HttpClient,
     private readonly serviceKey: string,
   ) {}
 
-  async searchNearby(center: Coordinates, radiusMeters: number): Promise<TourSpot[]> {
-    const response = await this.httpClient.get<TourApiResponse>('locationBasedList2', {
+  async searchNearby(center: Coordinates, radiusMeters: number): Promise<TourEvent[]> {
+    const response = await this.httpClient.get<TourApiResponse>('searchFestival2', {
       ...this.defaultParams(),
       arrange: 'E',
-      contentTypeId: ALLOWED_CONTENT_TYPE_ID,
-      mapX: center.longitude,
-      mapY: center.latitude,
-      radius: radiusMeters,
+      eventStartDate: todayCompactDate(),
     });
 
-    return this.toTourSpots(response);
+    return this.toTourEvents(response).filter(
+      (event) => distanceMetersBetween(center, event.location) <= radiusMeters,
+    );
   }
 
-  async byId(contentId: string): Promise<TourSpot | null> {
+  async byId(contentId: string): Promise<TourEvent | null> {
     const response = await this.httpClient.get<TourApiResponse>('detailCommon2', {
       ...this.defaultParams(),
       contentId,
+      contentTypeId: EVENT_CONTENT_TYPE_ID,
     });
 
-    return this.toTourSpots(response)[0] ?? null;
+    return this.toTourEvents(response)[0] ?? null;
   }
 
-  async search(query: string): Promise<TourSpot[]> {
+  async search(query: string): Promise<TourEvent[]> {
     const response = await this.httpClient.get<TourApiResponse>('searchKeyword2', {
       ...this.defaultParams(),
       arrange: 'A',
-      contentTypeId: ALLOWED_CONTENT_TYPE_ID,
+      contentTypeId: EVENT_CONTENT_TYPE_ID,
       keyword: query,
     });
 
-    return this.toTourSpots(response);
+    return this.toTourEvents(response);
   }
 
   private defaultParams() {
@@ -92,7 +95,7 @@ export class HttpTourRepository implements TourRepository {
     };
   }
 
-  private toTourSpots(response: TourApiResponse): TourSpot[] {
+  private toTourEvents(response: TourApiResponse): TourEvent[] {
     const header = response.response?.header;
 
     if (isNoDataResult(header)) {
@@ -104,8 +107,9 @@ export class HttpTourRepository implements TourRepository {
     }
 
     return normalizeItems(response)
-      .map(toTourSpot)
-      .filter((spot): spot is TourSpot => spot !== null);
+      .map(toTourEvent)
+      .filter((event): event is TourEvent => event !== null)
+      .filter((event) => event.endDate >= todayCompactDate());
   }
 }
 
@@ -119,21 +123,25 @@ const normalizeItems = (response: TourApiResponse): readonly TourApiItem[] => {
   return Array.isArray(item) ? item : [item];
 };
 
-const toTourSpot = (item: TourApiItem): TourSpot | null => {
+const toTourEvent = (item: TourApiItem): TourEvent | null => {
   const contentId = toNonEmptyString(item.contentid);
   const title = toNonEmptyString(item.title);
-  const contentTypeId = toNonEmptyString(item.contenttypeid);
+  const contentTypeId = toNonEmptyString(item.contenttypeid) ?? EVENT_CONTENT_TYPE_ID;
   const mapx = toFiniteNumber(item.mapx);
   const mapy = toFiniteNumber(item.mapy);
+  const startDate = toCompactDate(item.eventstartdate);
+  const endDate = toCompactDate(item.eventenddate);
   const imageUrls = toUniqueStrings([item.firstimage, item.firstimage2]);
   const thumbnailUrl = imageUrls[0];
 
   if (
     !contentId ||
     !title ||
-    !isAllowedContentTypeId(contentTypeId) ||
+    contentTypeId !== EVENT_CONTENT_TYPE_ID ||
     mapx === null ||
-    mapy === null
+    mapy === null ||
+    !startDate ||
+    !endDate
   ) {
     return null;
   }
@@ -147,16 +155,14 @@ const toTourSpot = (item: TourApiItem): TourSpot | null => {
       latitude: asLatitude(mapy),
       longitude: asLongitude(mapx),
     },
+    startDate,
+    endDate,
     thumbnailUrl,
     imageUrls,
     overview: toNormalizedText(item.overview) ?? undefined,
     homepage: toHomepageText(item.homepage) ?? undefined,
     telephone: toNormalizedText(item.tel) ?? undefined,
   };
-};
-
-const isAllowedContentTypeId = (value: string | null): value is typeof ALLOWED_CONTENT_TYPE_ID => {
-  return value === ALLOWED_CONTENT_TYPE_ID;
 };
 
 const toNonEmptyString = (value: string | number | undefined): string | null => {
@@ -177,6 +183,21 @@ const toFiniteNumber = (value: string | number | undefined): number | null => {
 
   const parsed = Number(text);
   return Number.isFinite(parsed) ? parsed : null;
+};
+
+const toCompactDate = (value: string | number | undefined): string | null => {
+  const text = toNonEmptyString(value)?.replace(/\D/g, '') ?? '';
+
+  return text.length === 8 ? text : null;
+};
+
+const todayCompactDate = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+
+  return `${year}${month}${day}`;
 };
 
 const toUniqueStrings = (values: readonly (string | number | undefined)[]): readonly string[] => {
