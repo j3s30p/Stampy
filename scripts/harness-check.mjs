@@ -12,7 +12,9 @@ const sh = (cmd) => execSync(cmd, { encoding: 'utf8', stdio: ['ignore', 'pipe', 
 const trackedFiles = sh('git ls-files -z')
   .split('\0')
   .filter(Boolean)
-  .filter((file) => !file.startsWith('node_modules/') && !file.startsWith('repo/'));
+  .filter((file) => !file.startsWith('node_modules/') && !file.startsWith('repo/'))
+  // dirty tree 에서 추적 파일이 로컬 삭제/이동된 경우 크래시 방지 (CI 는 항상 clean checkout).
+  .filter((file) => existsSync(join(root, file)));
 
 const textExtensions = new Set([
   '',

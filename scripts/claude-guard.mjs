@@ -26,7 +26,9 @@ const FORBIDDEN = [
     reason: 'hook 우회(--no-verify) 금지',
   },
   {
-    pattern: new RegExp(CMD + String.raw`git\s[^\n|;&]*\bpush\b[^\n|;&]*(--force(-with-lease)?\b|\s-f\b)`),
+    pattern: new RegExp(
+      CMD + String.raw`git\s[^\n|;&]*\bpush\b[^\n|;&]*(--force(-with-lease)?\b|\s-f\b)`,
+    ),
     reason: 'force-push 금지 — 히스토리 파괴/리뷰 무력화',
   },
   {
@@ -42,7 +44,10 @@ const FORBIDDEN = [
     reason: 'PR ready 전환은 사용자 결정',
   },
   {
-    pattern: new RegExp(CMD + String.raw`gh\s+api\b[^\n|;&]*-X\s+(PUT|PATCH|DELETE)\b[^\n|;&]*protection`, 'i'),
+    pattern: new RegExp(
+      CMD + String.raw`gh\s+api\b[^\n|;&]*-X\s+(PUT|PATCH|DELETE)\b[^\n|;&]*protection`,
+      'i',
+    ),
     reason: 'branch protection 완화 금지 — 안전망 자체 약화',
   },
 ];
