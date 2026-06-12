@@ -9,6 +9,7 @@ import { STAMP_RADIUS_METERS } from '@shared/config';
 import { AppText, Gauge, StampDrop, colors, radius, shadow, spacing } from '@shared/ui';
 
 export interface StampCandidate {
+  readonly kind: 'spot' | 'event';
   readonly contentId: string;
   readonly title: string;
   readonly address: string;
@@ -177,7 +178,9 @@ export function StampView(props: StampViewProps) {
                 도장 찍기
               </AppText>
               <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
-                {candidate ? `${candidate.title} · 서울 종로구` : '주변 스팟 확인 중'}
+                {candidate
+                  ? `${candidate.title} · ${candidate.kind === 'event' ? '행사' : '관광지'}`
+                  : '주변 도장 후보 확인 중'}
               </AppText>
             </View>
             <View style={canVerify ? styles.captureBadgeReady : styles.captureBadge}>
