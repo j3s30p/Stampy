@@ -60,11 +60,11 @@ Closes #
 - [ ] 리뷰어 검토 — 5.5 권장 (`skills/code-review/SKILL.md`, 수정 없이 findings 확인)
 - [ ] 사용자 최종 판단 대기
 
-## Phase 1 분담 확인
+## Mock-first 순서 확인
 
-- [ ] 본 PR 은 **Frontend** 영역 (interface / Mock / UI / 도메인) 만 수정
-- [ ] 본 PR 은 **Backend** 영역 (real impl / core/network) 만 수정
-- [ ] Co-owned 영역 (harness / 정본 문서) — 양쪽 리뷰 필요
+- [ ] interface / Mock / UI / 도메인 흐름을 먼저 세우는 변경
+- [ ] 같은 interface 에 real impl / core network / storage 를 연결하는 변경
+- [ ] 정본 문서 / harness 변경
 
 ## 관련 skill / background
 
