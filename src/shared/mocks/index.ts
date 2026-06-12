@@ -3,3 +3,5 @@
 // Mock*Repository 만 import 허용.
 
 export * from './stamps.fixture';
+export * from './tourEvents.fixture';
+export * from './tourSpots.fixture';
