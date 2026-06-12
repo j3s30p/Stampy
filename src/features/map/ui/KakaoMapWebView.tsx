@@ -26,6 +26,9 @@ interface KakaoMapWebViewProps {
 }
 
 const SEOUL_CITY_HALL_CENTER = { lat: 37.5665, lng: 126.978 };
+const webViewPalette = {
+  background: '#f8f7f4',
+} as const;
 
 const resolveKakaoMapPageUri = (kakaoJsKey: string): string | null => {
   const hostUri =
@@ -282,6 +285,6 @@ const styles = StyleSheet.create({
   },
   webView: {
     flex: 1,
-    backgroundColor: '#f8f7f4',
+    backgroundColor: webViewPalette.background,
   },
 });

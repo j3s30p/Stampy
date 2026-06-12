@@ -34,6 +34,17 @@ interface MapViewProps {
   readonly onOpenStamp?: (contentId: string) => void;
 }
 
+const fallbackMapPalette = {
+  backdrop: '#F5F1E8',
+  rowMark: '#EFE7D6',
+} as const;
+
+const fallbackThumbnailPalette = {
+  hill: '#7FA86E',
+  roof: '#3E5C46',
+  wall: '#B4543A',
+} as const;
+
 export function MapView({
   kakaoJsKey,
   events = [],
@@ -894,7 +905,7 @@ const styles = StyleSheet.create({
   },
   fallbackBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#F5F1E8',
+    backgroundColor: fallbackMapPalette.backdrop,
   },
   fallbackGrid: {
     ...StyleSheet.absoluteFillObject,
@@ -1205,7 +1216,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: 32,
-    backgroundColor: '#7FA86E',
+    backgroundColor: fallbackThumbnailPalette.hill,
   },
   thumbRoof: {
     position: 'absolute',
@@ -1213,7 +1224,7 @@ const styles = StyleSheet.create({
     top: 30,
     width: 38,
     height: 38,
-    backgroundColor: '#3E5C46',
+    backgroundColor: fallbackThumbnailPalette.roof,
     transform: [{ rotate: '45deg' }],
   },
   thumbWall: {
@@ -1222,7 +1233,7 @@ const styles = StyleSheet.create({
     bottom: 16,
     width: 34,
     height: 16,
-    backgroundColor: '#B4543A',
+    backgroundColor: fallbackThumbnailPalette.wall,
   },
   categoryPill: {
     position: 'absolute',
@@ -1347,7 +1358,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EFE7D6',
+    backgroundColor: fallbackMapPalette.rowMark,
   },
   fallbackRowMarkDone: {
     backgroundColor: colors.stampSoft,

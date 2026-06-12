@@ -50,6 +50,18 @@ interface HomeViewProps {
   readonly onSelectEvent?: (contentId: string) => void;
 }
 
+const homePalette = {
+  progressSub: '#AAB6C6',
+  eventBorder: '#BFD6FF',
+  spotMarkFallback: '#F0E6D6',
+} as const;
+
+const fallbackThumbnailPalette = {
+  hill: '#7FA86E',
+  roof: '#3E5C46',
+  wall: '#B4543A',
+} as const;
+
 export function HomeView({
   spots,
   events = [],
@@ -623,7 +635,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   progressSub: {
-    color: '#AAB6C6',
+    color: homePalette.progressSub,
   },
   progressAction: {
     color: colors.brandLight,
@@ -739,7 +751,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#BFD6FF',
+    borderColor: homePalette.eventBorder,
   },
   eventMark: {
     width: 56,
@@ -784,7 +796,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F0E6D6',
+    backgroundColor: homePalette.spotMarkFallback,
   },
   spotMarkFallbackDone: {
     backgroundColor: colors.stampSoft,
@@ -828,7 +840,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: '40%',
-    backgroundColor: '#7FA86E',
+    backgroundColor: fallbackThumbnailPalette.hill,
   },
   thumbRoof: {
     position: 'absolute',
@@ -836,7 +848,7 @@ const styles = StyleSheet.create({
     right: '18%',
     top: '34%',
     height: '18%',
-    backgroundColor: '#3E5C46',
+    backgroundColor: fallbackThumbnailPalette.roof,
     transform: [{ rotate: '45deg' }],
   },
   thumbWall: {
@@ -845,7 +857,7 @@ const styles = StyleSheet.create({
     right: '28%',
     bottom: '18%',
     height: '22%',
-    backgroundColor: '#B4543A',
+    backgroundColor: fallbackThumbnailPalette.wall,
   },
   sectionHead: {
     marginTop: spacing.xs,
