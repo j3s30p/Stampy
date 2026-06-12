@@ -1,12 +1,10 @@
 import { FetchHttpClient } from '@core/network';
-import type { EventRepository } from '@features/event/api';
-import { MockEventRepository } from '@features/event/api';
 import {
   HttpEventRepository,
-  HttpTourRepository,
-  MockTourRepository,
-  type TourRepository,
-} from '@features/tour/api';
+  MockEventRepository,
+  type EventRepository,
+} from '@features/event/api';
+import { HttpTourRepository, MockTourRepository, type TourRepository } from '@features/tour/api';
 import { TOUR_API_BASE_URL, env } from '@shared/config';
 
 const createTourRepository = (): TourRepository => {
