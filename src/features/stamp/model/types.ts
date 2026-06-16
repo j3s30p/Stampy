@@ -12,3 +12,12 @@ export interface StampSpot {
   readonly title: string;
   readonly location: Coordinates;
 }
+
+export interface RankingEntry {
+  readonly id: string;
+  readonly nickname: string;
+  readonly stampCount: number;
+  readonly isMe?: boolean;
+}
+
+export type RankingPeriod = 'weekly' | 'all';
