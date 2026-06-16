@@ -1,9 +1,9 @@
 import { asLatitude, asLongitude, type Coordinates } from '@shared/types';
 import { buildStraightLineRoutePayload, type MapRouteTarget } from '../route';
 
-const coord = (latitude: number, longitude: number): Coordinates => ({
-  latitude: asLatitude(latitude),
-  longitude: asLongitude(longitude),
+const coord = (lat: number, lng: number): Coordinates => ({
+  latitude: asLatitude(lat),
+  longitude: asLongitude(lng),
 });
 
 describe('buildStraightLineRoutePayload', () => {

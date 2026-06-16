@@ -5,9 +5,9 @@ import {
   normalizeMapRouteProxyResponse,
 } from '../MapRouteResponseNormalizer';
 
-const coord = (latitude: number, longitude: number): Coordinates => ({
-  latitude: asLatitude(latitude),
-  longitude: asLongitude(longitude),
+const coord = (lat: number, lng: number): Coordinates => ({
+  latitude: asLatitude(lat),
+  longitude: asLongitude(lng),
 });
 
 describe('normalizeKakaoDrivingRouteResponse', () => {
