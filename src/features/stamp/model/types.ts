@@ -21,3 +21,21 @@ export interface RankingEntry {
 }
 
 export type RankingPeriod = 'weekly' | 'all';
+
+export interface StampCandidate {
+  readonly kind: 'spot' | 'event';
+  readonly contentId: string;
+  readonly title: string;
+  readonly address: string;
+  readonly distanceMeters: number;
+  readonly verificationDistanceMeters: number | null;
+  readonly collected: boolean;
+}
+
+export interface MyStampSummary {
+  readonly contentId: string;
+  readonly title: string;
+  readonly collected: boolean;
+  readonly collectedAt?: string;
+  readonly thumbnailUrl?: string;
+}

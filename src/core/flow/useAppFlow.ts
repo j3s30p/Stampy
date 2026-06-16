@@ -2,21 +2,21 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCurrentLocation } from '@core/location';
 import type { RankingPeriod } from '@features/stamp/model';
 import {
-  collectMockCandidate,
-  getMockFlow,
-  selectMockEvent,
-  selectMockSpot,
-  subscribeMockFlow,
-} from './mockFlow';
+  collectCandidate as collectAppCandidate,
+  getAppFlow,
+  selectEvent as selectAppEvent,
+  selectSpot as selectAppSpot,
+  subscribeAppFlow,
+} from './appFlow';
 
-export type MockFlow = Awaited<ReturnType<typeof getMockFlow>>;
+export type AppFlow = Awaited<ReturnType<typeof getAppFlow>>;
 
-export function useMockFlow(rankingPeriod: RankingPeriod = 'weekly') {
-  const [flow, setFlow] = useState<MockFlow | null>(null);
+export function useAppFlow(rankingPeriod: RankingPeriod = 'weekly') {
+  const [flow, setFlow] = useState<AppFlow | null>(null);
   const currentLocation = useCurrentLocation();
   const requestIdRef = useRef(0);
 
-  const applyLatestFlow = useCallback(async (nextFlowPromise: Promise<MockFlow>) => {
+  const applyLatestFlow = useCallback(async (nextFlowPromise: Promise<AppFlow>) => {
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
     const nextFlow = await nextFlowPromise;
@@ -27,12 +27,12 @@ export function useMockFlow(rankingPeriod: RankingPeriod = 'weekly') {
   }, []);
 
   const refresh = useCallback(async () => {
-    await applyLatestFlow(getMockFlow(currentLocation.location, rankingPeriod));
+    await applyLatestFlow(getAppFlow(currentLocation.location, rankingPeriod));
   }, [applyLatestFlow, currentLocation.location, rankingPeriod]);
 
   useEffect(() => {
     void refresh();
-    const unsubscribe = subscribeMockFlow(refresh);
+    const unsubscribe = subscribeAppFlow(refresh);
 
     return () => {
       requestIdRef.current += 1;
@@ -42,16 +42,16 @@ export function useMockFlow(rankingPeriod: RankingPeriod = 'weekly') {
 
   const collectCandidate = useCallback(async () => {
     await applyLatestFlow(
-      collectMockCandidate(currentLocation.location, currentLocation.accuracyMeters, rankingPeriod),
+      collectAppCandidate(currentLocation.location, currentLocation.accuracyMeters, rankingPeriod),
     );
   }, [applyLatestFlow, currentLocation.accuracyMeters, currentLocation.location, rankingPeriod]);
 
   const selectSpot = useCallback((contentId: string) => {
-    selectMockSpot(contentId);
+    selectAppSpot(contentId);
   }, []);
 
   const selectEvent = useCallback((contentId: string) => {
-    selectMockEvent(contentId);
+    selectAppEvent(contentId);
   }, []);
 
   return {

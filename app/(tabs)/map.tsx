@@ -1,11 +1,11 @@
 import { useRouter } from 'expo-router';
-import { useMockFlow } from '@core/demo';
+import { useAppFlow } from '@core/flow';
 import { MapView } from '@features/map/ui';
 import { env } from '@shared/config';
 
 export default function MapScreen() {
   const router = useRouter();
-  const { flow, selectEvent, selectSpot, currentLocation, locationStatus } = useMockFlow();
+  const { flow, selectEvent, selectSpot, currentLocation, locationStatus } = useAppFlow();
 
   const openDetail = (contentId: string) => {
     selectSpot(contentId);

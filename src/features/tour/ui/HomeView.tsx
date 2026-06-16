@@ -2,44 +2,9 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import type { HomeTourEvent, HomeTourSpot } from '@features/tour/model';
 import { STAMP_RADIUS_METERS } from '@shared/config';
-import type { Coordinates } from '@shared/types';
 import { AppText, Badge, Gauge, Surface, colors, radius, spacing } from '@shared/ui';
-
-export interface HomeTourSpot {
-  readonly contentId: string;
-  readonly title: string;
-  readonly address: string;
-  readonly theme: string;
-  readonly distanceMeters: number;
-  readonly verificationDistanceMeters: number | null;
-  readonly collected: boolean;
-  readonly location: Coordinates;
-  readonly thumbnailUrl?: string;
-  readonly imageUrls: readonly string[];
-  readonly overview?: string;
-  readonly homepage?: string;
-  readonly telephone?: string;
-  readonly contentTypeId?: string;
-}
-
-export interface HomeTourEvent {
-  readonly contentId: string;
-  readonly title: string;
-  readonly address: string;
-  readonly distanceMeters: number;
-  readonly verificationDistanceMeters: number | null;
-  readonly collected: boolean;
-  readonly location: Coordinates;
-  readonly startDate: string;
-  readonly endDate: string;
-  readonly thumbnailUrl?: string;
-  readonly imageUrls: readonly string[];
-  readonly overview?: string;
-  readonly homepage?: string;
-  readonly telephone?: string;
-  readonly contentTypeId?: string;
-}
 
 interface HomeViewProps {
   readonly spots: readonly HomeTourSpot[];

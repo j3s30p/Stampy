@@ -11,9 +11,9 @@ import {
   type NativeScrollEvent,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import type { HomeTourSpot } from '@features/tour/model';
 import { STAMP_RADIUS_METERS } from '@shared/config';
 import { AppText, Badge, Button, Mascot, Surface, colors, radius, spacing } from '@shared/ui';
-import type { HomeTourSpot } from './HomeView';
 
 interface TourSpotDetailViewProps {
   readonly spot: HomeTourSpot | null;

@@ -2,17 +2,17 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useMockFlow } from '@core/demo';
 import { eventRepository } from '@core/di';
+import { useAppFlow } from '@core/flow';
 import type { TourEvent } from '@features/event/model';
 import { EventDetailView } from '@features/event/ui';
-import type { HomeTourEvent } from '@features/tour/ui';
+import type { HomeTourEvent } from '@features/tour/model';
 import { AppText, colors, spacing } from '@shared/ui';
 
 export default function EventDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ contentId?: string | string[] }>();
-  const { flow, selectEvent } = useMockFlow();
+  const { flow, selectEvent } = useAppFlow();
   const contentId = Array.isArray(params.contentId) ? params.contentId[0] : params.contentId;
   const baseEvent =
     contentId && flow

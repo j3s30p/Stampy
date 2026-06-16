@@ -1,11 +1,11 @@
 import { useRouter } from 'expo-router';
-import { useMockFlow } from '@core/demo';
+import { useAppFlow } from '@core/flow';
 import { StampView } from '@features/stamp/ui';
 
 export default function StampCaptureScreen() {
   const router = useRouter();
   const { collectCandidate, flow, locationAccuracyMeters, locationAvailable, locationStatus } =
-    useMockFlow();
+    useAppFlow();
 
   return (
     <StampView

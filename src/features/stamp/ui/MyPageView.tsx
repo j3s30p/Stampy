@@ -2,15 +2,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import type { MyStampSummary } from '@features/stamp/model';
 import { AppText, colors, radius, spacing } from '@shared/ui';
-
-export interface MyStampSummary {
-  readonly contentId: string;
-  readonly title: string;
-  readonly collected: boolean;
-  readonly collectedAt?: string;
-  readonly thumbnailUrl?: string;
-}
 
 interface MyPageViewProps {
   readonly stamps: readonly MyStampSummary[];

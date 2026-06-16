@@ -1,10 +1,10 @@
 import { useRouter } from 'expo-router';
-import { useMockFlow } from '@core/demo';
+import { useAppFlow } from '@core/flow';
 import { MyPageView } from '@features/stamp/ui';
 
 export default function MyScreen() {
   const router = useRouter();
-  const { flow, selectSpot } = useMockFlow();
+  const { flow, selectSpot } = useAppFlow();
 
   const openDetail = (contentId: string) => {
     selectSpot(contentId);
