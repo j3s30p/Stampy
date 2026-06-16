@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     backgroundColor: colors.brandSoft,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.brandSoftBorder,
   },
   feedbackCard: {
     padding: spacing.md,

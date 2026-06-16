@@ -15,6 +15,16 @@ interface RankingViewProps {
   readonly entries: readonly RankingEntry[];
 }
 
+type AvatarTone = 'blue' | 'green' | 'pink' | 'purple' | 'yellow' | 'orange' | 'orangeDark';
+type RankingRange = 'week' | 'month' | 'all';
+
+const avatarTonePalette = {
+  blue: { background: '#E6F1FB', ink: '#185FA5' },
+  pink: { background: '#FBEAF0', ink: '#993556' },
+  purple: { background: '#EEEDFE', ink: '#534AB7' },
+  yellow: { background: '#FAEEDA', ink: '#854F0B' },
+} as const;
+
 export function RankingView({ entries }: RankingViewProps) {
   const [activeRange, setActiveRange] = useState<RankingRange>('week');
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
@@ -253,9 +263,6 @@ function RankingRow({
   );
 }
 
-type AvatarTone = 'blue' | 'green' | 'pink' | 'purple' | 'yellow' | 'orange' | 'orangeDark';
-type RankingRange = 'week' | 'month' | 'all';
-
 function Avatar({
   label,
   size,
@@ -321,11 +328,17 @@ const avatarToneStyles: Record<
   AvatarTone,
   { readonly backgroundColor: string; readonly color: string }
 > = {
-  blue: { backgroundColor: '#E6F1FB', color: '#185FA5' },
+  blue: { backgroundColor: avatarTonePalette.blue.background, color: avatarTonePalette.blue.ink },
   green: { backgroundColor: colors.stampSoft, color: colors.stampInk },
-  pink: { backgroundColor: '#FBEAF0', color: '#993556' },
-  purple: { backgroundColor: '#EEEDFE', color: '#534AB7' },
-  yellow: { backgroundColor: '#FAEEDA', color: '#854F0B' },
+  pink: { backgroundColor: avatarTonePalette.pink.background, color: avatarTonePalette.pink.ink },
+  purple: {
+    backgroundColor: avatarTonePalette.purple.background,
+    color: avatarTonePalette.purple.ink,
+  },
+  yellow: {
+    backgroundColor: avatarTonePalette.yellow.background,
+    color: avatarTonePalette.yellow.ink,
+  },
   orange: { backgroundColor: colors.brandSoft, color: colors.brandInk },
   orangeDark: { backgroundColor: colors.brand, color: colors.surface },
 };
@@ -441,7 +454,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingHorizontal: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF1F6',
+    borderBottomColor: colors.rowDivider,
     backgroundColor: colors.surface,
   },
   rowSelected: {
