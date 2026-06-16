@@ -41,6 +41,13 @@ const HOLD_DURATION_MS = 1500;
 const HOLD_RING_SIZE = 192;
 const HOLD_RING_RADIUS = 86;
 const HOLD_RING_CIRCUMFERENCE = 2 * Math.PI * HOLD_RING_RADIUS;
+const stampPaperPalette = {
+  border: '#E8DFCC',
+  background: '#FBF7EF',
+  ink: '#9C8E72',
+  dashedBorder: '#D9CDB4',
+  mutedInk: '#C2B69A',
+} as const;
 
 export function StampView(props: StampViewProps) {
   const {
@@ -285,7 +292,7 @@ export function StampView(props: StampViewProps) {
                     cy={HOLD_RING_SIZE / 2}
                     r={HOLD_RING_RADIUS}
                     fill="none"
-                    stroke="#D9CDB4"
+                    stroke={stampPaperPalette.dashedBorder}
                     strokeDasharray="6 6"
                     strokeWidth={1.5}
                   />
@@ -313,7 +320,7 @@ export function StampView(props: StampViewProps) {
                     <Ionicons
                       name="hand-left-outline"
                       size={34}
-                      color={canVerify ? colors.brand : '#9C8E72'}
+                      color={canVerify ? colors.brand : stampPaperPalette.ink}
                     />
                     <AppText
                       variant="captionBold"
@@ -738,8 +745,8 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E8DFCC',
-    backgroundColor: '#FBF7EF',
+    borderColor: stampPaperPalette.border,
+    backgroundColor: stampPaperPalette.background,
     overflow: 'hidden',
   },
   paperStripe: {
@@ -751,13 +758,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.brand,
   },
   paperKicker: {
-    color: '#9C8E72',
+    color: stampPaperPalette.ink,
   },
   paperTitle: {
     textAlign: 'center',
   },
   paperMeta: {
-    color: '#9C8E72',
+    color: stampPaperPalette.ink,
     textAlign: 'center',
   },
   stampTarget: {
@@ -770,7 +777,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#D9CDB4',
+    borderColor: stampPaperPalette.dashedBorder,
     backgroundColor: colors.surface,
     ...shadow.e1,
   },
@@ -792,19 +799,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   holdText: {
-    color: '#9C8E72',
+    color: stampPaperPalette.ink,
   },
   holdTextActive: {
     color: colors.brand,
   },
   holdSub: {
     maxWidth: 136,
-    color: '#C2B69A',
+    color: stampPaperPalette.mutedInk,
     textAlign: 'center',
   },
   paperHint: {
     minHeight: 36,
-    color: '#9C8E72',
+    color: stampPaperPalette.ink,
     textAlign: 'center',
   },
   verifyPanel: {
