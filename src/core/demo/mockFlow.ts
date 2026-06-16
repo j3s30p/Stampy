@@ -1,7 +1,14 @@
-import { authRepository, eventRepository, stampRepository, tourRepository } from '@core/di';
+import {
+  authRepository,
+  eventRepository,
+  rankingRepository,
+  stampRepository,
+  tourRepository,
+} from '@core/di';
 import { distanceMetersBetween } from '@core/location';
 import type { TourEvent } from '@features/event/model';
-import type { MyStampSummary, RankingEntry, StampCandidate } from '@features/stamp/ui';
+import type { RankingPeriod } from '@features/stamp/model';
+import type { MyStampSummary, StampCandidate } from '@features/stamp/ui';
 import type { TourSpot } from '@features/tour/model';
 import type { HomeTourEvent, HomeTourSpot } from '@features/tour/ui';
 import {
@@ -46,12 +53,16 @@ const notifyListeners = () => {
   });
 };
 
-export async function getMockFlow(currentLocation: Coordinates | null = null) {
+export async function getMockFlow(
+  currentLocation: Coordinates | null = null,
+  rankingPeriod: RankingPeriod = 'weekly',
+) {
   const user = await resolveCurrentUser();
 
-  const [{ events, spots, distanceOrigin }, stamps] = await Promise.all([
+  const [{ events, spots, distanceOrigin }, stamps, rankingEntries] = await Promise.all([
     loadTourSpotsWithFallback(currentLocation),
     stampRepository.listCollected(user.id),
+    rankingRepository.getRanking(rankingPeriod),
   ]);
   const collectedSpotIds = new Set(stamps.map((stamp) => stamp.spotId));
 
@@ -126,13 +137,8 @@ export async function getMockFlow(currentLocation: Coordinates | null = null) {
     collectedCount,
     mockCollectionTotalCount,
   );
-  const rankingEntries: RankingEntry[] = [
-    { id: 'team-river', nickname: '한강러너', stampCount: 3 },
-    { id: user.id, nickname: user.nickname, stampCount: collectedCount, isMe: true },
-    { id: 'team-palace', nickname: '궁궐수집가', stampCount: 1 },
-  ].sort((a, b) => b.stampCount - a.stampCount);
-
   return {
+    rankingPeriod,
     spots: spotCards,
     events: eventCards,
     candidate,
@@ -240,12 +246,13 @@ const toEventStampCandidate = (event: HomeTourEvent): StampCandidate => ({
 export async function collectMockCandidate(
   currentLocation: Coordinates | null,
   accuracyMeters: number | null,
+  rankingPeriod: RankingPeriod = 'weekly',
 ) {
   if (!currentLocation || accuracyMeters === null || accuracyMeters > STAMP_RADIUS_METERS) {
-    return getMockFlow(currentLocation);
+    return getMockFlow(currentLocation, rankingPeriod);
   }
 
-  const flow = await getMockFlow(currentLocation);
+  const flow = await getMockFlow(currentLocation, rankingPeriod);
   const candidate = flow.candidate;
 
   if (!candidate || candidate.collected) {
@@ -277,7 +284,7 @@ export async function collectMockCandidate(
   selectedEventId = null;
   notifyListeners();
 
-  return getMockFlow(currentLocation);
+  return getMockFlow(currentLocation, rankingPeriod);
 }
 
 export function selectMockSpot(contentId: string) {

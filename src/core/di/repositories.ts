@@ -6,7 +6,12 @@ import {
   MockEventRepository,
   type EventRepository,
 } from '@features/event/api';
-import { MockStampRepository, type StampRepository } from '@features/stamp/api';
+import {
+  MockRankingRepository,
+  MockStampRepository,
+  type RankingRepository,
+  type StampRepository,
+} from '@features/stamp/api';
 import { HttpTourRepository, MockTourRepository, type TourRepository } from '@features/tour/api';
 import { TOUR_API_BASE_URL, env } from '@shared/config';
 
@@ -39,3 +44,7 @@ export const eventRepository: EventRepository = createEventRepository();
 export const storageRepository: StorageRepository = new MockStorageRepository();
 export const authRepository: AuthRepository = new MockAuthRepository(storageRepository);
 export const stampRepository: StampRepository = new MockStampRepository(storageRepository);
+export const rankingRepository: RankingRepository = new MockRankingRepository(
+  stampRepository,
+  authRepository,
+);

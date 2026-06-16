@@ -3,20 +3,24 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText, Surface, colors, radius, spacing } from '@shared/ui';
-
-export interface RankingEntry {
-  readonly id: string;
-  readonly nickname: string;
-  readonly stampCount: number;
-  readonly isMe?: boolean;
-}
+import type { RankingEntry, RankingPeriod } from '../model';
 
 interface RankingViewProps {
+  readonly activePeriod: RankingPeriod;
   readonly entries: readonly RankingEntry[];
+  readonly onPeriodChange: (period: RankingPeriod) => void;
 }
 
-export function RankingView({ entries }: RankingViewProps) {
-  const [activeRange, setActiveRange] = useState<RankingRange>('week');
+type AvatarTone = 'blue' | 'green' | 'pink' | 'purple' | 'yellow' | 'orange' | 'orangeDark';
+
+const avatarTonePalette = {
+  blue: { background: '#E6F1FB', ink: '#185FA5' },
+  pink: { background: '#FBEAF0', ink: '#993556' },
+  purple: { background: '#EEEDFE', ink: '#534AB7' },
+  yellow: { background: '#FAEEDA', ink: '#854F0B' },
+} as const;
+
+export function RankingView({ activePeriod, entries, onPeriodChange }: RankingViewProps) {
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const rows = useMemo(() => buildLeaderboard(entries), [entries]);
   const podium = rows.slice(0, 3);
@@ -37,17 +41,17 @@ export function RankingView({ entries }: RankingViewProps) {
                 key={range.key}
                 accessibilityRole="button"
                 accessibilityLabel={`${range.label} 랭킹 보기`}
-                accessibilityState={{ selected: activeRange === range.key }}
-                onPress={() => setActiveRange(range.key)}
+                accessibilityState={{ selected: activePeriod === range.key }}
+                onPress={() => onPeriodChange(range.key)}
                 style={({ pressed }) => [
                   styles.segmentItem,
-                  activeRange === range.key ? styles.segmentActive : null,
+                  activePeriod === range.key ? styles.segmentActive : null,
                   pressed ? styles.pressed : null,
                 ]}
               >
                 <AppText
                   variant="captionBold"
-                  tone={activeRange === range.key ? 'ink' : 'inkMuted'}
+                  tone={activePeriod === range.key ? 'ink' : 'inkMuted'}
                   numberOfLines={1}
                 >
                   {range.label}
@@ -56,7 +60,7 @@ export function RankingView({ entries }: RankingViewProps) {
             ))}
           </View>
           <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
-            {rankingRanges.find((range) => range.key === activeRange)?.subtitle ?? ''}
+            {rankingRanges.find((range) => range.key === activePeriod)?.subtitle ?? ''}
           </AppText>
         </View>
 
@@ -116,7 +120,7 @@ export function RankingView({ entries }: RankingViewProps) {
                 선택됨
               </AppText>
               <AppText variant="caption" tone="inkMuted" numberOfLines={1}>
-                {rangeLabel(activeRange)}
+                {rangeLabel(activePeriod)}
               </AppText>
             </View>
             <AppText variant="bodyBold" tone="ink" numberOfLines={1}>
@@ -253,9 +257,6 @@ function RankingRow({
   );
 }
 
-type AvatarTone = 'blue' | 'green' | 'pink' | 'purple' | 'yellow' | 'orange' | 'orangeDark';
-type RankingRange = 'week' | 'month' | 'all';
-
 function Avatar({
   label,
   size,
@@ -291,24 +292,11 @@ function Avatar({
 }
 
 const buildLeaderboard = (entries: readonly RankingEntry[]) => {
-  const meEntry =
-    entries.find((entry) => entry.isMe) ??
-    ({ id: 'mock-user-1', nickname: '재선', stampCount: 3, isMe: true } as RankingEntry);
-  const demoRows: RankingEntry[] = [
-    { id: 'weekly-1', nickname: '도장왕준호', stampCount: 12 },
-    { id: 'weekly-2', nickname: '서울탐험가', stampCount: 9 },
-    { id: 'weekly-3', nickname: '하늘바람', stampCount: 8 },
-    { id: 'weekly-4', nickname: '한옥러버', stampCount: 7 },
-    { id: 'weekly-5', nickname: '길따라도윤', stampCount: 7 },
-    { id: 'weekly-6', nickname: '궁궐지기', stampCount: 6 },
-    { id: 'weekly-7', nickname: '주말여행자', stampCount: 5 },
-  ];
-
-  return [...demoRows, { ...meEntry, nickname: meEntry.nickname.replace('스탬피 테스터', '재선') }]
+  return [...entries]
     .sort((a, b) => b.stampCount - a.stampCount)
     .map((entry, index) => ({
       ...entry,
-      id: entry.isMe ? 'mock-user-1' : entry.id || `rank-${index}`,
+      id: entry.id || `rank-${index}`,
     }));
 };
 
@@ -321,23 +309,28 @@ const avatarToneStyles: Record<
   AvatarTone,
   { readonly backgroundColor: string; readonly color: string }
 > = {
-  blue: { backgroundColor: '#E6F1FB', color: '#185FA5' },
+  blue: { backgroundColor: avatarTonePalette.blue.background, color: avatarTonePalette.blue.ink },
   green: { backgroundColor: colors.stampSoft, color: colors.stampInk },
-  pink: { backgroundColor: '#FBEAF0', color: '#993556' },
-  purple: { backgroundColor: '#EEEDFE', color: '#534AB7' },
-  yellow: { backgroundColor: '#FAEEDA', color: '#854F0B' },
+  pink: { backgroundColor: avatarTonePalette.pink.background, color: avatarTonePalette.pink.ink },
+  purple: {
+    backgroundColor: avatarTonePalette.purple.background,
+    color: avatarTonePalette.purple.ink,
+  },
+  yellow: {
+    backgroundColor: avatarTonePalette.yellow.background,
+    color: avatarTonePalette.yellow.ink,
+  },
   orange: { backgroundColor: colors.brandSoft, color: colors.brandInk },
   orangeDark: { backgroundColor: colors.brand, color: colors.surface },
 };
 
 const rowTones: readonly AvatarTone[] = ['pink', 'purple', 'yellow', 'green'];
-const rankingRanges: readonly { key: RankingRange; label: string; subtitle: string }[] = [
-  { key: 'week', label: '이번 주', subtitle: '이번 주 활동 기준으로 보여줘요.' },
-  { key: 'month', label: '이번 달', subtitle: '이번 달 누적 도장 수를 보여줘요.' },
+const rankingRanges: readonly { key: RankingPeriod; label: string; subtitle: string }[] = [
+  { key: 'weekly', label: '이번 주', subtitle: '이번 주 활동 기준으로 보여줘요.' },
   { key: 'all', label: '전체', subtitle: '전체 누적 순위를 보여줘요.' },
 ];
 
-const rangeLabel = (range: RankingRange) =>
+const rangeLabel = (range: RankingPeriod) =>
   rankingRanges.find((item) => item.key === range)?.label ?? '전체';
 
 const styles = StyleSheet.create({
@@ -441,7 +434,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingHorizontal: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF1F6',
+    borderBottomColor: colors.border,
     backgroundColor: colors.surface,
   },
   rowSelected: {
