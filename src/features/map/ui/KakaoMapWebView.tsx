@@ -30,6 +30,8 @@ const webViewPalette = {
   background: '#f8f7f4',
 } as const;
 
+const IPV6_LOOPBACK_HOSTS = new Set(['::1', '0:0:0:0:0:0:0:1']);
+
 const resolveKakaoMapPageUri = (kakaoJsKey: string): string | null => {
   const hostUri =
     Constants.expoConfig?.hostUri ??
@@ -41,7 +43,56 @@ const resolveKakaoMapPageUri = (kakaoJsKey: string): string | null => {
     return null;
   }
 
-  return `http://${host}/kakao-map.html?appkey=${encodeURIComponent(kakaoJsKey)}`;
+  const normalizedHost = normalizeKakaoMapPageHost(host);
+
+  return `http://${normalizedHost}/kakao-map.html?appkey=${encodeURIComponent(kakaoJsKey)}`;
+};
+
+const normalizeKakaoMapPageHost = (host: string): string => {
+  try {
+    const parsedHost = new URL(`http://${host}`);
+    const hostname = parsedHost.hostname.replace(/^\[|\]$/g, '');
+
+    if (isLoopbackHost(hostname)) {
+      return parsedHost.port ? `localhost:${parsedHost.port}` : 'localhost';
+    }
+  } catch {
+    const hostname = host.replace(/^\[|\]$/g, '');
+
+    if (isLoopbackHost(hostname)) {
+      return 'localhost';
+    }
+
+    const unbracketedIpv6Loopback = parseUnbracketedIpv6LoopbackHost(hostname);
+
+    if (unbracketedIpv6Loopback) {
+      return unbracketedIpv6Loopback.port
+        ? `localhost:${unbracketedIpv6Loopback.port}`
+        : 'localhost';
+    }
+  }
+
+  return host;
+};
+
+const isLoopbackHost = (hostname: string): boolean =>
+  hostname === '127.0.0.1' || IPV6_LOOPBACK_HOSTS.has(hostname.toLowerCase());
+
+const parseUnbracketedIpv6LoopbackHost = (host: string): { readonly port: string } | null => {
+  const portSeparatorIndex = host.lastIndexOf(':');
+
+  if (portSeparatorIndex < 0) {
+    return null;
+  }
+
+  const hostname = host.slice(0, portSeparatorIndex);
+  const port = host.slice(portSeparatorIndex + 1);
+
+  if (!/^\d+$/.test(port) || !isLoopbackHost(hostname)) {
+    return null;
+  }
+
+  return { port };
 };
 
 export function KakaoMapWebView({
