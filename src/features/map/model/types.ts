@@ -39,18 +39,6 @@ export interface KakaoMapSpotPayload {
   readonly location: KakaoMapPointPayload;
 }
 
-export interface KakaoMapRoutePayload {
-  readonly mode: 'straight-line' | 'walking-api' | 'driving-api';
-  readonly targetContentId: string;
-  readonly targetKind: 'spot' | 'event';
-  readonly targetTitle: string;
-  readonly distanceMeters: number;
-  readonly durationSeconds?: number;
-  readonly source?: 'kakao-driving-api' | 'kakao-walking-api' | 'straight-line-fallback';
-  readonly summaryLabel: string;
-  readonly points: readonly KakaoMapPointPayload[];
-}
-
 export type KakaoBridgeMessage =
   | { readonly kind: 'ready' }
   | { readonly kind: 'tiles:loaded' }
@@ -64,5 +52,4 @@ export interface KakaoMapDataPayload {
   readonly currentLocation: KakaoMapPointPayload | null;
   readonly center: KakaoMapPointPayload;
   readonly stampRadiusMeters: number;
-  readonly route: KakaoMapRoutePayload | null;
 }

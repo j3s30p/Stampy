@@ -28,7 +28,6 @@ interface TourApiItem {
   readonly overview?: string;
   readonly homepage?: string;
   readonly tel?: string;
-  readonly originimgurl?: string;
   readonly mapx?: string | number;
   readonly mapy?: string | number;
 }
@@ -67,18 +66,8 @@ export class HttpTourRepository implements TourRepository {
       ...this.defaultParams(),
       contentId,
     });
-    const spot = this.toTourSpots(response)[0] ?? null;
 
-    if (!spot) {
-      return null;
-    }
-
-    const detailImageUrls = await this.fetchDetailImageUrls(contentId);
-
-    return {
-      ...spot,
-      imageUrls: toUniqueStrings([...spot.imageUrls, ...detailImageUrls]),
-    };
+    return this.toTourSpots(response)[0] ?? null;
   }
 
   async search(query: string): Promise<TourSpot[]> {
@@ -118,20 +107,6 @@ export class HttpTourRepository implements TourRepository {
       .map(toTourSpot)
       .filter((spot): spot is TourSpot => spot !== null);
   }
-
-  private async fetchDetailImageUrls(contentId: string): Promise<readonly string[]> {
-    try {
-      const response = await this.httpClient.get<TourApiResponse>('detailImage2', {
-        ...this.defaultParams(),
-        contentId,
-        imageYN: 'Y',
-      });
-
-      return toDetailImageUrls(response);
-    } catch {
-      return [];
-    }
-  }
 }
 
 const normalizeItems = (response: TourApiResponse): readonly TourApiItem[] => {
@@ -150,9 +125,8 @@ const toTourSpot = (item: TourApiItem): TourSpot | null => {
   const contentTypeId = toNonEmptyString(item.contenttypeid);
   const mapx = toFiniteNumber(item.mapx);
   const mapy = toFiniteNumber(item.mapy);
-  const imageUrls = toUniqueStrings([item.firstimage]);
-  const thumbnailUrl =
-    toNonEmptyString(item.firstimage2) ?? toNonEmptyString(item.firstimage) ?? undefined;
+  const imageUrls = toUniqueStrings([item.firstimage, item.firstimage2]);
+  const thumbnailUrl = imageUrls[0];
 
   if (
     !contentId ||
@@ -216,20 +190,6 @@ const toUniqueStrings = (values: readonly (string | number | undefined)[]): read
   }
 
   return [...unique];
-};
-
-const toDetailImageUrls = (response: TourApiResponse): readonly string[] => {
-  const header = response.response?.header;
-
-  if (isNoDataResult(header)) {
-    return [];
-  }
-
-  if (header?.resultCode !== '0000') {
-    throw new Error(`TourAPI ${header?.resultCode ?? 'UNKNOWN'}: ${header?.resultMsg ?? ''}`);
-  }
-
-  return toUniqueStrings(normalizeItems(response).map((item) => item.originimgurl));
 };
 
 const toNormalizedText = (value: string | number | undefined): string | null => {

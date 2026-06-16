@@ -8,7 +8,6 @@ import { AppText, colors, spacing } from '@shared/ui';
 import type {
   KakaoBridgeMessage,
   KakaoMapDataPayload,
-  KakaoMapRoutePayload,
   KakaoMapSpotPayload,
   MapEventPin,
   MapSpotPin,
@@ -20,7 +19,6 @@ interface KakaoMapWebViewProps {
   readonly events: readonly MapEventPin[];
   readonly selectedSpotId: string | null;
   readonly currentLocation: Coordinates | null;
-  readonly route: KakaoMapRoutePayload | null;
   readonly onMarkerTap?: (spotId: string) => void;
   readonly onMapTap?: () => void;
   readonly onMapReady?: () => void;
@@ -52,7 +50,6 @@ export function KakaoMapWebView({
   spots,
   selectedSpotId,
   currentLocation,
-  route,
   onMarkerTap,
   onMapTap,
   onMapReady,
@@ -78,9 +75,8 @@ export function KakaoMapWebView({
         : null,
       center,
       stampRadiusMeters: STAMP_RADIUS_METERS,
-      route,
     };
-  }, [currentLocation, events, route, selectedSpotId, spots]);
+  }, [currentLocation, events, selectedSpotId, spots]);
 
   const kakaoMapPageUri = useMemo(() => resolveKakaoMapPageUri(kakaoJsKey), [kakaoJsKey]);
   const webViewSource = useMemo(

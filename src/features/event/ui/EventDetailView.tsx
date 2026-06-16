@@ -35,15 +35,13 @@ export interface EventDetailItem {
 
 interface EventDetailViewProps {
   readonly event: EventDetailItem | null;
-  readonly canOpenDirections?: boolean;
   readonly onBack?: () => void;
-  readonly onOpenDirections?: () => Promise<boolean>;
+  readonly onOpenDirections?: () => void;
   readonly onOpenStamp?: () => void;
 }
 
 export function EventDetailView({
   event,
-  canOpenDirections = false,
   onBack,
   onOpenDirections,
   onOpenStamp,
@@ -52,7 +50,13 @@ export function EventDetailView({
   const [message, setMessage] = useState('행사 기간과 도장 동선을 확인해 보세요.');
 
   const carouselWidth = Math.max(width - spacing.lg * 2, 0);
-  const images = event ? [...event.imageUrls] : [];
+  const images = event
+    ? event.imageUrls.length > 0
+      ? [...event.imageUrls]
+      : event.thumbnailUrl
+        ? [event.thumbnailUrl]
+        : []
+    : [];
 
   if (!event) {
     return (
@@ -82,22 +86,6 @@ export function EventDetailView({
 
   const intro = event.overview ?? getEventIntroText(event);
   const statusLabel = getEventStatusLabel(event);
-  const handleOpenDirections = async () => {
-    if (!canOpenDirections) {
-      setMessage('현재 위치 확인 후 지도 길찾기를 사용할 수 있어요');
-      return;
-    }
-
-    setMessage(`${event.title} 카카오맵을 여는 중`);
-
-    const opened = (await onOpenDirections?.()) ?? false;
-
-    setMessage(
-      opened
-        ? `${event.title} 지도에서 경로를 표시해요`
-        : '현재 위치 확인 후 지도 길찾기를 사용할 수 있어요',
-    );
-  };
 
   return (
     <SafeAreaView style={styles.root}>
@@ -228,9 +216,9 @@ export function EventDetailView({
           size="lg"
           fullWidth
           onPress={() => {
-            void handleOpenDirections();
+            setMessage(`${event.title} 길찾기 준비 중`);
+            onOpenDirections?.();
           }}
-          disabled={!canOpenDirections}
           accessibilityLabel={`${event.title} 카카오맵으로 길찾기`}
         >
           카카오맵으로 길찾기
