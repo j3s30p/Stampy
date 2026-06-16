@@ -11,7 +11,7 @@ import { AppText, colors, spacing } from '@shared/ui';
 export default function SpotDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ contentId?: string | string[] }>();
-  const { flow, selectSpot } = useMockFlow();
+  const { currentLocation, flow, selectSpot } = useMockFlow();
   const contentId = Array.isArray(params.contentId) ? params.contentId[0] : params.contentId;
   const baseSpot =
     contentId && flow
@@ -90,11 +90,25 @@ export default function SpotDetailScreen() {
     router.replace('/');
   };
 
+  const openDirections = async () => {
+    if (!spot || !currentLocation) {
+      return false;
+    }
+
+    selectSpot(spot.contentId);
+    router.push({
+      pathname: '/map',
+      params: { directions: `spot-${spot.contentId}-${Date.now()}`, spotId: spot.contentId },
+    });
+    return true;
+  };
+
   return (
     <TourSpotDetailView
       spot={spot}
+      canOpenDirections={currentLocation !== null}
       onBack={goBack}
-      onOpenDirections={() => undefined}
+      onOpenDirections={openDirections}
       onOpenStamp={openStamp}
     />
   );
@@ -109,11 +123,18 @@ const mergeSpot = (baseSpot: HomeTourSpot, detailSpot: TourSpot | null): HomeTou
     ...baseSpot,
     title: detailSpot.title,
     address: detailSpot.address,
-    thumbnailUrl: detailSpot.thumbnailUrl ?? detailSpot.imageUrls[0] ?? baseSpot.thumbnailUrl,
-    imageUrls: detailSpot.imageUrls.length > 0 ? detailSpot.imageUrls : baseSpot.imageUrls,
+    thumbnailUrl: detailSpot.thumbnailUrl ?? baseSpot.thumbnailUrl,
+    imageUrls: mergeImageUrls(baseSpot.imageUrls, detailSpot.imageUrls),
     overview: detailSpot.overview ?? baseSpot.overview,
     homepage: detailSpot.homepage ?? baseSpot.homepage,
     telephone: detailSpot.telephone ?? baseSpot.telephone,
     contentTypeId: detailSpot.contentTypeId ?? baseSpot.contentTypeId,
   };
+};
+
+const mergeImageUrls = (
+  baseImageUrls: readonly string[],
+  detailImageUrls: readonly string[],
+): readonly string[] => {
+  return [...new Set([...baseImageUrls, ...detailImageUrls])];
 };

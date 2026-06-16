@@ -21,10 +21,31 @@
         width: 100vw;
         height: 100vh;
       }
+
+      #routeSummary {
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        bottom: 18px;
+        z-index: 10;
+        display: none;
+        box-sizing: border-box;
+        padding: 9px 12px;
+        border: 1px solid rgba(24, 169, 104, 0.28);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.94);
+        color: #243126;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.35;
+        box-shadow: 0 8px 18px rgba(36, 49, 38, 0.14);
+      }
     </style>
   </head>
   <body>
     <div id="map"></div>
+    <div id="routeSummary" aria-live="polite"></div>
     <script>
       (function () {
         var DEFAULT_CENTER = { lat: 37.5665, lng: 126.978 };
@@ -35,6 +56,7 @@
         var spotMarkers = [];
         var selectedRadiusCircle = null;
         var currentLocationMarker = null;
+        var routePolyline = null;
         var postedErrors = {};
         var ignoreNextMapTap = false;
 
@@ -117,6 +139,50 @@
           spotMarkers = [];
         }
 
+        function routeSummaryElement() {
+          return document.getElementById('routeSummary');
+        }
+
+        function setRouteSummary(route) {
+          var element = routeSummaryElement();
+
+          if (!element) {
+            return;
+          }
+
+          if (!route) {
+            element.textContent = '';
+            element.style.display = 'none';
+            return;
+          }
+
+          element.textContent =
+            route.mode === 'straight-line'
+              ? route.summaryLabel + ' · 직선 표시'
+              : route.summaryLabel + ' · 실제 API 경로';
+          element.style.display = 'block';
+        }
+
+        function renderRoute(route) {
+          clearOverlay(routePolyline);
+          routePolyline = null;
+          setRouteSummary(route);
+
+          if (!route || !route.points || route.points.length < 2) {
+            return;
+          }
+
+          routePolyline = new kakao.maps.Polyline({
+            map: map,
+            path: route.points.map(toLatLng),
+            strokeWeight: 4,
+            strokeColor: '#18A968',
+            strokeOpacity: 0.86,
+            strokeStyle: route.mode === 'straight-line' ? 'shortdash' : 'solid',
+            zIndex: 25,
+          });
+        }
+
         function markerImage(color, width, height) {
           var svg =
             '<svg xmlns="http://www.w3.org/2000/svg" width="' +
@@ -162,6 +228,7 @@
             clearOverlay(currentLocationMarker);
             selectedRadiusCircle = null;
             currentLocationMarker = null;
+            renderRoute(latestData.route);
 
             requestAnimationFrame(function () {
               if (typeof map.relayout === 'function') {

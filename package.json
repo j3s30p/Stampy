@@ -15,6 +15,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "harness:check": "node scripts/harness-check.mjs",
+    "map-route-proxy": "node scripts/kakao-route-proxy.mjs",
     "test": "jest",
     "quality:fast": "npm-run-all -s typecheck lint format:check",
     "quality": "npm-run-all -s quality:fast test harness:check",

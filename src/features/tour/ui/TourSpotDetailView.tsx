@@ -17,13 +17,15 @@ import type { HomeTourSpot } from './HomeView';
 
 interface TourSpotDetailViewProps {
   readonly spot: HomeTourSpot | null;
+  readonly canOpenDirections?: boolean;
   readonly onBack?: () => void;
   readonly onOpenStamp?: () => void;
-  readonly onOpenDirections?: () => void;
+  readonly onOpenDirections?: () => Promise<boolean>;
 }
 
 export function TourSpotDetailView({
   spot,
+  canOpenDirections = false,
   onBack,
   onOpenStamp,
   onOpenDirections,
@@ -32,13 +34,7 @@ export function TourSpotDetailView({
   const [message, setMessage] = useState('길찾기와 도장 동선을 확인해 보세요.');
 
   const carouselWidth = Math.max(width - spacing.lg * 2, 0);
-  const images = spot
-    ? spot.imageUrls.length > 0
-      ? [...spot.imageUrls]
-      : spot.thumbnailUrl
-        ? [spot.thumbnailUrl]
-        : []
-    : [];
+  const images = spot ? [...spot.imageUrls] : [];
 
   if (!spot) {
     return (
@@ -68,6 +64,22 @@ export function TourSpotDetailView({
 
   const intro = spot.overview ?? getIntroText(spot.title, spot.theme);
   const statusLabel = getSpotStatusLabel(spot);
+  const handleOpenDirections = async () => {
+    if (!canOpenDirections) {
+      setMessage('현재 위치 확인 후 지도 길찾기를 사용할 수 있어요');
+      return;
+    }
+
+    setMessage(`${spot.title} 카카오맵을 여는 중`);
+
+    const opened = (await onOpenDirections?.()) ?? false;
+
+    setMessage(
+      opened
+        ? `${spot.title} 지도에서 경로를 표시해요`
+        : '현재 위치 확인 후 지도 길찾기를 사용할 수 있어요',
+    );
+  };
 
   return (
     <SafeAreaView style={styles.root}>
@@ -199,9 +211,9 @@ export function TourSpotDetailView({
           size="lg"
           fullWidth
           onPress={() => {
-            setMessage(`${spot.title} 길찾기 준비 중`);
-            onOpenDirections?.();
+            void handleOpenDirections();
           }}
+          disabled={!canOpenDirections}
           accessibilityLabel={`${spot.title} 카카오맵으로 길찾기`}
         >
           카카오맵으로 길찾기
@@ -455,7 +467,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     backgroundColor: colors.brandSoft,
     borderWidth: 1,
-    borderColor: '#F2C8B6',
+    borderColor: colors.border,
   },
   feedbackCard: {
     padding: spacing.md,

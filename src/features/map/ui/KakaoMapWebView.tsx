@@ -8,6 +8,7 @@ import { AppText, colors, spacing } from '@shared/ui';
 import type {
   KakaoBridgeMessage,
   KakaoMapDataPayload,
+  KakaoMapRoutePayload,
   KakaoMapSpotPayload,
   MapEventPin,
   MapSpotPin,
@@ -19,6 +20,7 @@ interface KakaoMapWebViewProps {
   readonly events: readonly MapEventPin[];
   readonly selectedSpotId: string | null;
   readonly currentLocation: Coordinates | null;
+  readonly route: KakaoMapRoutePayload | null;
   readonly onMarkerTap?: (spotId: string) => void;
   readonly onMapTap?: () => void;
   readonly onMapReady?: () => void;
@@ -26,6 +28,9 @@ interface KakaoMapWebViewProps {
 }
 
 const SEOUL_CITY_HALL_CENTER = { lat: 37.5665, lng: 126.978 };
+const webViewPalette = {
+  background: '#f8f7f4',
+} as const;
 
 const resolveKakaoMapPageUri = (kakaoJsKey: string): string | null => {
   const hostUri =
@@ -47,6 +52,7 @@ export function KakaoMapWebView({
   spots,
   selectedSpotId,
   currentLocation,
+  route,
   onMarkerTap,
   onMapTap,
   onMapReady,
@@ -72,8 +78,9 @@ export function KakaoMapWebView({
         : null,
       center,
       stampRadiusMeters: STAMP_RADIUS_METERS,
+      route,
     };
-  }, [currentLocation, events, selectedSpotId, spots]);
+  }, [currentLocation, events, route, selectedSpotId, spots]);
 
   const kakaoMapPageUri = useMemo(() => resolveKakaoMapPageUri(kakaoJsKey), [kakaoJsKey]);
   const webViewSource = useMemo(
@@ -282,6 +289,6 @@ const styles = StyleSheet.create({
   },
   webView: {
     flex: 1,
-    backgroundColor: '#f8f7f4',
+    backgroundColor: webViewPalette.background,
   },
 });

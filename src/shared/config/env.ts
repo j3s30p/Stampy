@@ -3,6 +3,7 @@ import Constants from 'expo-constants';
 interface AppEnv {
   readonly tourApiKey: string;
   readonly kakaoJsKey: string;
+  readonly mapRouteProxyUrl: string;
   readonly useRealApi: boolean;
 }
 
@@ -27,5 +28,8 @@ const parseEnvBoolean = (value: unknown): boolean => {
 export const env: AppEnv = {
   tourApiKey: normalizeEnvValue(extra.tourApiKey ?? process.env.EXPO_PUBLIC_TOUR_API_KEY),
   kakaoJsKey: normalizeEnvValue(extra.kakaoJsKey ?? process.env.EXPO_PUBLIC_KAKAO_JS_KEY),
+  mapRouteProxyUrl: normalizeEnvValue(
+    extra.mapRouteProxyUrl ?? process.env.EXPO_PUBLIC_MAP_ROUTE_PROXY_URL,
+  ),
   useRealApi: parseEnvBoolean(extra.useRealApi ?? process.env.EXPO_PUBLIC_USE_REAL_API),
 };
