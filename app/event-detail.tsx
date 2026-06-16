@@ -12,7 +12,7 @@ import { AppText, colors, spacing } from '@shared/ui';
 export default function EventDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ contentId?: string | string[] }>();
-  const { currentLocation, flow, selectEvent } = useMockFlow();
+  const { flow, selectEvent } = useMockFlow();
   const contentId = Array.isArray(params.contentId) ? params.contentId[0] : params.contentId;
   const baseEvent =
     contentId && flow
@@ -91,25 +91,11 @@ export default function EventDetailScreen() {
     router.replace('/');
   };
 
-  const openDirections = async () => {
-    if (!event || !currentLocation) {
-      return false;
-    }
-
-    selectEvent(event.contentId);
-    router.push({
-      pathname: '/map',
-      params: { directions: `event-${event.contentId}-${Date.now()}`, eventId: event.contentId },
-    });
-    return true;
-  };
-
   return (
     <EventDetailView
       event={event}
-      canOpenDirections={currentLocation !== null}
       onBack={goBack}
-      onOpenDirections={openDirections}
+      onOpenDirections={() => undefined}
       onOpenStamp={openStamp}
     />
   );
@@ -124,8 +110,8 @@ const mergeEvent = (baseEvent: HomeTourEvent, detailEvent: TourEvent | null): Ho
     ...baseEvent,
     title: detailEvent.title,
     address: detailEvent.address || baseEvent.address,
-    thumbnailUrl: detailEvent.thumbnailUrl ?? baseEvent.thumbnailUrl,
-    imageUrls: mergeImageUrls(baseEvent.imageUrls, detailEvent.imageUrls),
+    thumbnailUrl: detailEvent.thumbnailUrl ?? detailEvent.imageUrls[0] ?? baseEvent.thumbnailUrl,
+    imageUrls: detailEvent.imageUrls.length > 0 ? detailEvent.imageUrls : baseEvent.imageUrls,
     overview: detailEvent.overview ?? baseEvent.overview,
     homepage: detailEvent.homepage ?? baseEvent.homepage,
     telephone: detailEvent.telephone ?? baseEvent.telephone,
@@ -133,11 +119,4 @@ const mergeEvent = (baseEvent: HomeTourEvent, detailEvent: TourEvent | null): Ho
     startDate: detailEvent.startDate || baseEvent.startDate,
     endDate: detailEvent.endDate || baseEvent.endDate,
   };
-};
-
-const mergeImageUrls = (
-  baseImageUrls: readonly string[],
-  detailImageUrls: readonly string[],
-): readonly string[] => {
-  return [...new Set([...baseImageUrls, ...detailImageUrls])];
 };

@@ -29,7 +29,6 @@ interface TourApiItem {
   readonly overview?: string;
   readonly homepage?: string;
   readonly tel?: string;
-  readonly originimgurl?: string;
   readonly mapx?: string | number;
   readonly mapy?: string | number;
   readonly eventstartdate?: string | number;
@@ -65,32 +64,13 @@ export class HttpEventRepository implements EventRepository {
   }
 
   async byId(contentId: string): Promise<TourEvent | null> {
-    const detailCommonResponse = await this.httpClient.get<TourApiResponse>('detailCommon2', {
-      ...this.defaultParams(),
-      contentId,
-    });
-    const detailIntroResponse = await this.httpClient.get<TourApiResponse>('detailIntro2', {
+    const response = await this.httpClient.get<TourApiResponse>('detailCommon2', {
       ...this.defaultParams(),
       contentId,
       contentTypeId: EVENT_CONTENT_TYPE_ID,
     });
-    const detailItem = mergeTourApiItems(
-      getFirstTourApiItem(detailCommonResponse),
-      getFirstTourApiItem(detailIntroResponse),
-      { contentid: contentId, contenttypeid: EVENT_CONTENT_TYPE_ID },
-    );
-    const event = toTourEvent(detailItem);
 
-    if (!event) {
-      return null;
-    }
-
-    const detailImageUrls = await this.fetchDetailImageUrls(contentId);
-
-    return {
-      ...event,
-      imageUrls: toUniqueStrings([...event.imageUrls, ...detailImageUrls]),
-    };
+    return this.toTourEvents(response)[0] ?? null;
   }
 
   async search(query: string): Promise<TourEvent[]> {
@@ -131,20 +111,6 @@ export class HttpEventRepository implements EventRepository {
       .filter((event): event is TourEvent => event !== null)
       .filter((event) => event.endDate >= todayCompactDate());
   }
-
-  private async fetchDetailImageUrls(contentId: string): Promise<readonly string[]> {
-    try {
-      const response = await this.httpClient.get<TourApiResponse>('detailImage2', {
-        ...this.defaultParams(),
-        contentId,
-        imageYN: 'Y',
-      });
-
-      return toDetailImageUrls(response);
-    } catch {
-      return [];
-    }
-  }
 }
 
 const normalizeItems = (response: TourApiResponse): readonly TourApiItem[] => {
@@ -157,24 +123,6 @@ const normalizeItems = (response: TourApiResponse): readonly TourApiItem[] => {
   return Array.isArray(item) ? item : [item];
 };
 
-const getFirstTourApiItem = (response: TourApiResponse): TourApiItem | null => {
-  const header = response.response?.header;
-
-  if (isNoDataResult(header)) {
-    return null;
-  }
-
-  if (header?.resultCode !== '0000') {
-    throw new Error(`TourAPI ${header?.resultCode ?? 'UNKNOWN'}: ${header?.resultMsg ?? ''}`);
-  }
-
-  return normalizeItems(response)[0] ?? null;
-};
-
-const mergeTourApiItems = (...items: readonly (TourApiItem | null)[]): TourApiItem => {
-  return Object.assign({}, ...items.filter((item): item is TourApiItem => item !== null));
-};
-
 const toTourEvent = (item: TourApiItem): TourEvent | null => {
   const contentId = toNonEmptyString(item.contentid);
   const title = toNonEmptyString(item.title);
@@ -183,9 +131,8 @@ const toTourEvent = (item: TourApiItem): TourEvent | null => {
   const mapy = toFiniteNumber(item.mapy);
   const startDate = toCompactDate(item.eventstartdate);
   const endDate = toCompactDate(item.eventenddate);
-  const imageUrls = toUniqueStrings([item.firstimage]);
-  const thumbnailUrl =
-    toNonEmptyString(item.firstimage2) ?? toNonEmptyString(item.firstimage) ?? undefined;
+  const imageUrls = toUniqueStrings([item.firstimage, item.firstimage2]);
+  const thumbnailUrl = imageUrls[0];
 
   if (
     !contentId ||
@@ -264,20 +211,6 @@ const toUniqueStrings = (values: readonly (string | number | undefined)[]): read
   }
 
   return [...unique];
-};
-
-const toDetailImageUrls = (response: TourApiResponse): readonly string[] => {
-  const header = response.response?.header;
-
-  if (isNoDataResult(header)) {
-    return [];
-  }
-
-  if (header?.resultCode !== '0000') {
-    throw new Error(`TourAPI ${header?.resultCode ?? 'UNKNOWN'}: ${header?.resultMsg ?? ''}`);
-  }
-
-  return toUniqueStrings(normalizeItems(response).map((item) => item.originimgurl));
 };
 
 const toNormalizedText = (value: string | number | undefined): string | null => {

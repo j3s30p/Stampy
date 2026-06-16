@@ -1,16 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type Dispatch,
-  type SetStateAction,
-} from 'react';
+import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import {
   Image,
   type GestureResponderHandlers,
+  Linking,
   PanResponder,
   Pressable,
   ScrollView,
@@ -19,12 +12,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { CurrentLocationStatus } from '@core/location';
-import type { MapRouteRepository } from '@features/map/api';
 import { STAMP_RADIUS_METERS } from '@shared/config';
 import type { Coordinates } from '@shared/types';
 import { AppText, Badge, Button, Surface, colors, radius, shadow, spacing } from '@shared/ui';
-import { buildStraightLineRoutePayload } from '../model';
-import type { KakaoMapRoutePayload, MapEventPin, MapRouteTarget, MapSpotPin } from '../model';
+import type { MapEventPin, MapSpotPin } from '../model';
 import { KakaoMapWebView } from './KakaoMapWebView';
 
 interface MapViewProps {
@@ -33,11 +24,8 @@ interface MapViewProps {
   readonly events: readonly MapEventPin[];
   readonly totalCount: number;
   readonly selectedSpotId: string | null;
-  readonly selectedEventId: string | null;
   readonly currentLocation: Coordinates | null;
   readonly locationStatus: CurrentLocationStatus;
-  readonly mapRouteRepository: MapRouteRepository;
-  readonly directionsRequestKey?: string | null;
   readonly useRealApi?: boolean;
   readonly onSelectSpot?: (contentId: string) => void;
   readonly onSelectEvent?: (contentId: string) => void;
@@ -62,12 +50,8 @@ export function MapView({
   events = [],
   spots,
   totalCount,
-  selectedEventId,
-  selectedSpotId,
   currentLocation,
   locationStatus,
-  mapRouteRepository,
-  directionsRequestKey = null,
   useRealApi = false,
   onSelectEvent,
   onSelectSpot,
@@ -75,86 +59,27 @@ export function MapView({
   onOpenSpotDetail,
   onOpenStamp,
 }: MapViewProps) {
-  const [selectionState, setSelectionState] = useState<MapSelectionState>(() =>
-    createSelectionState(selectedSpotId, selectedEventId),
-  );
+  const [internalSelectedSpotId, setInternalSelectedSpotId] = useState<string | null>(null);
+  const [internalSelectedEventId, setInternalSelectedEventId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<MapFilter>('all');
   const [directionMessage, setDirectionMessage] = useState('GPS 위치 인증 후 수집 가능');
   const [mapErrorMessage, setMapErrorMessage] = useState<string | null>(null);
-  const [apiRoutePayload, setApiRoutePayload] = useState<KakaoMapRoutePayload | null>(null);
   const [sheetExpanded, setSheetExpanded] = useState(false);
-  const lastDirectionsRequestKeyRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    let ignore = false;
-
-    queueMicrotask(() => {
-      if (ignore) {
-        return;
-      }
-
-      setSelectionState((current) => {
-        const propSelectionChanged =
-          current.propSpotId !== selectedSpotId || current.propEventId !== selectedEventId;
-
-        return propSelectionChanged
-          ? createSelectionState(selectedSpotId, selectedEventId)
-          : current;
-      });
-    });
-
-    return () => {
-      ignore = true;
-    };
-  }, [selectedEventId, selectedSpotId]);
-
-  const effectiveSelectedSpotId = resolveEffectiveSelectedSpotId(spots, selectionState.spotId);
+  const effectiveSelectedSpotId = resolveEffectiveSelectedSpotId(spots, internalSelectedSpotId);
 
   const selectedSpot = useMemo(() => {
     return resolveSelectedSpot(spots, effectiveSelectedSpotId);
   }, [effectiveSelectedSpotId, spots]);
   const selectedEvent = useMemo(() => {
-    return events.find((event) => event.contentId === selectionState.eventId) ?? null;
-  }, [events, selectionState.eventId]);
+    return events.find((event) => event.contentId === internalSelectedEventId) ?? null;
+  }, [events, internalSelectedEventId]);
   const selectedKind: 'spot' | 'event' | null = selectedEvent
     ? 'event'
     : selectedSpot
       ? 'spot'
       : null;
   const selectedMapContentId = selectedEvent?.contentId ?? effectiveSelectedSpotId;
-  const selectedRouteTarget = useMemo<MapRouteTarget | null>(() => {
-    if (selectedEvent) {
-      return {
-        kind: 'event',
-        contentId: selectedEvent.contentId,
-        title: selectedEvent.title,
-        location: selectedEvent.location,
-      };
-    }
-
-    if (selectedSpot) {
-      return {
-        kind: 'spot',
-        contentId: selectedSpot.contentId,
-        title: selectedSpot.title,
-        location: selectedSpot.location,
-      };
-    }
-
-    return null;
-  }, [selectedEvent, selectedSpot]);
-  const straightLineRoutePayload = useMemo(
-    () => buildStraightLineRoutePayload(currentLocation, selectedRouteTarget),
-    [currentLocation, selectedRouteTarget],
-  );
-
-  const routePayload =
-    apiRoutePayload &&
-    selectedRouteTarget &&
-    apiRoutePayload.targetContentId === selectedRouteTarget.contentId &&
-    apiRoutePayload.targetKind === selectedRouteTarget.kind
-      ? apiRoutePayload
-      : straightLineRoutePayload;
 
   const filteredSpots = useMemo(() => filterSpots(spots, activeFilter), [activeFilter, spots]);
   const filteredEvents = useMemo(() => filterEvents(events, activeFilter), [activeFilter, events]);
@@ -187,32 +112,22 @@ export function MapView({
     const nextEvent = events.find((event) => event.contentId === contentId) ?? null;
 
     if (nextEvent) {
-      setSelectionState((current) => ({
-        ...current,
-        eventId: contentId,
-        spotId: null,
-      }));
+      setInternalSelectedEventId(contentId);
       setDirectionMessage(`${nextEvent.title} 행사 선택됨`);
       onSelectEvent?.(contentId);
       return;
     }
 
-    setSelectionState((current) => ({
-      ...current,
-      eventId: null,
-      spotId: contentId,
-    }));
+    setInternalSelectedSpotId(contentId);
+    setInternalSelectedEventId(null);
     const nextSpot = spots.find((spot) => spot.contentId === contentId) ?? null;
     setDirectionMessage(nextSpot ? `${nextSpot.title} 선택됨` : 'GPS 위치 인증 후 수집 가능');
     onSelectSpot?.(contentId);
   };
 
   const handleMapTap = () => {
-    setSelectionState((current) => ({
-      ...current,
-      eventId: null,
-      spotId: null,
-    }));
+    setInternalSelectedEventId(null);
+    setInternalSelectedSpotId(null);
     setSheetExpanded(false);
     setDirectionMessage('GPS 위치 인증 후 수집 가능');
   };
@@ -222,46 +137,18 @@ export function MapView({
     handleMapTap();
   };
 
-  const handleOpenDirections = useCallback(async () => {
-    if (!currentLocation) {
-      setDirectionMessage('현재 위치 확인 후 길찾기를 표시할 수 있어요');
-      return;
-    }
-
-    if (!selectedRouteTarget) {
-      setDirectionMessage('길찾기할 관광지나 행사를 먼저 선택해 주세요');
+  const handleOpenDirections = async () => {
+    if (!selectedSpot) {
       return;
     }
 
     try {
-      setDirectionMessage(`${selectedRouteTarget.title} 카카오 길찾기 경로를 불러오는 중`);
-      const directionsRoutePayload = await mapRouteRepository.directionsRoute({
-        origin: currentLocation,
-        destination: selectedRouteTarget,
-      });
-
-      setApiRoutePayload(directionsRoutePayload);
-      setDirectionMessage('차량 기준 경로를 지도에 표시했어요');
+      setDirectionMessage(`${selectedSpot.title} 카카오맵 열기`);
+      await Linking.openURL(buildKakaoDirectionsUrl(selectedSpot));
     } catch {
-      setApiRoutePayload(null);
-      setDirectionMessage('카카오 길찾기 경로를 불러오지 못해 직선 거리를 표시해요');
+      setDirectionMessage('카카오맵을 열지 못했습니다');
     }
-  }, [currentLocation, mapRouteRepository, selectedRouteTarget]);
-
-  useEffect(() => {
-    if (!directionsRequestKey || lastDirectionsRequestKeyRef.current === directionsRequestKey) {
-      return;
-    }
-
-    if (!currentLocation || !selectedRouteTarget) {
-      return;
-    }
-
-    lastDirectionsRequestKeyRef.current = directionsRequestKey;
-    queueMicrotask(() => {
-      void handleOpenDirections();
-    });
-  }, [currentLocation, directionsRequestKey, handleOpenDirections, selectedRouteTarget]);
+  };
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'left', 'right']}>
@@ -296,7 +183,6 @@ export function MapView({
             spots={filteredSpots}
             selectedSpotId={selectedMapContentId}
             currentLocation={currentLocation}
-            route={routePayload}
             onMarkerTap={handleSelectSpot}
             onMapTap={handleMapTap}
             onMapReady={() => setMapErrorMessage(null)}
@@ -376,7 +262,6 @@ export function MapView({
             event={selectedEvent}
             onOpenStamp={onOpenStamp}
             onOpenEventDetail={onOpenEventDetail}
-            onOpenDirections={handleOpenDirections}
             directionMessage={directionMessage}
           />
         </View>
@@ -404,7 +289,7 @@ export function MapView({
                   {getSpotStatusLabel(selectedSpot)}
                 </Badge>
                 <Badge tone="neutral" size="sm">
-                  {selectedSpot.distanceMeters}m · 위치 확인
+                  {selectedSpot.distanceMeters}m · 도보 1분
                 </Badge>
               </View>
             </View>
@@ -632,13 +517,11 @@ function EventSheetContent({
   directionMessage,
   event,
   onOpenEventDetail,
-  onOpenDirections,
   onOpenStamp,
 }: {
   readonly directionMessage: string;
   readonly event: MapEventPin;
   readonly onOpenEventDetail?: (contentId: string) => void;
-  readonly onOpenDirections: () => void;
   readonly onOpenStamp?: (contentId: string) => void;
 }) {
   return (
@@ -687,11 +570,11 @@ function EventSheetContent({
       <View style={styles.actionRow}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`${event.title} 행사 카카오 길찾기`}
-          onPress={onOpenDirections}
-          style={({ pressed }) => [styles.routeButton, pressed ? styles.pressed : null]}
+          accessibilityLabel={`${event.title} 행사 상세 보기`}
+          onPress={() => onOpenEventDetail?.(event.contentId)}
+          style={styles.routeButton}
         >
-          <Ionicons name="navigate-outline" size={21} color={colors.locationDot} />
+          <Ionicons name="information-circle-outline" size={21} color={colors.locationDot} />
         </Pressable>
         <Button
           variant="primary"
@@ -806,6 +689,12 @@ function SpotListMark({
   );
 }
 
+const buildKakaoDirectionsUrl = (spot: MapSpotPin) => {
+  const lat = spot.location.latitude;
+  const lng = spot.location.longitude;
+  return `https://map.kakao.com/link/to/${encodeURIComponent(spot.title)},${lat},${lng}`;
+};
+
 const getSpotStatusLabel = (spot: MapSpotPin) => {
   if (spot.collected) {
     return '수집 완료';
@@ -894,23 +783,6 @@ const resolveSelectedSpot = (spots: readonly MapSpotPin[], selectedSpotId: strin
 
   return spots.find((spot) => spot.contentId === selectedSpotId) ?? null;
 };
-
-interface MapSelectionState {
-  readonly eventId: string | null;
-  readonly spotId: string | null;
-  readonly propEventId: string | null;
-  readonly propSpotId: string | null;
-}
-
-const createSelectionState = (
-  selectedSpotId: string | null,
-  selectedEventId: string | null,
-): MapSelectionState => ({
-  eventId: selectedEventId,
-  spotId: selectedEventId ? null : selectedSpotId,
-  propEventId: selectedEventId,
-  propSpotId: selectedSpotId,
-});
 
 type MapFilter = 'all' | 'spot' | 'event' | 'uncollected';
 

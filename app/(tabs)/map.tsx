@@ -1,22 +1,11 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useMockFlow } from '@core/demo';
-import { mapRouteRepository } from '@core/di';
 import { MapView } from '@features/map/ui';
 import { env } from '@shared/config';
 
 export default function MapScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{
-    directions?: string | string[];
-    eventId?: string | string[];
-    spotId?: string | string[];
-  }>();
-  const { currentLocation, flow, selectEvent, selectSpot, locationStatus } = useMockFlow();
-  const directionsRequestKey = getSingleParam(params.directions);
-  const selectedEventId = getSingleParam(params.eventId) ?? flow?.selectedEventId ?? null;
-  const selectedSpotId = selectedEventId
-    ? null
-    : (getSingleParam(params.spotId) ?? flow?.selectedSpotId ?? null);
+  const { flow, selectEvent, selectSpot, currentLocation, locationStatus } = useMockFlow();
 
   const openDetail = (contentId: string) => {
     selectSpot(contentId);
@@ -44,12 +33,9 @@ export default function MapScreen() {
       spots={flow?.spots ?? []}
       events={flow?.events ?? []}
       totalCount={flow?.totalSpotCount ?? 0}
-      selectedSpotId={selectedSpotId}
-      selectedEventId={selectedEventId}
+      selectedSpotId={flow?.selectedSpotId ?? null}
       currentLocation={currentLocation}
       locationStatus={locationStatus}
-      mapRouteRepository={mapRouteRepository}
-      directionsRequestKey={directionsRequestKey}
       useRealApi={env.useRealApi}
       onSelectEvent={selectEvent}
       onSelectSpot={selectSpot}
@@ -59,7 +45,3 @@ export default function MapScreen() {
     />
   );
 }
-
-const getSingleParam = (value: string | string[] | undefined): string | null => {
-  return Array.isArray(value) ? (value[0] ?? null) : (value ?? null);
-};
