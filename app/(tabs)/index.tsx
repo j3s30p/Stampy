@@ -1,10 +1,10 @@
 import { useRouter } from 'expo-router';
-import { useMockFlow } from '@core/demo';
+import { useAppFlow } from '@core/flow';
 import { HomeView } from '@features/tour/ui';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { flow, selectEvent, selectSpot } = useMockFlow();
+  const { flow, selectEvent, selectSpot } = useAppFlow();
 
   const openDetail = (contentId: string) => {
     selectSpot(contentId);

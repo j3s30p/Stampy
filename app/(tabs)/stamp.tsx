@@ -1,9 +1,9 @@
-import { useMockFlow } from '@core/demo';
+import { useAppFlow } from '@core/flow';
 import { StampView } from '@features/stamp/ui';
 
 export default function StampScreen() {
   const { collectCandidate, flow, locationAccuracyMeters, locationAvailable, locationStatus } =
-    useMockFlow();
+    useAppFlow();
   return (
     <StampView
       candidate={flow?.candidate ?? null}

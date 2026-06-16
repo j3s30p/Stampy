@@ -5,18 +5,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
+import type { StampCandidate } from '@features/stamp/model';
 import { STAMP_RADIUS_METERS } from '@shared/config';
 import { AppText, Gauge, StampDrop, colors, radius, shadow, spacing } from '@shared/ui';
-
-export interface StampCandidate {
-  readonly kind: 'spot' | 'event';
-  readonly contentId: string;
-  readonly title: string;
-  readonly address: string;
-  readonly distanceMeters: number;
-  readonly verificationDistanceMeters: number | null;
-  readonly collected: boolean;
-}
 
 export type StampLocationStatus = 'loading' | 'granted' | 'denied' | 'unavailable';
 

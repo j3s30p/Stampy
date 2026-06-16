@@ -2,16 +2,16 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useMockFlow } from '@core/demo';
 import { tourRepository } from '@core/di';
-import type { TourSpot } from '@features/tour/model';
-import { TourSpotDetailView, type HomeTourSpot } from '@features/tour/ui';
+import { useAppFlow } from '@core/flow';
+import type { HomeTourSpot, TourSpot } from '@features/tour/model';
+import { TourSpotDetailView } from '@features/tour/ui';
 import { AppText, colors, spacing } from '@shared/ui';
 
 export default function SpotDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ contentId?: string | string[] }>();
-  const { flow, selectSpot } = useMockFlow();
+  const { flow, selectSpot } = useAppFlow();
   const contentId = Array.isArray(params.contentId) ? params.contentId[0] : params.contentId;
   const baseSpot =
     contentId && flow

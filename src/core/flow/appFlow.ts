@@ -1,3 +1,4 @@
+// Backend 연결 이후에도 앱 화면 상태를 조합하는 flow 계층으로 유지한다.
 import {
   authRepository,
   eventRepository,
@@ -7,22 +8,21 @@ import {
 } from '@core/di';
 import { distanceMetersBetween } from '@core/location';
 import type { TourEvent } from '@features/event/model';
-import type { RankingPeriod } from '@features/stamp/model';
-import type { MyStampSummary, StampCandidate } from '@features/stamp/ui';
-import type { TourSpot } from '@features/tour/model';
-import type { HomeTourEvent, HomeTourSpot } from '@features/tour/ui';
 import {
-  STAMP_RADIUS_METERS,
-  TOUR_DISCOVERY_LIMIT,
-  TOUR_DISCOVERY_RADIUS_METERS,
-} from '@shared/config';
+  canCollectCandidate,
+  type MyStampSummary,
+  type RankingPeriod,
+  type StampCandidate,
+} from '@features/stamp/model';
+import type { HomeTourEvent, HomeTourSpot, TourSpot } from '@features/tour/model';
+import { TOUR_DISCOVERY_LIMIT, TOUR_DISCOVERY_RADIUS_METERS } from '@shared/config';
 import { asLatitude, asLongitude, type Coordinates } from '@shared/types';
 
 const seoulCityHallCenter = {
   latitude: asLatitude(37.5665),
   longitude: asLongitude(126.978),
 };
-const mockCollectionTotalCount = 12;
+const fallbackCollectionTotalCount = 12;
 
 let selectedSpotId: string | null = null;
 let selectedEventId: string | null = null;
@@ -53,7 +53,7 @@ const notifyListeners = () => {
   });
 };
 
-export async function getMockFlow(
+export async function getAppFlow(
   currentLocation: Coordinates | null = null,
   rankingPeriod: RankingPeriod = 'weekly',
 ) {
@@ -135,7 +135,7 @@ export async function getMockFlow(
   const totalSpotCount = Math.max(
     spotCards.length + eventCards.length,
     collectedCount,
-    mockCollectionTotalCount,
+    fallbackCollectionTotalCount,
   );
   return {
     rankingPeriod,
@@ -243,63 +243,51 @@ const toEventStampCandidate = (event: HomeTourEvent): StampCandidate => ({
   collected: event.collected,
 });
 
-export async function collectMockCandidate(
+export async function collectCandidate(
   currentLocation: Coordinates | null,
   accuracyMeters: number | null,
   rankingPeriod: RankingPeriod = 'weekly',
 ) {
-  if (!currentLocation || accuracyMeters === null || accuracyMeters > STAMP_RADIUS_METERS) {
-    return getMockFlow(currentLocation, rankingPeriod);
-  }
-
-  const flow = await getMockFlow(currentLocation, rankingPeriod);
+  const flow = await getAppFlow(currentLocation, rankingPeriod);
   const candidate = flow.candidate;
+  const target = candidate
+    ? (flow.spots.find((spot) => spot.contentId === candidate.contentId) ??
+      flow.events.find((event) => event.contentId === candidate.contentId) ??
+      null)
+    : null;
+  const collectRuleInput = { accuracyMeters, candidate, currentLocation, target };
 
-  if (!candidate || candidate.collected) {
-    return flow;
-  }
-
-  const candidateSpot =
-    flow.spots.find((spot) => spot.contentId === candidate.contentId) ??
-    flow.events.find((event) => event.contentId === candidate.contentId);
-
-  if (!candidateSpot) {
-    return flow;
-  }
-
-  const actualDistanceMeters = distanceMetersBetween(currentLocation, candidateSpot.location);
-
-  if (actualDistanceMeters > STAMP_RADIUS_METERS) {
+  if (!canCollectCandidate(collectRuleInput)) {
     return flow;
   }
 
   const user = await resolveCurrentUser();
 
   await stampRepository.collect(user.id, {
-    spotId: candidate.contentId,
-    location: currentLocation,
+    spotId: collectRuleInput.candidate.contentId,
+    location: collectRuleInput.currentLocation,
   });
 
   selectedSpotId = null;
   selectedEventId = null;
   notifyListeners();
 
-  return getMockFlow(currentLocation, rankingPeriod);
+  return getAppFlow(collectRuleInput.currentLocation, rankingPeriod);
 }
 
-export function selectMockSpot(contentId: string) {
+export function selectSpot(contentId: string) {
   selectedSpotId = contentId;
   selectedEventId = null;
   notifyListeners();
 }
 
-export function selectMockEvent(contentId: string) {
+export function selectEvent(contentId: string) {
   selectedEventId = contentId;
   selectedSpotId = null;
   notifyListeners();
 }
 
-export function subscribeMockFlow(listener: () => void) {
+export function subscribeAppFlow(listener: () => void) {
   listeners.add(listener);
 
   return () => {
