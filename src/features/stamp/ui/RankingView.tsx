@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingHorizontal: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.rowDivider,
     backgroundColor: colors.surface,
   },
   rowSelected: {

@@ -18,6 +18,11 @@ interface MyPageViewProps {
   readonly onSelectStamp?: (contentId: string) => void;
 }
 
+const kakaoBadgePalette = {
+  background: '#FAE54D',
+  ink: '#3C2A00',
+} as const;
+
 export function MyPageView({ stamps, nickname, onSelectStamp }: MyPageViewProps) {
   const [selectedSetting, setSelectedSetting] = useState<string | null>(null);
   const collectedCount = stamps.filter((stamp) => stamp.collected).length;
@@ -308,10 +313,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: radius.full,
-    backgroundColor: '#FAE54D',
+    backgroundColor: kakaoBadgePalette.background,
   },
   kakaoText: {
-    color: '#3C2A00',
+    color: kakaoBadgePalette.ink,
   },
   statsRow: {
     paddingHorizontal: spacing.lg,
@@ -356,7 +361,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingHorizontal: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF1F6',
+    borderBottomColor: colors.rowDivider,
   },
   menuLabel: {
     flex: 1,
