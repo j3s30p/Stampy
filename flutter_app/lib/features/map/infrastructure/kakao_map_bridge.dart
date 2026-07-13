@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:stampy/core/geo/coordinates.dart';
+import 'package:stampy/core/location/heading_degrees.dart';
 
 import '../domain/map_models.dart';
 
@@ -100,6 +101,10 @@ final class KakaoMapBridge {
     return 'window.StampyKakaoMap.receive($command);';
   }
 
+  String buildSetCurrentHeadingScript(HeadingDegrees? heading) =>
+      'window.StampyKakaoMap.setCurrentHeading('
+      '${jsonEncode(heading?.value)});';
+
   T _withoutPayload<T extends KakaoMapEvent>(
     Map<String, dynamic> message,
     T event,
@@ -176,6 +181,7 @@ extension on MapSnapshot {
   Map<String, Object?> _toBridgeJson() => <String, Object?>{
     'center': center._toBridgeJson(),
     'currentLocation': currentLocation?._toBridgeJson(),
+    'currentHeadingDegrees': currentHeading?.value,
     'selectedContentId': selectedContentId,
     'selectedRadiusMeters': stampVerificationRadiusMeters,
     'pins': pins.map((pin) => pin._toBridgeJson()).toList(growable: false),

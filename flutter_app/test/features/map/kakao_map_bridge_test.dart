@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stampy/core/geo/coordinates.dart';
+import 'package:stampy/core/location/heading_degrees.dart';
 import 'package:stampy/features/map/data/fake_map_repository.dart';
 import 'package:stampy/features/map/domain/map_models.dart';
 import 'package:stampy/features/map/infrastructure/kakao_map_bridge.dart';
@@ -107,6 +108,7 @@ void main() {
       expect(decoded['version'], KakaoMapBridge.protocolVersion);
       expect(decoded['type'], 'setMapData');
       expect(payload['selectedRadiusMeters'], stampVerificationRadiusMeters);
+      expect(payload['currentHeadingDegrees'], isNull);
       expect(payload['selectedContentId'], 'tour-126508');
       expect(center['lat'], closeTo(37.579617, 0.0000001));
       expect(center['lng'], closeTo(126.977041, 0.0000001));
@@ -134,5 +136,34 @@ void main() {
       'lng': 127.654321,
     });
     expect(center, encodedLocation);
+  });
+
+  test('setMapData emits the validated current heading in degrees', () async {
+    final baseSnapshot = await const FakeMapRepository().loadSnapshot();
+    final currentLocation = Coordinates(
+      latitude: Latitude(37.123456),
+      longitude: Longitude(127.654321),
+    );
+    final snapshot = baseSnapshot
+        .withCurrentLocation(currentLocation)
+        .withCurrentHeading(HeadingDegrees(123.5));
+
+    final decoded =
+        jsonDecode(bridge.encodeSetMapDataCommand(snapshot))
+            as Map<String, dynamic>;
+    final payload = decoded['payload'] as Map<String, dynamic>;
+
+    expect(payload['currentHeadingDegrees'], 123.5);
+  });
+
+  test('builds a compact heading-only update script', () {
+    expect(
+      bridge.buildSetCurrentHeadingScript(HeadingDegrees(45.5)),
+      'window.StampyKakaoMap.setCurrentHeading(45.5);',
+    );
+    expect(
+      bridge.buildSetCurrentHeadingScript(null),
+      'window.StampyKakaoMap.setCurrentHeading(null);',
+    );
   });
 }
