@@ -53,6 +53,20 @@ flutter run \
 
 Kakao JavaScript 키 없이도 앱 셸까지 실행할 수 있지만 실제 지도 타일은 표시되지 않는다.
 
+## Local Supabase database
+
+Docker를 실행한 뒤 저장소 루트에서 고정된 CLI 버전으로 migration과 RLS를 검증한다.
+
+```sh
+npx supabase@2.109.1 db start
+npx supabase@2.109.1 db reset
+npx supabase@2.109.1 test db
+npx supabase@2.109.1 db lint --level error --schema public
+npx supabase@2.109.1 stop
+```
+
+`stamp_spots`는 서버가 관리하는 도장 대상 정본이다. 로그인한 사용자는 조회만 가능하며, 운영 데이터는 이후 TourAPI 동기화 단계에서 추가한다.
+
 ## 검증
 
 ```sh
