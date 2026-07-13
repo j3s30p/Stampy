@@ -6,6 +6,7 @@ import 'package:stampy/core/location/location.dart';
 import 'package:stampy/core/widgets/field_journal.dart';
 import 'package:stampy/features/recommendation/data/recommendation_providers.dart';
 import 'package:stampy/features/recommendation/domain/recommendation_domain.dart';
+import 'package:stampy/features/stamp/presentation/stamp_session.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -15,6 +16,9 @@ class HomeScreen extends ConsumerWidget {
     final authUser = ref.watch(currentAuthUserProvider);
     final location = ref.watch(currentLocationProvider);
     final recommendation = ref.watch(nearbyRecommendationProvider);
+    final collectedStampCount = ref.watch(
+      stampSessionProvider.select((session) => session.collectedStamps.length),
+    );
     final presentation = _recommendationPresentation(
       authUser,
       location,
@@ -46,8 +50,12 @@ class HomeScreen extends ConsumerWidget {
           title: '여행 기록',
           child: Row(
             children: [
-              const Expanded(
-                child: JournalStat(value: '0', suffix: '개', label: '수집한 도장'),
+              Expanded(
+                child: JournalStat(
+                  value: '$collectedStampCount',
+                  suffix: '개',
+                  label: '수집한 도장',
+                ),
               ),
               Container(width: 1, height: 52, color: StampyColors.hairline),
               const SizedBox(width: 20),
