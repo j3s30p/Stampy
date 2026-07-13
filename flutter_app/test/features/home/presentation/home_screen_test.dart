@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stampy/core/auth/auth.dart';
 import 'package:stampy/core/geo/coordinates.dart';
 import 'package:stampy/core/location/location.dart';
+import 'package:stampy/core/widgets/field_journal.dart';
 import 'package:stampy/features/home/presentation/home_screen.dart';
 import 'package:stampy/features/recommendation/data/fake_recommendation_repository.dart';
 import 'package:stampy/features/recommendation/data/recommendation_providers.dart';
@@ -16,14 +17,20 @@ import 'package:stampy/features/stamp/presentation/stamp_session.dart';
 
 void main() {
   testWidgets(
-    'shows one nearby uncollected badge with server title and distance',
+    'shows one nearby uncollected badge and selects the exact recommendation',
     (tester) async {
+      final semanticsHandle = tester.ensureSemantics();
+      final recommendation = _recommendation();
+      Recommendation? selectedRecommendation;
       await _pumpHome(
         tester,
         location: FakeLocationRepository(state: _availableLocation()),
         recommendation: FakeRecommendationRepository(
-          recommendation: _recommendation(),
+          recommendation: recommendation,
         ),
+        onRecommendationSelected: (selected) {
+          selectedRecommendation = selected;
+        },
       );
       await tester.pumpAndSettle();
 
@@ -34,6 +41,16 @@ void main() {
       expect(find.text('현재 위치에서 219m · 아직 수집하지 않은 도장이에요.'), findsOneWidget);
       expect(find.text('추천 예정'), findsNothing);
       expect(find.textContaining('78.15'), findsNothing);
+
+      final notice = tester.widget<JournalNotice>(find.byType(JournalNotice));
+      expect(notice.onTap, isNotNull);
+      expect(
+        tester.getSemantics(find.text('경복궁')),
+        isSemantics(isButton: true, hasTapAction: true),
+      );
+      await tester.tap(find.text('경복궁'));
+      expect(selectedRecommendation, same(recommendation));
+      semanticsHandle.dispose();
     },
   );
 
@@ -52,6 +69,10 @@ void main() {
     expect(find.text('GPS 필요'), findsNWidgets(2));
     expect(find.text('위치 권한이 필요해요'), findsOneWidget);
     expect(find.text('추천 없음'), findsNothing);
+    expect(
+      tester.widget<JournalNotice>(find.byType(JournalNotice)).onTap,
+      isNull,
+    );
 
     await _pumpHome(
       tester,
@@ -63,6 +84,10 @@ void main() {
     expect(find.text('GPS 연결됨'), findsOneWidget);
     expect(find.text('추천 없음'), findsOneWidget);
     expect(find.text('1km 안의 미수집 도장을 모두 모았어요'), findsOneWidget);
+    expect(
+      tester.widget<JournalNotice>(find.byType(JournalNotice)).onTap,
+      isNull,
+    );
   });
 
   testWidgets('shows a safe recommendation error without transport details', (
@@ -159,6 +184,7 @@ Future<void> _pumpHome(
   required LocationRepository location,
   required RecommendationRepository recommendation,
   StampRepository? stamp,
+  ValueChanged<Recommendation>? onRecommendationSelected,
 }) => tester.pumpWidget(
   ProviderScope(
     overrides: [
@@ -175,7 +201,9 @@ Future<void> _pumpHome(
       recommendationRepositoryProvider.overrideWithValue(recommendation),
       if (stamp != null) stampRepositoryProvider.overrideWithValue(stamp),
     ],
-    child: const MaterialApp(home: HomeScreen()),
+    child: MaterialApp(
+      home: HomeScreen(onRecommendationSelected: onRecommendationSelected),
+    ),
   ),
 );
 
@@ -201,7 +229,7 @@ Coordinates _coordinates() => Coordinates(
 );
 
 Recommendation _recommendation() => Recommendation(
-  contentId: 'spot-126508',
+  contentId: 'tour-126508',
   title: '경복궁',
   contentKind: RecommendationContentKind.spot,
   location: _coordinates(),

@@ -78,6 +78,57 @@ void main() {
     expect(moved.selectedPin, same(pin));
   });
 
+  test('focused selection selects and centers an existing pin', () {
+    final first = MapPin(
+      contentId: 'tour-1',
+      title: '광화문',
+      kind: MapPinKind.place,
+      location: _coordinates(37.5760, 126.9769),
+    );
+    final second = MapPin(
+      contentId: 'tour-2',
+      title: '경복궁',
+      kind: MapPinKind.place,
+      location: _coordinates(37.5796, 126.9770),
+    );
+    final snapshot = MapSnapshot(
+      center: first.location,
+      currentLocation: _coordinates(37.5800, 126.9800),
+      currentHeading: HeadingDegrees(20),
+      pins: <MapPin>[first, second],
+      selectedContentId: first.contentId,
+    );
+
+    final focused = snapshot.withFocusedSelection(second.contentId);
+
+    expect(focused.center, same(second.location));
+    expect(focused.selectedContentId, second.contentId);
+    expect(focused.currentLocation, same(snapshot.currentLocation));
+    expect(focused.currentHeading, same(snapshot.currentHeading));
+    expect(focused.pins, orderedEquals(<MapPin>[first, second]));
+  });
+
+  test('focused selection clears a stale card when the pin is missing', () {
+    final pin = MapPin(
+      contentId: 'tour-1',
+      title: '광화문',
+      kind: MapPinKind.place,
+      location: _coordinates(37.5760, 126.9769),
+    );
+    final snapshot = MapSnapshot(
+      center: pin.location,
+      currentLocation: null,
+      pins: <MapPin>[pin],
+      selectedContentId: pin.contentId,
+    );
+
+    final focused = snapshot.withFocusedSelection('missing');
+
+    expect(focused.center, same(snapshot.center));
+    expect(focused.selectedContentId, isNull);
+    expect(focused.pins.single, same(pin));
+  });
+
   test('heading can be updated only while current location exists', () {
     final location = _coordinates(37.579302, 126.976932);
     final snapshot = MapSnapshot(

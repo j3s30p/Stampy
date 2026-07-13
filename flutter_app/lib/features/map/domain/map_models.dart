@@ -86,6 +86,17 @@ final class MapSnapshot {
     selectedContentId: contentId,
   );
 
+  MapSnapshot withFocusedSelection(String contentId) {
+    final pin = pinByContentId(contentId);
+    return MapSnapshot(
+      center: pin?.location ?? center,
+      currentLocation: currentLocation,
+      currentHeading: currentHeading,
+      pins: pins,
+      selectedContentId: pin?.contentId,
+    );
+  }
+
   MapSnapshot withCurrentLocation(Coordinates? location) => MapSnapshot(
     center: location ?? center,
     currentLocation: location,

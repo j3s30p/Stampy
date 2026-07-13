@@ -178,6 +178,7 @@ class JournalNotice extends StatelessWidget {
     required this.title,
     required this.description,
     this.badge,
+    this.onTap,
     super.key,
   });
 
@@ -185,46 +186,63 @@ class JournalNotice extends StatelessWidget {
   final String title;
   final String description;
   final String? badge;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: StampyColors.paper,
-        border: Border.all(color: StampyColors.hairline),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              number,
-              style: Theme.of(
-                context,
-              ).textTheme.labelMedium?.copyWith(color: StampyColors.accent),
-            ),
-            const SizedBox(width: 18),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (badge != null) ...[
-                    JournalBadge(label: badge!, emphasized: true),
-                    const SizedBox(height: 12),
-                  ],
-                  Text(title, style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 8),
-                  Text(
-                    description,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+    final borderRadius = BorderRadius.circular(16);
+    final content = Padding(
+      padding: const EdgeInsets.all(18),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            number,
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(color: StampyColors.accent),
+          ),
+          const SizedBox(width: 18),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (badge != null) ...[
+                  JournalBadge(label: badge!, emphasized: true),
+                  const SizedBox(height: 12),
                 ],
-              ),
+                Text(title, style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 8),
+                Text(description, style: Theme.of(context).textTheme.bodySmall),
+              ],
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+
+    final handleTap = onTap;
+    if (handleTap == null) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: StampyColors.paper,
+          border: Border.all(color: StampyColors.hairline),
+          borderRadius: borderRadius,
         ),
+        child: content,
+      );
+    }
+
+    return Semantics(
+      button: true,
+      child: Material(
+        color: StampyColors.paper,
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(color: StampyColors.hairline),
+          borderRadius: borderRadius,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(onTap: handleTap, child: content),
       ),
     );
   }

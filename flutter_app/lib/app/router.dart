@@ -38,7 +38,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/',
                 name: 'home',
-                builder: (context, state) => const HomeScreen(),
+                builder: (context, state) => HomeScreen(
+                  onRecommendationSelected: (recommendation) {
+                    ref
+                        .read(mapSelectionRequestProvider.notifier)
+                        .select(recommendation.contentId);
+                    context.go('/map');
+                  },
+                ),
               ),
             ],
           ),
@@ -102,6 +109,7 @@ class _MapStampCollectionRouteState
   @override
   Widget build(BuildContext context) {
     final repository = ref.watch(readyMapRepositoryProvider);
+    final selectionRequest = ref.watch(mapSelectionRequestProvider);
     return repository.when(
       skipLoadingOnRefresh: false,
       skipLoadingOnReload: false,
@@ -113,6 +121,7 @@ class _MapStampCollectionRouteState
 
         return MapScreen(
           repository: repository,
+          selectionRequest: selectionRequest,
           collectedContentIds: collectedContentIds,
           resolveCollectAvailability: (pin, locationState) =>
               resolveStampCollectAvailability(

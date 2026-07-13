@@ -20,6 +20,22 @@ void main() {
     expect(repository, isA<FakeMapRepository>());
   });
 
+  test('reselecting the same content id increases the request revision', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final controller = container.read(mapSelectionRequestProvider.notifier);
+
+    controller.select('tour-126508');
+    final first = container.read(mapSelectionRequestProvider)!;
+    controller.select('tour-126508');
+    final second = container.read(mapSelectionRequestProvider)!;
+
+    expect(first.contentId, 'tour-126508');
+    expect(first.revision, 1);
+    expect(second.contentId, first.contentId);
+    expect(second.revision, 2);
+  });
+
   test('does not expose the real repository before auth is ready', () async {
     final auth = _PendingAuthRepository();
     addTearDown(auth.dispose);
