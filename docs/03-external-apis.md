@@ -7,7 +7,15 @@
 ### 인증
 
 - 인증키는 **URL 인코딩 된 것** 과 **디코딩 된 것** 두 형태로 발급된다. `serviceKey` 파라미터에는 _디코딩 된 키_ 를 axios/fetch 가 다시 인코딩하도록 넘기는 것이 안전하다. 이미 인코딩된 키를 그대로 넣으면 `%` 가 이중 인코딩되어 401.
-- `.env.example` 의 `EXPO_PUBLIC_TOUR_API_KEY` 는 _디코딩 키_ 기준.
+- Flutter 정본에서는 디코딩 키를 Edge Function의 `TOUR_API_SERVICE_KEY` secret으로만 보관한다. 앱의 `dart-define`이나 `EXPO_PUBLIC_*`에 넣지 않는다.
+
+### 운영 도장 스팟 동기화
+
+- `GET https://apis.data.go.kr/B551011/KorService2/detailCommon2`를 사용한다.
+- 필수 파라미터는 `serviceKey`, `MobileOS`, `MobileApp`, `contentId`다. JSON 응답을 위해 `_type=json`을 함께 보낸다.
+- `contentTypeId`는 요청자가 보내지 않는다. 응답 `contenttypeid`를 정본으로 `15 → event`, 나머지 지원 타입 → `spot`으로 정규화한다.
+- 한 요청은 `contentId` 하나만 조회하므로 Edge Function이 명시된 ID 목록을 각각 조회한다. 모든 항목 검증이 끝난 뒤 한 번에 upsert하며, 요청하지 않은 기존 행은 삭제하지 않는다.
+- 함수 호출 자격은 별도 `STAMP_SPOT_SYNC_TOKEN`으로 검증한다. service-role 키는 함수 내부 DB 쓰기에만 사용한다.
 
 ### 좌표 표현
 
@@ -18,6 +26,7 @@
 
 - 기본 XML. JSON 응답을 받으려면 `_type=json` 쿼리 파라미터 명시 필요.
 - 성공: `response.header.resultCode === "0000"`. 그 외는 에러로 매핑.
+- 인증·게이트웨이 오류는 `_type=json`이어도 non-2xx 또는 XML 본문일 수 있다. HTTP 상태를 먼저 검사하고 JSON 파싱 실패도 안전한 상류 오류로 처리한다.
 - 페이지네이션: `numOfRows`, `pageNo`, 총건수는 `response.body.totalCount`.
 
 ### 코드표

@@ -65,7 +65,36 @@ npx supabase@2.109.1 db lint --level error --schema public
 npx supabase@2.109.1 stop
 ```
 
-`stamp_spots`는 서버가 관리하는 도장 대상 정본이다. 로그인한 사용자는 조회만 가능하며, 운영 데이터는 이후 TourAPI 동기화 단계에서 추가한다.
+`stamp_spots`는 서버가 관리하는 도장 대상 정본이다. 로그인한 사용자는 조회만 가능하며, 운영 데이터는 가짜 seed 없이 아래 TourAPI 동기화 함수로만 추가한다.
+
+## TourAPI catalog sync
+
+Edge Function 코드는 Deno 2.9.2로 별도 검증한다.
+
+```sh
+(cd supabase/functions && npx -y deno@2.9.2 task quality)
+```
+
+로컬 호출에는 디코딩된 공공데이터포털 키와 32자 이상의 호출 전용 토큰이 필요하다. `SUPABASE_SERVICE_ROLE_KEY`는 로컬 Supabase 런타임이 함수 내부 DB 쓰기에만 제공하며 호출 토큰으로 재사용하지 않는다.
+
+```sh
+cp supabase/functions/.env.example supabase/functions/.env.local
+npx supabase@2.109.1 start -x vector,logflare
+npx supabase@2.109.1 functions serve sync-stamp-spots \
+  --env-file supabase/functions/.env.local
+```
+
+함수는 운영자가 명시한 TourAPI `contentId` 문자열만 동기화한다. 요청하지 않은 기존 행은 삭제하지 않는다.
+
+```sh
+curl --request POST \
+  --url http://127.0.0.1:54321/functions/v1/sync-stamp-spots \
+  --header 'Authorization: Bearer <STAMP_SPOT_SYNC_TOKEN>' \
+  --header 'Content-Type: application/json' \
+  --data '{"contentIds":["126508"]}'
+```
+
+실제 운영 대상 ID 선정, 원격 secret 등록, 함수 배포는 환경 자격증명이 준비된 활성화 단계에서 수행한다. 앱에는 TourAPI 키, 동기화 토큰, service-role 키를 넣지 않는다.
 
 ## 검증
 

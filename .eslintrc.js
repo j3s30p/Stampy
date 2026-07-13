@@ -12,6 +12,7 @@ module.exports = {
     '/android/*',
     '/web-build/*',
     '/repo/*',
+    '/supabase/functions/*',
     'expo-env.d.ts',
   ],
   settings: {
