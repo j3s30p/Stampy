@@ -29,7 +29,6 @@ final class FakeMapRepository implements MapRepository {
         title: '창덕궁',
         kind: MapPinKind.place,
         location: _coordinate(37.579431, 126.991042),
-        collected: true,
       ),
       MapPin(
         contentId: 'event-seoul-plaza',

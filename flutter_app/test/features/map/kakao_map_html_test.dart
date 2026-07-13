@@ -22,6 +22,7 @@ void main() {
       contains('function currentLocationArrowImage(headingDegrees)'),
     );
     expect(html, contains('currentLocationDotImage()'));
+    expect(html, contains('function collectedMarkerImage()'));
   });
 }
 
@@ -73,6 +74,10 @@ const maps = {
     this.setImage = (image) => { this.options.image = image; };
     this.setPosition = (position) => { this.options.position = position; };
     markers.push(this);
+  },
+  Circle: function Circle(options) {
+    this.options = options;
+    this.setMap = () => {};
   },
   Map: function Map() {
     this.relayout = () => {};
@@ -140,5 +145,30 @@ if (!dotImage || dotImage.size.width !== 28) {
 context.window.StampyKakaoMap.setCurrentHeading(360);
 if (!messages.some((message) => message.code === 'invalidHeading')) {
   throw new Error('accepted invalid heading-only update');
+}
+
+messages.length = 0;
+markerImages.length = 0;
+markers.length = 0;
+const collectedCommand = command(null);
+collectedCommand.payload.currentLocation = null;
+collectedCommand.payload.selectedContentId = 'event-collected';
+collectedCommand.payload.pins = [{
+  contentId: 'event-collected',
+  title: '수집한 행사',
+  kind: 'event',
+  collected: true,
+  location: { lat: 37.579617, lng: 126.977041 },
+}];
+context.window.StampyKakaoMap.receive(collectedCommand);
+if (messages.length !== 0) throw new Error('rejected collected marker payload');
+const collectedMarker = markers.at(-1);
+if (!collectedMarker) throw new Error('did not render a collected marker');
+const collectedSvg = decodeURIComponent(collectedMarker.options.image.url);
+if (!collectedSvg.includes('fill="#d95432"')) {
+  throw new Error('collected marker did not use vermilion');
+}
+if (!collectedSvg.includes('M8.5 14.8L12.3 18.6L19.7 10.8')) {
+  throw new Error('collected marker did not use the check glyph');
 }
 ''';

@@ -1,7 +1,8 @@
 import 'package:stampy/core/geo/coordinates.dart';
+import 'package:stampy/core/geo/geo_constants.dart';
 import 'package:stampy/core/location/heading_degrees.dart';
 
-const int stampVerificationRadiusMeters = 100;
+const int stampVerificationRadiusMeters = stampRadiusMeters;
 
 enum MapPinKind { place, event }
 
@@ -20,6 +21,14 @@ final class MapPin {
   final MapPinKind kind;
   final Coordinates location;
   final bool collected;
+
+  MapPin withCollected(bool value) => MapPin(
+    contentId: contentId,
+    title: title,
+    kind: kind,
+    location: location,
+    collected: value,
+  );
 }
 
 final class MapSnapshot {
@@ -90,6 +99,41 @@ final class MapSnapshot {
     currentLocation: currentLocation,
     currentHeading: heading,
     pins: pins,
+    selectedContentId: selectedContentId,
+  );
+
+  MapSnapshot withCollectedPin(String contentId) {
+    if (pinByContentId(contentId) == null) {
+      throw ArgumentError.value(
+        contentId,
+        'contentId',
+        'must match a pin in this snapshot',
+      );
+    }
+
+    return MapSnapshot(
+      center: center,
+      currentLocation: currentLocation,
+      currentHeading: currentHeading,
+      pins: <MapPin>[
+        for (final pin in pins)
+          if (pin.contentId == contentId) pin.withCollected(true) else pin,
+      ],
+      selectedContentId: selectedContentId,
+    );
+  }
+
+  MapSnapshot withCollectedContentIds(Set<String> contentIds) => MapSnapshot(
+    center: center,
+    currentLocation: currentLocation,
+    currentHeading: currentHeading,
+    pins: <MapPin>[
+      for (final pin in pins)
+        if (pin.collected == contentIds.contains(pin.contentId))
+          pin
+        else
+          pin.withCollected(contentIds.contains(pin.contentId)),
+    ],
     selectedContentId: selectedContentId,
   );
 }

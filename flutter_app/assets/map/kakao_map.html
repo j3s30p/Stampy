@@ -205,6 +205,19 @@
           );
         }
 
+        function collectedMarkerImage() {
+          var svg =
+            '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="40" viewBox="0 0 28 40">' +
+            '<path d="M14 39C14 39 25 24 25 15C25 8.9 20.1 4 14 4C7.9 4 3 8.9 3 15C3 24 14 39 14 39Z" fill="#d95432" stroke="#fffcf6" stroke-width="2"/>' +
+            '<path d="M8.5 14.8L12.3 18.6L19.7 10.8" fill="none" stroke="#fffcf6" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+          return new kakao.maps.MarkerImage(
+            'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+            new kakao.maps.Size(28, 40),
+            { offset: new kakao.maps.Point(14, 40) },
+          );
+        }
+
         function currentLocationArrowImage(headingDegrees) {
           var svg =
             '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">' +
@@ -314,8 +327,6 @@
               var color = '#6f716a';
               if (pin.kind === 'event') {
                 color = '#007ea1';
-              } else if (pin.collected) {
-                color = '#6f716a';
               }
 
               var marker = new kakao.maps.Marker({
@@ -323,7 +334,9 @@
                 position: toLatLng(pin.location),
                 title: pin.title,
                 zIndex: isSelected ? 20 : 10,
-                image: markerImage(isSelected ? '#d95432' : color, 28, 40),
+                image: pin.collected
+                  ? collectedMarkerImage()
+                  : markerImage(isSelected ? '#d95432' : color, 28, 40),
               });
 
               kakao.maps.event.addListener(marker, 'click', function () {
