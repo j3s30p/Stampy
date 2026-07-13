@@ -11,6 +11,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  supabase-database:
+    name: Supabase database (migration + RLS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v2
+        with:
+          version: 2.109.1
+
+      - name: Start local Postgres
+        run: supabase db start
+
+      - name: Reset migrations
+        run: supabase db reset
+
+      - name: Database tests
+        run: supabase test db
+
+      - name: Database lint
+        run: supabase db lint --level error --schema public
+
   flutter-quality:
     name: Flutter quality (format + analyze + test)
     runs-on: ubuntu-latest
