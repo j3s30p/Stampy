@@ -9,7 +9,9 @@ import 'package:stampy/features/recommendation/domain/recommendation_domain.dart
 import 'package:stampy/features/stamp/presentation/stamp_session.dart';
 
 class HomeScreen extends ConsumerWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({this.onRecommendationSelected, super.key});
+
+  final ValueChanged<Recommendation>? onRecommendationSelected;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -24,6 +26,7 @@ class HomeScreen extends ConsumerWidget {
       location,
       recommendation,
     );
+    final availableRecommendation = presentation.recommendation;
 
     return FieldJournalPage(
       eyebrow: '오늘의 탐험',
@@ -43,6 +46,11 @@ class HomeScreen extends ConsumerWidget {
             badge: presentation.badge,
             title: presentation.title,
             description: presentation.description,
+            onTap:
+                availableRecommendation == null ||
+                    onRecommendationSelected == null
+                ? null
+                : () => onRecommendationSelected!(availableRecommendation),
           ),
         ),
         JournalSection(
@@ -141,6 +149,7 @@ final class _RecommendationPresentation {
     required this.description,
     this.badge,
     this.isAvailable = false,
+    this.recommendation,
   });
 
   const _RecommendationPresentation.loading()
@@ -192,6 +201,7 @@ final class _RecommendationPresentation {
             '아직 수집하지 않은 도장이에요.',
         badge: '가까운 미수집',
         isAvailable: true,
+        recommendation: recommendation,
       );
 
   final String sectionLabel;
@@ -199,6 +209,7 @@ final class _RecommendationPresentation {
   final String description;
   final String? badge;
   final bool isAvailable;
+  final Recommendation? recommendation;
 }
 
 String _formatDistance(double distanceMeters) {

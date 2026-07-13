@@ -12,6 +12,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../domain/map_collect.dart';
 import '../domain/map_models.dart';
 import '../domain/map_repository.dart';
+import '../domain/map_selection.dart';
 import '../infrastructure/kakao_map_bridge.dart';
 import 'map_location_status.dart';
 
@@ -24,6 +25,7 @@ class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({
     super.key,
     required this.repository,
+    this.selectionRequest,
     this.collectedContentIds = const <String>{},
     this.resolveCollectAvailability,
     this.onCollectRequested,
@@ -31,6 +33,7 @@ class MapScreen extends ConsumerStatefulWidget {
   });
 
   final MapRepository repository;
+  final MapSelectionRequest? selectionRequest;
   final Set<String> collectedContentIds;
   final MapCollectAvailabilityResolver? resolveCollectAvailability;
   final MapCollectRequest? onCollectRequested;
@@ -85,20 +88,33 @@ class _MapScreenState extends ConsumerState<MapScreen>
   @override
   void didUpdateWidget(covariant MapScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (setEquals(_appliedCollectedContentIds, widget.collectedContentIds)) {
-      return;
+    var snapshot = _snapshot;
+    var snapshotChanged = false;
+
+    if (!setEquals(_appliedCollectedContentIds, widget.collectedContentIds)) {
+      _appliedCollectedContentIds = Set<String>.unmodifiable(
+        widget.collectedContentIds,
+      );
+      if (snapshot != null) {
+        snapshot = snapshot.withCollectedContentIds(
+          _appliedCollectedContentIds,
+        );
+        snapshotChanged = true;
+      }
     }
 
-    _appliedCollectedContentIds = Set<String>.unmodifiable(
-      widget.collectedContentIds,
-    );
-    final snapshot = _snapshot;
-    if (snapshot == null) {
-      return;
+    if (oldWidget.selectionRequest != widget.selectionRequest &&
+        widget.selectionRequest != null &&
+        snapshot != null) {
+      snapshot = applyMapSelectionRequest(snapshot, widget.selectionRequest);
+      snapshotChanged = true;
+      _clearCollectFeedback();
     }
 
-    _snapshot = snapshot.withCollectedContentIds(_appliedCollectedContentIds);
-    unawaited(_sendSnapshot());
+    if (snapshotChanged) {
+      _snapshot = snapshot;
+      unawaited(_sendSnapshot());
+    }
   }
 
   @override
@@ -135,8 +151,11 @@ class _MapScreenState extends ConsumerState<MapScreen>
       }
 
       setState(() {
-        _snapshot = _withLiveSensorState(
-          snapshot.withCollectedContentIds(_appliedCollectedContentIds),
+        _snapshot = applyMapSelectionRequest(
+          _withLiveSensorState(
+            snapshot.withCollectedContentIds(_appliedCollectedContentIds),
+          ),
+          widget.selectionRequest,
         );
       });
       await _webViewController.loadHtmlString(html, baseUrl: _mapBaseUrl);
