@@ -67,24 +67,6 @@ jobs:
       - name: Unit tests
         run: npm test -- --ci
 
-      - name: Harness contract
-        run: npm run harness:check
-
-      - name: Session-state script (smoke test)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          out=$(npm run --silent session)
-          echo "$out"
-          # 기대 섹션들이 모두 출력되는지 확인 — 라벨/마일스톤 이름 변경 시 silent 깨짐 차단.
-          echo "$out" | grep -q "Stampy session state" || { echo "::error::missing header"; exit 1; }
-          echo "$out" | grep -q "^Branch"             || { echo "::error::missing Branch section"; exit 1; }
-          echo "$out" | grep -q "^Open PRs"           || { echo "::error::missing Open PRs section"; exit 1; }
-          echo "$out" | grep -q "^Open milestones"    || { echo "::error::missing Open milestones section"; exit 1; }
-          echo "$out" | grep -q "^In-progress"        || { echo "::error::missing In-progress section"; exit 1; }
-          echo "$out" | grep -q "^Closed milestones"  || { echo "::error::missing Closed milestones section"; exit 1; }
-          echo "$out" | grep -q "^Conventions"        || { echo "::error::missing Conventions section"; exit 1; }
-
   commitlint:
     name: Commit message lint
     runs-on: ubuntu-latest

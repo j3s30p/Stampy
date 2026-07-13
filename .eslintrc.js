@@ -1,6 +1,5 @@
 // https://docs.expo.dev/guides/using-eslint/
-// 룰 ID → 의도 → 수정 방안 매핑은 `skills/static-analysis-guide/SKILL.md` 참조.
-// 변경 시 AGENTS.md 의 invariants 와 동기 유지.
+// 프로젝트 경계와 mock 격리 규칙을 이 설정에서 직접 관리한다.
 module.exports = {
   root: true,
   extends: ['expo', 'prettier'],
@@ -39,8 +38,7 @@ module.exports = {
       },
     ],
 
-    // AGENTS.md invariant: features 간 cross-import 금지 (ADR-004).
-    // 위반 시 skills/static-analysis-guide/SKILL.md 참조.
+    // features 간 cross-import 금지 (ADR-004).
     'import/no-restricted-paths': [
       'error',
       {
@@ -55,7 +53,7 @@ module.exports = {
       },
     ],
 
-    // AGENTS.md invariant: shared/mocks 는 Mock*Repository / shared/mocks 내부에서만 사용.
+    // shared/mocks 는 Mock*Repository / shared/mocks 내부에서만 사용.
     // (override 에서 예외 처리)
     'no-restricted-imports': [
       'error',
@@ -63,8 +61,7 @@ module.exports = {
         patterns: [
           {
             group: ['@shared/mocks', '@shared/mocks/*', '**/shared/mocks', '**/shared/mocks/*'],
-            message:
-              '@shared/mocks 는 Mock*Repository 에서만 import 허용. AGENTS.md File ownership 참조.',
+            message: '@shared/mocks 는 Mock*Repository 에서만 import할 수 있습니다.',
           },
         ],
       },
