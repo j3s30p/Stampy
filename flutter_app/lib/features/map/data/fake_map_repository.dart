@@ -9,7 +9,7 @@ final class FakeMapRepository implements MapRepository {
   @override
   Future<MapSnapshot> loadSnapshot() async => MapSnapshot(
     center: _coordinate(37.579617, 126.977041),
-    currentLocation: _coordinate(37.579302, 126.976932),
+    currentLocation: null,
     selectedContentId: 'tour-126508',
     pins: <MapPin>[
       MapPin(

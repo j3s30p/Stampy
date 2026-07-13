@@ -3,34 +3,38 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stampy/app/theme/app_colors.dart';
+import 'package:stampy/core/location/location.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../data/fake_map_repository.dart';
 import '../domain/map_models.dart';
 import '../domain/map_repository.dart';
 import '../infrastructure/kakao_map_bridge.dart';
+import 'map_location_status.dart';
 
 const String _kakaoJavaScriptKey = String.fromEnvironment('KAKAO_JS_KEY');
 const String _mapAssetPath = 'assets/map/kakao_map.html';
 const String _keyPlaceholder = '__STAMPY_KAKAO_JS_KEY_JSON__';
 const String _mapBaseUrl = 'https://stampy.local/';
 
-class MapScreen extends StatefulWidget {
+class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key, this.repository = const FakeMapRepository()});
 
   final MapRepository repository;
 
   @override
-  State<MapScreen> createState() => _MapScreenState();
+  ConsumerState<MapScreen> createState() => _MapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen> {
+class _MapScreenState extends ConsumerState<MapScreen> {
   static const _bridge = KakaoMapBridge();
 
   late final WebViewController _webViewController;
 
   MapSnapshot? _snapshot;
+  LocationState _locationState = const LocationState.loading();
   bool _bridgeReady = false;
   bool _tilesLoaded = false;
   String? _errorMessage;
@@ -61,7 +65,9 @@ class _MapScreenState extends State<MapScreen> {
       }
 
       setState(() {
-        _snapshot = snapshot;
+        _snapshot = snapshot.withCurrentLocation(
+          _locationState.fix?.coordinates,
+        );
       });
       await _webViewController.loadHtmlString(html, baseUrl: _mapBaseUrl);
     } on Object {
@@ -142,6 +148,22 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  Future<void> _applyLocationState(LocationState locationState) async {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _locationState = locationState;
+      if (locationState.status != LocationStatus.loading) {
+        _snapshot = _snapshot?.withCurrentLocation(
+          locationState.fix?.coordinates,
+        );
+      }
+    });
+    await _sendSnapshot();
+  }
+
   String _redactSecret(String message) {
     if (_kakaoJavaScriptKey.isEmpty) {
       return message;
@@ -162,7 +184,19 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(currentLocationProvider);
+    ref.listen(currentLocationProvider, (previous, next) {
+      next.when(
+        data: (state) => unawaited(_applyLocationState(state)),
+        error: (error, stackTrace) =>
+            unawaited(_applyLocationState(const LocationState.unavailable())),
+        loading: () =>
+            unawaited(_applyLocationState(const LocationState.loading())),
+      );
+    });
+
     final selectedPin = _snapshot?.selectedPin;
+    final locationStatus = describeMapLocation(_locationState);
 
     return Scaffold(
       backgroundColor: StampyColors.canvas,
@@ -208,6 +242,16 @@ class _MapScreenState extends State<MapScreen> {
                 right: 16,
                 child: _MapErrorBanner(message: message),
               ),
+            Positioned(
+              top: _errorMessage == null ? 16 : 80,
+              right: 16,
+              child: _MapLocationChip(
+                status: locationStatus,
+                onRetry: locationStatus.canRetry
+                    ? () => ref.invalidate(currentLocationProvider)
+                    : null,
+              ),
+            ),
             if (selectedPin != null)
               Positioned(
                 left: 16,
@@ -216,6 +260,84 @@ class _MapScreenState extends State<MapScreen> {
                 child: _SelectedPinCard(pin: selectedPin),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MapLocationChip extends StatelessWidget {
+  const _MapLocationChip({required this.status, this.onRetry});
+
+  final MapLocationStatus status;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final (foreground, background, icon) = switch (status.tone) {
+      MapLocationTone.neutral => (
+        StampyColors.mutedInk,
+        StampyColors.paper,
+        Icons.location_searching,
+      ),
+      MapLocationTone.available => (
+        const Color(0xFF176B4D),
+        const Color(0xFFE8F5EE),
+        Icons.my_location,
+      ),
+      MapLocationTone.warning => (
+        const Color(0xFF8A4B08),
+        const Color(0xFFFFF0D8),
+        Icons.location_off_outlined,
+      ),
+      MapLocationTone.error => (
+        const Color(0xFF93000A),
+        const Color(0xFFFFDAD6),
+        Icons.location_disabled_outlined,
+      ),
+    };
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: background.withValues(alpha: 0.96),
+        border: Border.all(color: StampyColors.hairline),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 260),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: foreground),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  status.label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: foreground,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+              if (onRetry != null) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  constraints: const BoxConstraints.tightFor(
+                    width: 44,
+                    height: 44,
+                  ),
+                  padding: EdgeInsets.zero,
+                  tooltip: '현재 위치 다시 확인',
+                  onPressed: onRetry,
+                  icon: Icon(Icons.refresh, size: 17, color: foreground),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
