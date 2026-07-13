@@ -46,18 +46,18 @@ body:
     id: env
     attributes:
       label: '환경'
-      description: 'iOS/Android/Web, 시뮬레이터 vs 실기기, Expo SDK 버전 등'
-      placeholder: 'iOS Sim iPhone 17 Pro, Expo SDK 52'
+      description: 'iOS/Android, 시뮬레이터 vs 실기기, Flutter 버전 등'
+      placeholder: 'iOS Simulator iPhone 17, Flutter stable'
   - type: dropdown
     id: invariant-impact
     attributes:
-      label: 'AGENTS.md invariant 에 영향 있나요?'
+      label: '제품 제약에 영향 있나요?'
       options:
         - '없음'
         - '도장 인증 반경 100m'
-        - 'branded coordinate types'
+        - 'Latitude / Longitude 값 객체'
         - 'Kakao WebView only'
-        - 'TourAPI 정규화 경계'
-        - 'ESLint suppress'
+        - 'TourAPI 서버 정규화 경계'
+        - 'Supabase RLS / 최소 권한'
     validations:
       required: true

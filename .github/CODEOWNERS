@@ -1,43 +1,15 @@
-# CODEOWNERS — Mock-first 작업 영역 자동 리뷰어 매핑
-# AGENTS.md 의 "Work order ownership" 표와 동기 유지.
-# 1인 개발 체제 기준으로 모든 영역 기본 리뷰어는 저장소 owner 다.
+# CODEOWNERS — 현재 Flutter 앱과 저장소 설정의 기본 리뷰어
 
 # 기본값
 *                                            @j3s30p
 
-# Mock-first 기본 영역 — interface/Mock/UI/도메인
-/app/                                        @j3s30p
-/src/features/*/ui/                          @j3s30p
-/src/features/*/model/                       @j3s30p
-/src/features/*/api/*Repository.ts           @j3s30p
-/src/features/*/api/Mock*Repository.ts       @j3s30p
-/src/shared/                                 @j3s30p
-/src/core/location/                          @j3s30p
-/src/core/*/Mock*Repository.ts               @j3s30p
-/src/core/*/StorageRepository.ts             @j3s30p
-/src/core/*/AuthRepository.ts                @j3s30p
+# Flutter 앱
+/flutter_app/                                @j3s30p
 
-# 백엔드 연결 단계 — 같은 interface 의 real impl
-/src/core/network/                           @j3s30p
-/src/features/tour/api/Http*Repository.ts    @j3s30p
-/src/core/storage/AsyncStorage*Repository.ts @j3s30p
-/src/core/auth/Http*Repository.ts            @j3s30p
-
-# Harness / 인프라 — 영향 큰 영역
+# 저장소 설정
 /.github/                                    @j3s30p
-/.husky/                                     @j3s30p
-/.eslintrc.js                                @j3s30p
-/.prettierrc.js                              @j3s30p
-/commitlint.config.js                        @j3s30p
-/package.json                                @j3s30p
-/tsconfig.json                               @j3s30p
-/app.json                                    @j3s30p
-/scripts/                                    @j3s30p
 
 # 정본 문서
 /README.md                                   @j3s30p
 /AGENTS.md                                   @j3s30p
-/CLAUDE.md                                   @j3s30p
 /docs/                                       @j3s30p
-/skills/                                     @j3s30p
-/.claude/                                    @j3s30p

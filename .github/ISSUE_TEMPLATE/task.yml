@@ -7,16 +7,15 @@ body:
     id: area
     attributes:
       label: '어느 영역인가요?'
-      description: 'AGENTS.md File ownership 표의 area 슬러그'
       options:
-        - 'stamp (features/stamp)'
-        - 'map (features/map)'
-        - 'tour (features/tour)'
-        - 'core (network/location/storage/auth)'
-        - 'shared (brand types, mocks, ui-kit)'
-        - 'app (라우트)'
-        - 'harness (ESLint/CI/scripts)'
-        - 'docs (README/AGENTS/CLAUDE/docs/skills)'
+        - 'stamp (flutter_app/lib/features/stamp)'
+        - 'map (flutter_app/lib/features/map)'
+        - 'tour (관광지/TourAPI)'
+        - 'core (flutter_app/lib/core)'
+        - 'shared (공통 타입/상수/UI)'
+        - 'app (flutter_app/lib/app)'
+        - 'harness (CI/빌드/tooling)'
+        - 'docs (README/docs/GitHub templates)'
         - 'deps (의존성)'
     validations:
       required: true
@@ -39,12 +38,6 @@ body:
         - [ ] PR 머지 + 시뮬레이터에서 동작 확인
     validations:
       required: true
-  - type: input
-    id: related-skill
-    attributes:
-      label: '관련 skill (선택)'
-      description: 'skills/<name>/SKILL.md 의 폴더명. 작업 직전 1회 정독.'
-      placeholder: 'git-workflow'
   - type: input
     id: related-adr
     attributes:

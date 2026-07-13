@@ -1,4 +1,4 @@
-// 변경 시 skills/static-analysis-guide/SKILL.md 의 "Format" 섹션 동기화 필수.
+// Keep formatting consistent across the remaining TypeScript transition surface.
 module.exports = {
   semi: true,
   singleQuote: true,

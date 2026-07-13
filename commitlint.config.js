@@ -1,5 +1,5 @@
-// Conventional Commits + AGENTS.md File ownership 의 영역 슬러그 강제.
-// scope 미정의 시 에러. 변경 시 AGENTS.md "Branch / commit convention" 섹션 동기 유지.
+// Conventional Commits와 프로젝트 영역 슬러그를 강제한다.
+// scope 미정의 시 에러다. 영역을 추가할 때 이 목록도 함께 갱신한다.
 module.exports = {
   extends: ['@commitlint/config-conventional'],
   rules: {
@@ -13,8 +13,8 @@ module.exports = {
         'core', // src/core/* (network/location/storage/auth)
         'shared', // src/shared/*
         'app', // app/ 라우트
-        'harness', // ESLint·CI·문서·skills 등 인프라
-        'docs', // README/AGENTS/CLAUDE/docs/skills 본문 수정
+        'harness', // ESLint·CI·개발 도구 등 인프라
+        'docs', // README와 docs 본문 수정
         'deps', // 의존성 bump
       ],
     ],

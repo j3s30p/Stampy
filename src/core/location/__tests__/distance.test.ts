@@ -36,7 +36,7 @@ describe('distanceMetersBetween', () => {
     expect(distanceMetersBetween(spot, outside)).toBeGreaterThan(STAMP_RADIUS_METERS);
   });
 
-  it('도장 인증 반경 invariant — 100m 고정 (AGENTS.md)', () => {
+  it('도장 인증 반경 제품 규칙 — 100m 고정', () => {
     expect(STAMP_RADIUS_METERS).toBe(100);
   });
 });

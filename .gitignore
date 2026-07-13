@@ -34,9 +34,6 @@ expo-env.d.ts.bak
 .vscode/
 *.swp
 
-# Claude Code (user-local permission/settings)
-.claude/settings.local.json
-
 # Logs
 *.log
 
