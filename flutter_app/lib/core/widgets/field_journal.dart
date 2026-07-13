@@ -237,24 +237,53 @@ class _JournalUtilityBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final useStackedLayout =
+        MediaQuery.sizeOf(context).width < 360 ||
+        MediaQuery.textScalerOf(context).scale(1) > 1.3;
+
     return Column(
       children: [
-        Row(
-          children: [
-            Text(
-              'STAMPY / TRAVEL ARCHIVE',
-              style: Theme.of(
-                context,
-              ).textTheme.labelMedium?.copyWith(color: StampyColors.ink),
-            ),
-            const Spacer(),
-            trailing ??
-                Text(
-                  'KR · 2026',
-                  style: Theme.of(context).textTheme.labelMedium,
+        if (useStackedLayout)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'STAMPY / TRAVEL ARCHIVE',
+                style: Theme.of(
+                  context,
+                ).textTheme.labelMedium?.copyWith(color: StampyColors.ink),
+              ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child:
+                    trailing ??
+                    Text(
+                      'KR · 2026',
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+              ),
+            ],
+          )
+        else
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'STAMPY / TRAVEL ARCHIVE',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelMedium?.copyWith(color: StampyColors.ink),
                 ),
-          ],
-        ),
+              ),
+              const SizedBox(width: 12),
+              trailing ??
+                  Text(
+                    'KR · 2026',
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+            ],
+          ),
         const SizedBox(height: 12),
         const Divider(),
       ],

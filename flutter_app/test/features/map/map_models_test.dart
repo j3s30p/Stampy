@@ -119,4 +119,89 @@ void main() {
     expect(cleared.currentLocation, isNull);
     expect(cleared.currentHeading, isNull);
   });
+
+  test('collecting a pin preserves every other snapshot field', () {
+    final center = _coordinates(37.5796, 126.9770);
+    final currentLocation = _coordinates(37.5793, 126.9769);
+    final selectedPin = MapPin(
+      contentId: 'tour-1',
+      title: '경복궁',
+      kind: MapPinKind.place,
+      location: center,
+    );
+    final otherPin = MapPin(
+      contentId: 'tour-2',
+      title: '북촌한옥마을',
+      kind: MapPinKind.place,
+      location: _coordinates(37.5826, 126.9837),
+    );
+    final snapshot = MapSnapshot(
+      center: center,
+      currentLocation: currentLocation,
+      currentHeading: HeadingDegrees(123),
+      pins: <MapPin>[selectedPin, otherPin],
+      selectedContentId: selectedPin.contentId,
+    );
+
+    final updated = snapshot.withCollectedPin(selectedPin.contentId);
+
+    expect(updated, isNot(same(snapshot)));
+    expect(updated.center, same(center));
+    expect(updated.currentLocation, same(currentLocation));
+    expect(updated.currentHeading, same(snapshot.currentHeading));
+    expect(updated.selectedContentId, selectedPin.contentId);
+    expect(updated.selectedPin?.collected, isTrue);
+    expect(snapshot.selectedPin?.collected, isFalse);
+    expect(updated.pinByContentId(otherPin.contentId), same(otherPin));
+  });
+
+  test('collecting rejects a content id outside the snapshot', () {
+    final snapshot = MapSnapshot(
+      center: _coordinates(37.5796, 126.9770),
+      currentLocation: null,
+      pins: const <MapPin>[],
+      selectedContentId: null,
+    );
+
+    expect(() => snapshot.withCollectedPin('missing'), throwsArgumentError);
+  });
+
+  test('collected content ids replace seed flags and preserve map state', () {
+    final center = _coordinates(37.5796, 126.9770);
+    final currentLocation = _coordinates(37.5793, 126.9769);
+    final first = MapPin(
+      contentId: 'tour-1',
+      title: '경복궁',
+      kind: MapPinKind.place,
+      location: center,
+      collected: true,
+    );
+    final second = MapPin(
+      contentId: 'tour-2',
+      title: '북촌한옥마을',
+      kind: MapPinKind.place,
+      location: _coordinates(37.5826, 126.9837),
+    );
+    final snapshot = MapSnapshot(
+      center: center,
+      currentLocation: currentLocation,
+      currentHeading: HeadingDegrees(75),
+      pins: <MapPin>[first, second],
+      selectedContentId: second.contentId,
+    );
+
+    final updated = snapshot.withCollectedContentIds(<String>{
+      second.contentId,
+      'not-in-this-snapshot',
+    });
+
+    expect(updated.pinByContentId(first.contentId)?.collected, isFalse);
+    expect(updated.pinByContentId(second.contentId)?.collected, isTrue);
+    expect(updated.center, same(center));
+    expect(updated.currentLocation, same(currentLocation));
+    expect(updated.currentHeading, same(snapshot.currentHeading));
+    expect(updated.selectedContentId, second.contentId);
+    expect(snapshot.pinByContentId(first.contentId)?.collected, isTrue);
+    expect(snapshot.pinByContentId(second.contentId)?.collected, isFalse);
+  });
 }

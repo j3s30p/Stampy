@@ -113,6 +113,12 @@ void main() {
       expect(center['lat'], closeTo(37.579617, 0.0000001));
       expect(center['lng'], closeTo(126.977041, 0.0000001));
       expect(pins, isNotEmpty);
+      expect(
+        pins.cast<Map<String, dynamic>>().every(
+          (pin) => pin['collected'] == false,
+        ),
+        isTrue,
+      );
     },
   );
 
@@ -165,5 +171,24 @@ void main() {
       bridge.buildSetCurrentHeadingScript(null),
       'window.StampyKakaoMap.setCurrentHeading(null);',
     );
+  });
+
+  test('setMapData sends an immutable collected pin update', () async {
+    final original = await const FakeMapRepository().loadSnapshot();
+    final contentId = original.selectedContentId!;
+    final updated = original.withCollectedPin(contentId);
+
+    final decoded =
+        jsonDecode(bridge.encodeSetMapDataCommand(updated))
+            as Map<String, dynamic>;
+    final payload = decoded['payload'] as Map<String, dynamic>;
+    final pins = payload['pins'] as List<dynamic>;
+    final selected = pins.cast<Map<String, dynamic>>().singleWhere(
+      (pin) => pin['contentId'] == contentId,
+    );
+
+    expect(selected['collected'], isTrue);
+    expect(original.selectedPin?.collected, isFalse);
+    expect(payload['selectedContentId'], contentId);
   });
 }

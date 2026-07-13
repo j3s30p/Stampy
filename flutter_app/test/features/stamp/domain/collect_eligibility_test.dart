@@ -1,8 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stampy/core/geo/geo.dart';
 import 'package:stampy/features/stamp/domain/stamp_domain.dart';
 
-const metersPerLatitudeDegree = 111000;
+const radiansToDegrees = 180 / math.pi;
 
 Coordinates coordinates(double latitude, double longitude) =>
     Coordinates(latitude: Latitude(latitude), longitude: Longitude(longitude));
@@ -14,7 +16,9 @@ StampCandidate candidate({bool isCollected = false}) => StampCandidate(
 );
 
 Coordinates offsetByMeters(Coordinates origin, double meters) => Coordinates(
-  latitude: Latitude(origin.latitude.value + meters / metersPerLatitudeDegree),
+  latitude: Latitude(
+    origin.latitude.value + meters / earthRadiusMeters * radiansToDegrees,
+  ),
   longitude: origin.longitude,
 );
 
@@ -52,6 +56,41 @@ void main() {
     expect(inside.blockReason, isNull);
     expect(outside.canCollect, isFalse);
     expect(outside.blockReason, CollectBlockReason.outOfRange);
+  });
+
+  test('allows an actual distance at the inclusive 100m boundary', () {
+    final boundaryTargetLocation = coordinates(0, 0);
+    final boundaryLocation = offsetByMeters(
+      boundaryTargetLocation,
+      stampRadiusMeters.toDouble(),
+    );
+    final actualDistance = distanceMetersBetween(
+      boundaryTargetLocation,
+      boundaryLocation,
+    );
+    final result = evaluate(
+      currentLocation: boundaryLocation,
+      stampCandidate: candidate(),
+      target: StampTarget(location: boundaryTargetLocation),
+    );
+
+    expect(actualDistance, closeTo(stampRadiusMeters, 0.0000001));
+    expect(actualDistance, lessThanOrEqualTo(stampRadiusMeters));
+    expect(result.canCollect, isTrue);
+  });
+
+  test('uses the exact distance instead of its rounded display value', () {
+    final justOutside = offsetByMeters(targetLocation, 100.1);
+    final actualDistance = distanceMetersBetween(targetLocation, justOutside);
+    final result = evaluate(
+      currentLocation: justOutside,
+      stampCandidate: candidate(),
+      target: target,
+    );
+
+    expect(actualDistance.round(), stampRadiusMeters);
+    expect(actualDistance, greaterThan(stampRadiusMeters));
+    expect(result.blockReason, CollectBlockReason.outOfRange);
   });
 
   test('requires a current location', () {

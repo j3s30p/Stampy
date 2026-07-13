@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'coordinates.dart';
 import 'geo_constants.dart';
 
-int distanceMetersBetween(Coordinates from, Coordinates to) {
+double distanceMetersBetween(Coordinates from, Coordinates to) {
   final latitudeDelta = _toRadians(to.latitude.value - from.latitude.value);
   final longitudeDelta = _toRadians(to.longitude.value - from.longitude.value);
   final fromLatitude = _toRadians(from.latitude.value);
@@ -23,7 +23,7 @@ int distanceMetersBetween(Coordinates from, Coordinates to) {
         math.sqrt(1 - safeHalfChordLength),
       );
 
-  return (earthRadiusMeters * angularDistance).round();
+  return earthRadiusMeters * angularDistance;
 }
 
 double _toRadians(double degrees) => degrees * math.pi / 180;
