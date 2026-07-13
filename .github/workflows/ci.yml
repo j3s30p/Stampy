@@ -39,7 +39,7 @@ jobs:
         run: flutter test
 
   quality:
-    name: Legacy Expo quality (transition only)
+    name: Quality gate (tsc + eslint + prettier)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
