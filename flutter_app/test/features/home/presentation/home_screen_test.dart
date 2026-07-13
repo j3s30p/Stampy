@@ -10,6 +10,9 @@ import 'package:stampy/features/home/presentation/home_screen.dart';
 import 'package:stampy/features/recommendation/data/fake_recommendation_repository.dart';
 import 'package:stampy/features/recommendation/data/recommendation_providers.dart';
 import 'package:stampy/features/recommendation/domain/recommendation_domain.dart';
+import 'package:stampy/features/stamp/data/fake_stamp_repository.dart';
+import 'package:stampy/features/stamp/domain/stamp_domain.dart';
+import 'package:stampy/features/stamp/presentation/stamp_session.dart';
 
 void main() {
   testWidgets(
@@ -85,12 +88,49 @@ void main() {
       auth: const FakeAuthRepository(),
       location: FakeLocationRepository(state: _availableLocation()),
       recommendation: const FakeRecommendationRepository(),
+      stamp: FakeStampRepository(initialStamps: <CollectedStamp>[_stamp('a')]),
     );
     await tester.pumpAndSettle();
 
     expect(find.text('게스트 모드'), findsOneWidget);
     expect(find.text('추천 데이터 연결이 필요해요'), findsOneWidget);
     expect(find.text('1km 안의 미수집 도장을 모두 모았어요'), findsNothing);
+    expect(find.text('1'), findsOneWidget);
+  });
+
+  testWidgets('shows loaded stamps and updates immediately after collection', (
+    tester,
+  ) async {
+    final repository = FakeStampRepository(
+      initialStamps: <CollectedStamp>[_stamp('a'), _stamp('b')],
+      clock: () => DateTime.utc(2026, 7, 13, 13),
+    );
+    await _pumpHome(
+      tester,
+      location: FakeLocationRepository(state: _availableLocation()),
+      recommendation: const FakeRecommendationRepository(),
+      stamp: repository,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('2'), findsOneWidget);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(HomeScreen)),
+    );
+    await container
+        .read(stampSessionProvider.notifier)
+        .collect(
+          CollectStampRequest(
+            contentId: 'c',
+            title: '도장 c',
+            kind: StampCandidateKind.spot,
+            verificationFix: _locationFix(),
+          ),
+        );
+    await tester.pump();
+
+    expect(find.text('3'), findsOneWidget);
   });
 
   testWidgets('shows loading while the current GPS request is pending', (
@@ -118,6 +158,7 @@ Future<void> _pumpHome(
   AuthRepository? auth,
   required LocationRepository location,
   required RecommendationRepository recommendation,
+  StampRepository? stamp,
 }) => tester.pumpWidget(
   ProviderScope(
     overrides: [
@@ -132,17 +173,26 @@ Future<void> _pumpHome(
       ),
       locationRepositoryProvider.overrideWithValue(location),
       recommendationRepositoryProvider.overrideWithValue(recommendation),
+      if (stamp != null) stampRepositoryProvider.overrideWithValue(stamp),
     ],
     child: const MaterialApp(home: HomeScreen()),
   ),
 );
 
-LocationState _availableLocation() => LocationState.available(
-  LocationFix(
-    coordinates: _coordinates(),
-    accuracyMeters: 5,
-    timestamp: DateTime.utc(2026, 7, 13, 12),
-  ),
+LocationState _availableLocation() => LocationState.available(_locationFix());
+
+LocationFix _locationFix() => LocationFix(
+  coordinates: _coordinates(),
+  accuracyMeters: 5,
+  timestamp: DateTime.utc(2026, 7, 13, 12),
+);
+
+CollectedStamp _stamp(String contentId) => CollectedStamp(
+  contentId: contentId,
+  title: '도장 $contentId',
+  kind: StampCandidateKind.spot,
+  verificationFix: _locationFix(),
+  collectedAt: DateTime.utc(2026, 7, 13, 12),
 );
 
 Coordinates _coordinates() => Coordinates(
