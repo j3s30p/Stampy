@@ -6,8 +6,11 @@ import 'package:http/testing.dart';
 import 'package:stampy/app/app_dependencies.dart';
 import 'package:stampy/core/auth/auth.dart';
 import 'package:stampy/core/config/app_config.dart';
+import 'package:stampy/core/geo/coordinates.dart';
 import 'package:stampy/features/map/data/fake_map_repository.dart';
 import 'package:stampy/features/map/data/supabase_map_repository.dart';
+import 'package:stampy/features/recommendation/data/fake_recommendation_repository.dart';
+import 'package:stampy/features/recommendation/data/supabase_recommendation_repository.dart';
 import 'package:stampy/features/stamp/data/fake_stamp_repository.dart';
 import 'package:stampy/features/stamp/data/supabase_stamp_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -28,13 +31,14 @@ void main() {
 
     expect(dependencies.auth, isA<FakeAuthRepository>());
     expect(dependencies.map, isA<FakeMapRepository>());
+    expect(dependencies.recommendation, isA<FakeRecommendationRepository>());
     expect(dependencies.stamp, isA<FakeStampRepository>());
     expect(initializeCalls, 0);
     expect(reportedErrors, isEmpty);
   });
 
   test(
-    'uses one initialized client for Supabase auth, map, and stamps',
+    'uses one initialized client for Supabase auth, map, recommendation, and stamps',
     () async {
       final rpcRequests = <http.Request>[];
       final client = SupabaseClient(
@@ -69,14 +73,25 @@ void main() {
 
       expect(dependencies.auth, isA<SupabaseAuthRepository>());
       expect(dependencies.map, isA<SupabaseMapRepository>());
+      expect(
+        dependencies.recommendation,
+        isA<SupabaseRecommendationRepository>(),
+      );
       expect(dependencies.stamp, isA<SupabaseStampRepository>());
       expect(initializeCalls, 1);
 
       await dependencies.map.loadSnapshot();
       await dependencies.stamp.loadCollected();
+      await dependencies.recommendation.loadRecommendation(
+        Coordinates(
+          latitude: Latitude(37.579617),
+          longitude: Longitude(126.977041),
+        ),
+      );
       expect(rpcRequests.map((request) => request.url.path), <String>[
         '/rest/v1/rpc/list_stamp_spots',
         '/rest/v1/rpc/list_collected_stamps',
+        '/rest/v1/rpc/get_stamp_recommendation',
       ]);
     },
   );
@@ -95,6 +110,7 @@ void main() {
 
       expect(dependencies.auth, isA<UnavailableAuthRepository>());
       expect(dependencies.map, isA<FakeMapRepository>());
+      expect(dependencies.recommendation, isA<FakeRecommendationRepository>());
       expect(dependencies.stamp, isA<FakeStampRepository>());
       expect(reportedErrors.single, isA<AppConfigException>());
     },
@@ -115,6 +131,7 @@ void main() {
 
     expect(dependencies.auth, isA<UnavailableAuthRepository>());
     expect(dependencies.map, isA<FakeMapRepository>());
+    expect(dependencies.recommendation, isA<FakeRecommendationRepository>());
     expect(dependencies.stamp, isA<FakeStampRepository>());
     expect(reportedErrors.single, isA<AuthRepositoryException>());
     expect(reportedErrors.single.toString(), isNot(contains('private')));
