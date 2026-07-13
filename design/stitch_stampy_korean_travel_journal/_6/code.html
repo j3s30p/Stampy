@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Stampy - Ranking</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/mono.css" rel="stylesheet"/>
+<!-- Using Pretendard via CDN for Korean Typography -->
+<link as="style" crossorigin="" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #f8faf5; /* background from config */
+            font-family: 'Pretendard', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .hanji-texture {
+            background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
+            background-repeat: repeat;
+            opacity: 0.15;
+            pointer-events: none;
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+        }
+        .ink-bleed {
+            filter: blur(0.4px) contrast(1.1);
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary-container": "#007ea1",
+                      "primary-fixed-dim": "#ffb4a2",
+                      "on-tertiary-fixed": "#001f29",
+                      "primary-container": "#ca4a28",
+                      "on-secondary": "#ffffff",
+                      "primary-fixed": "#ffdbd2",
+                      "surface-variant": "#e1e3de",
+                      "on-primary": "#ffffff",
+                      "outline-variant": "#e0bfb7",
+                      "on-secondary-container": "#71615a",
+                      "secondary-fixed-dim": "#d6c2ba",
+                      "on-secondary-fixed-variant": "#52443d",
+                      "inverse-primary": "#ffb4a2",
+                      "surface-container-high": "#e7e9e4",
+                      "on-tertiary-container": "#fbfdff",
+                      "tertiary-fixed-dim": "#70d2fa",
+                      "secondary-container": "#f3ded5",
+                      "on-secondary-fixed": "#241914",
+                      "surface-bright": "#f8faf5",
+                      "tertiary-fixed": "#bce9ff",
+                      "primary": "#a83212",
+                      "on-primary-container": "#fffbff",
+                      "inverse-surface": "#2e312e",
+                      "surface-container-low": "#f3f4ef",
+                      "surface-tint": "#ac3414",
+                      "tertiary": "#006480",
+                      "secondary": "#6a5b54",
+                      "on-surface-variant": "#59413b",
+                      "on-tertiary": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "on-primary-fixed": "#3c0800",
+                      "on-tertiary-fixed-variant": "#004d63",
+                      "on-surface": "#191c19",
+                      "outline": "#8c716a",
+                      "surface-dim": "#d9dbd6",
+                      "inverse-on-surface": "#f0f1ec",
+                      "error": "#ba1a1a",
+                      "background": "#f8faf5",
+                      "surface-container-highest": "#e1e3de",
+                      "on-error": "#ffffff",
+                      "secondary-fixed": "#f3ded5",
+                      "on-error-container": "#93000a",
+                      "surface-container": "#edeee9",
+                      "surface": "#f8faf5",
+                      "on-primary-fixed-variant": "#891d00",
+                      "on-background": "#191c19"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-md": "12px",
+                      "gutter": "16px",
+                      "section-gap": "40px",
+                      "side-padding": "20px",
+                      "stack-sm": "4px",
+                      "unit": "8px"
+              },
+              "fontFamily": {
+                      "display-title": ["Pretendard"],
+                      "coord-label": ["Geist Mono", "monospace"],
+                      "section-title": ["Pretendard"],
+                      "body-main": ["Pretendard"],
+                      "ranking-num": ["Geist Mono", "monospace"],
+                      "display-title-mobile": ["Pretendard"]
+              },
+              "fontSize": {
+                      "display-title": ["28px", {"lineHeight": "1.3", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "coord-label": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                      "section-title": ["20px", {"lineHeight": "1.4", "fontWeight": "700"}],
+                      "body-main": ["15px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "ranking-num": ["14px", {"lineHeight": "1.0", "fontWeight": "600"}],
+                      "display-title-mobile": ["24px", {"lineHeight": "1.3", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background">
+<div class="hanji-texture"></div>
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-side-padding h-16 bg-background border-b border-outline-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">edit_calendar</span>
+<h1 class="font-display-title-mobile text-display-title-mobile text-primary">Stampy</h1>
+</div>
+<div class="flex items-center">
+<button class="w-10 h-10 flex items-center justify-center hover:bg-surface-container-low rounded-full transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</button>
+</div>
+</header>
+<main class="relative z-10 pt-20 pb-28 px-side-padding max-w-2xl mx-auto">
+<!-- Editorial Header Section -->
+<section class="mb-section-gap">
+<div class="flex flex-col gap-1">
+<span class="font-coord-label text-coord-label text-secondary tracking-widest uppercase">Traveler Ledger</span>
+<h2 class="font-display-title-mobile text-display-title-mobile text-on-surface ink-bleed">발자취 랭킹</h2>
+</div>
+<!-- Period Selector -->
+<div class="mt-8 flex gap-4 overflow-x-auto scrollbar-hide">
+<button class="px-4 py-2 bg-primary text-white font-section-title text-[14px] transition-all hover:opacity-90 active:scale-95">이번 주</button>
+<button class="px-4 py-2 border border-outline text-secondary font-section-title text-[14px] hover:bg-surface-container-low transition-all active:scale-95">이번 달</button>
+<button class="px-4 py-2 border border-outline text-secondary font-section-title text-[14px] hover:bg-surface-container-low transition-all active:scale-95">전체</button>
+</div>
+</section>
+<!-- Ranking List (Editorial Style) -->
+<div class="space-y-0 border-t border-outline-variant">
+<!-- Rank 1 -->
+<div class="flex items-center py-6 border-b border-outline-variant group hover:bg-white/50 transition-colors">
+<div class="w-12 flex flex-col items-center">
+<span class="font-ranking-num text-ranking-num text-primary">01</span>
+<span class="material-symbols-outlined text-[12px] text-primary" style="font-variation-settings: 'FILL' 1;">change_history</span>
+</div>
+<div class="flex-1 flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-outline-variant bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A portrait of a minimalist runner wearing modern Korean streetwear, with the Han River sunset in the background. The style is a clean, archival editorial photography with film grain, muted earth tones, and focused soft lighting to match the Stampy brand aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOFQyWPmdzF_ZrprMNU7SUYPZn3c13dzJc5VAVA7vfbCI1enCUpqsF0rpY8hUXTjZPfJ-b-ylTlYqovqaa98B2kEtlGxwPoKFJ9aNw3Zu78onKYWCbo3cho6FcQC8PY_fx2UkFBzzx2bd79x6vHMjeVF1JXaRbusVB0escKzokoQrnjMGbovlv_enTtcg-EKmCBm84dvVuQSDw2ySR-_oA31ZKXNXnCx_89Tb1rzm5hqmfyzEsn_7QOgCUvdjjePr2eiprelow2ip_"/>
+</div>
+<div class="flex flex-col">
+<span class="font-section-title text-on-surface">한강러너</span>
+<span class="font-coord-label text-coord-label text-secondary">ID: HR-8821</span>
+</div>
+</div>
+<div class="text-right">
+<div class="font-section-title text-primary">도장 28개</div>
+<div class="font-coord-label text-coord-label text-secondary uppercase">Verified Collector</div>
+</div>
+</div>
+<!-- Rank 2 -->
+<div class="flex items-center py-6 border-b border-outline-variant group hover:bg-white/50 transition-colors">
+<div class="w-12 flex flex-col items-center">
+<span class="font-ranking-num text-ranking-num text-on-surface-variant">02</span>
+<div class="flex items-center text-[10px] text-tertiary font-ranking-num">
+<span class="material-symbols-outlined text-[14px]">arrow_drop_up</span>
+<span>2</span>
+</div>
+</div>
+<div class="flex-1 flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-outline-variant bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A high-quality editorial shot of a young man in traditional-inspired modern Hanbok standing near a Gyeongbokgung palace stone wall. Muted, soft natural lighting, high-contrast primary text vibes, and film grain texture reflecting the contemporary Korean travel field journal aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmunMKdM15vFjtRGUgBCdYlW5LlIYHbG9G-e4dnb7bvEFpJpaC-g6L5KdBlV3C3llBKxaTb5MuZyJ_d7B_QNQ-2_L2BWxHkLRzz5F6tcNQxwlxOBFrMu3IgBB0FGLAr-vfna3bMC0AQfrMMykspSMO5eGY3wuMfrJzSVs4rpbhUzxD_zgEcqoYyYFV5UCbD2V33NLjP9JxKiXDZ9ALIEE-Rds3mGAJhPZzbVWkEPZZnS8fGK5VJSztWkJru0_lg98nq6Oi2TFBK5QR"/>
+</div>
+<div class="flex flex-col">
+<span class="font-section-title text-on-surface">경복궁지기</span>
+<span class="font-coord-label text-coord-label text-secondary">ID: GB-1004</span>
+</div>
+</div>
+<div class="text-right">
+<div class="font-section-title text-on-surface">도장 25개</div>
+<div class="font-coord-label text-coord-label text-secondary uppercase">Local Expert</div>
+</div>
+</div>
+<!-- ... Other Ranks (Spacing) ... -->
+<div class="py-4 flex justify-center">
+<span class="material-symbols-outlined text-outline-variant">more_vert</span>
+</div>
+<!-- User Row (Rank 12) Highlighted -->
+<div class="flex items-center py-6 border border-primary/20 bg-primary/5 rounded-lg px-2 group shadow-sm transition-all">
+<div class="w-12 flex flex-col items-center">
+<span class="font-ranking-num text-ranking-num text-primary">12</span>
+<span class="material-symbols-outlined text-[12px] text-secondary">horizontal_rule</span>
+</div>
+<div class="flex-1 flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border-2 border-primary bg-surface-container relative">
+<img class="w-full h-full object-cover" data-alt="Close-up of a stylish traveler looking at a physical field journal in a quiet Seoul cafe. Warm Hanji paper background colors, soft afternoon sunbeams, and archival editorial mood. Subtle film grain and high-quality photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDAMMUt0BdamHj0uv4vt6qga4Yup3M3HJavJ_OJrg6K8ocGf2zucPiVt6cr8Hi_dkyTCTwk7NwLflgHBosI5B1K-sy9SCwTGkz6yUN5CLUCoqejvH8rVMeOKnYLaOanqf1vYfla8n2Ns0dcdJzPPhGqD0Tb-wzzQ4WK2c-PJNi9Sj87UwmNFAbcOMrH-6A5iCg5UD5NFqTUan_T-nZ0pqzHtgVVi9SclxC2skyt2ei5KUf4Wsbg_vNcmUTFqkQOiA4kwVUfu9R71a5b"/>
+<div class="absolute inset-0 border-[3px] border-white/30 rounded-full"></div>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-section-title text-primary">스탬피 테스터</span>
+<span class="bg-primary text-white text-[8px] px-1 font-coord-label rounded-sm">YOU</span>
+</div>
+<span class="font-coord-label text-coord-label text-secondary">ID: ST-0001</span>
+</div>
+</div>
+<div class="text-right">
+<div class="font-section-title text-primary">도장 8개</div>
+<div class="font-coord-label text-coord-label text-primary/70 uppercase">On the path</div>
+</div>
+</div>
+<!-- More Ranks -->
+<div class="flex items-center py-6 border-b border-outline-variant group hover:bg-white/50 transition-colors">
+<div class="w-12 flex flex-col items-center">
+<span class="font-ranking-num text-ranking-num text-on-surface-variant">13</span>
+<div class="flex items-center text-[10px] text-error font-ranking-num">
+<span class="material-symbols-outlined text-[14px]">arrow_drop_down</span>
+<span>1</span>
+</div>
+</div>
+<div class="flex-1 flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-outline-variant bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Artistic portrait of a traveler with a camera around their neck in a bustling Bukchon Hanok Village alleyway. Desaturated colors, emphasis on textures like stone and wood, cinematic lighting, and archival travel journal feel." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHj5pJzJb4P4p3zenW8sr6sTdmwgeouQ1r5yVso0i19uanz06_ML0txpYcyfHVrfotZbARnmKplCg0WsJ45g026jcisifvpzpPtW_gPUNGNYT58JD6QBybM-PW6Op2Odxmu1dBIvjBIHWkUmQjr08e6QVZeq7pw5Dn5oGR3YercnQc-3OaDtQTN-MEgxW4rEhnpoi9uSFWISYjlwH3hUj_RgbSu1NL3u6wfQceQaxL2VXzozQx_jZ5yLhVWbooJs46Xxd7OrjOHzs_"/>
+</div>
+<div class="flex flex-col">
+<span class="font-section-title text-on-surface">북촌산책자</span>
+<span class="font-coord-label text-coord-label text-secondary">ID: BC-3312</span>
+</div>
+</div>
+<div class="text-right">
+<div class="font-section-title text-on-surface">도장 7개</div>
+<div class="font-coord-label text-coord-label text-secondary uppercase">Voyager</div>
+</div>
+</div>
+</div>
+<!-- Cartographic Footer Detail -->
+<div class="mt-section-gap flex justify-between items-end">
+<div class="font-coord-label text-coord-label text-outline uppercase leading-relaxed">
+                Log Serial: 2024-RANK-Q4<br/>
+                Status: Verified Ink
+            </div>
+<div class="font-coord-label text-coord-label text-outline text-right">
+                37.5665° N, 126.9780° E<br/>
+                SEOUL, KOREA
+            </div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-side-padding pb-safe h-20 bg-surface-container-lowest border-t border-outline-variant">
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary-container transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-coord-label text-coord-label">홈</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary-container transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">map</span>
+<span class="font-coord-label text-coord-label">지도</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary-container transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-coord-label text-coord-label">도장</span>
+</a>
+<!-- ACTIVE TAB: 랭킹 -->
+<a class="flex flex-col items-center justify-center text-primary after:content-['•'] after:text-[8px] after:mt-1 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-coord-label text-coord-label">랭킹</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary-container transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-coord-label text-coord-label">마이</span>
+</a>
+</nav>
+<script>
+        // Simple Interaction for Period Selector
+        document.querySelectorAll('button[class*="font-section-title"]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Reset others
+                document.querySelectorAll('button[class*="font-section-title"]').forEach(b => {
+                    b.classList.remove('bg-primary', 'text-white');
+                    b.classList.add('border', 'border-outline', 'text-secondary');
+                });
+                // Set active
+                this.classList.remove('border', 'border-outline', 'text-secondary');
+                this.classList.add('bg-primary', 'text-white');
+            });
+        });
+
+        // Add a subtle parallax to the background on scroll
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const background = document.querySelector('.hanji-texture');
+            background.style.transform = `translateY(${scrolled * 0.1}px)`;
+        });
+    </script>
+</body></html>

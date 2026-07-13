@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Stampy - Bukchon Hanok Village</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/mono.css" rel="stylesheet"/>
+<link as="style" crossorigin="" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-container": "#007ea1",
+                    "primary-fixed-dim": "#ffb4a2",
+                    "on-tertiary-fixed": "#001f29",
+                    "primary-container": "#ca4a28",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed": "#ffdbd2",
+                    "surface-variant": "#e1e3de",
+                    "on-primary": "#ffffff",
+                    "outline-variant": "#e0bfb7",
+                    "on-secondary-container": "#71615a",
+                    "secondary-fixed-dim": "#d6c2ba",
+                    "on-secondary-fixed-variant": "#52443d",
+                    "inverse-primary": "#ffb4a2",
+                    "surface-container-high": "#e7e9e4",
+                    "on-tertiary-container": "#fbfdff",
+                    "tertiary-fixed-dim": "#70d2fa",
+                    "secondary-container": "#f3ded5",
+                    "on-secondary-fixed": "#241914",
+                    "surface-bright": "#f8faf5",
+                    "tertiary-fixed": "#bce9ff",
+                    "primary": "#a83212",
+                    "on-primary-container": "#fffbff",
+                    "inverse-surface": "#2e312e",
+                    "surface-container-low": "#f3f4ef",
+                    "surface-tint": "#ac3414",
+                    "tertiary": "#006480",
+                    "secondary": "#6a5b54",
+                    "on-surface-variant": "#59413b",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed": "#3c0800",
+                    "on-tertiary-fixed-variant": "#004d63",
+                    "on-surface": "#191c19",
+                    "outline": "#8c716a",
+                    "surface-dim": "#d9dbd6",
+                    "inverse-on-surface": "#f0f1ec",
+                    "error": "#ba1a1a",
+                    "background": "#f8faf5",
+                    "surface-container-highest": "#e1e3de",
+                    "on-error": "#ffffff",
+                    "secondary-fixed": "#f3ded5",
+                    "on-error-container": "#93000a",
+                    "surface-container": "#edeee9",
+                    "surface": "#f8faf5",
+                    "on-primary-fixed-variant": "#891d00",
+                    "on-background": "#191c19"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-md": "12px",
+                    "gutter": "16px",
+                    "section-gap": "40px",
+                    "side-padding": "20px",
+                    "stack-sm": "4px",
+                    "unit": "8px"
+            },
+            "fontFamily": {
+                    "display-title": ["Pretendard"],
+                    "coord-label": ["Geist Mono"],
+                    "section-title": ["Pretendard"],
+                    "body-main": ["Pretendard"],
+                    "ranking-num": ["Geist Mono"],
+                    "display-title-mobile": ["Pretendard"]
+            },
+            "fontSize": {
+                    "display-title": ["28px", {"lineHeight": "1.3", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "coord-label": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "section-title": ["20px", {"lineHeight": "1.4", "fontWeight": "700"}],
+                    "body-main": ["15px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "ranking-num": ["14px", {"lineHeight": "1.0", "fontWeight": "600"}],
+                    "display-title-mobile": ["24px", {"lineHeight": "1.3", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #f4f0e8; /* Hanji Canvas */
+            -webkit-font-smoothing: antialiased;
+        }
+        .hanji-texture {
+            background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
+            opacity: 0.15;
+            pointer-events: none;
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+        }
+        .hairline-rule {
+            border: 0;
+            height: 1px;
+            background-color: #D8D2C7;
+        }
+        .ink-stamp-disabled {
+            background-color: #e0bfb7;
+            color: #ffffff;
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .film-grain {
+            position: relative;
+        }
+        .film-grain::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.05;
+            pointer-events: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-main text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed">
+<div class="hanji-texture"></div>
+<!-- Floating Back Button -->
+<nav class="fixed top-6 left-5 z-[60]">
+<button class="w-10 h-10 flex items-center justify-center bg-surface-container-lowest border border-outline-variant rounded-full active:scale-95 transition-transform" onclick="history.back()">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+</button>
+</nav>
+<!-- Main Content -->
+<main class="pb-32">
+<!-- Hero Section -->
+<section class="relative w-full aspect-[4/5] md:aspect-video film-grain overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="An editorial, wide-angle photograph of Bukchon Hanok Village in Seoul at golden hour. The image features rows of traditional Korean wooden houses with curved tile roofs receding into the distance, with the modern skyline of Seoul visible in the soft-focus background. The lighting is warm and cinematic, highlighting the tactile texture of the dark wood and grey stone walls. The overall mood is quiet and archival, consistent with a high-end travel journal." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLTFIQqrAdfzc3fZiuvsADXS-WaZuYOIMicirILczfidEtFXEFTZyZh9jBnr9TYrWRAcHzTpqbP8i5I-ClhlHslVavvecczPTnHWnrJIqe0-GwKe3C_GsI3UfEX8QMRNMDQN8YMIkn-VcuL03VihE_Ilf3YPby4osdalyIDP49MKNcOuYQhdTasa8VC_7zrdSq4oxRYad2w4XY3rI1ujVPvj5C-2Jdo9lPwLsBR5PtsMuXAQA75OmI7qaHSdzmERfkZzL5vgB2_3xT"/>
+<div class="absolute bottom-4 right-5 bg-surface-container-lowest/80 backdrop-blur-sm px-2 py-1 border border-outline-variant">
+<span class="font-coord-label text-coord-label text-on-surface-variant">37.5828° N, 126.9837° E</span>
+</div>
+</section>
+<!-- Content Body -->
+<article class="px-side-padding mt-8">
+<!-- Header -->
+<header class="flex justify-between items-end mb-section-gap">
+<div>
+<span class="font-coord-label text-coord-label text-primary-container mb-2 block tracking-widest uppercase">Traditional Village</span>
+<h1 class="font-display-title-mobile text-display-title-mobile text-on-surface mb-1">북촌한옥마을</h1>
+<div class="flex items-center gap-2">
+<span class="font-body-main text-secondary">민속촌</span>
+<div class="w-1 h-1 rounded-full bg-outline-variant"></div>
+<span class="font-ranking-num text-ranking-num text-on-surface-variant">LV. 04</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-coord-label text-coord-label text-on-surface-variant block mb-1">DISTANCE</span>
+<span class="font-ranking-num text-ranking-num text-primary">860 m</span>
+</div>
+</header>
+<hr class="hairline-rule mb-stack-md"/>
+<!-- Metadata Row -->
+<div class="flex flex-wrap gap-y-4 mb-section-gap">
+<div class="w-1/2 md:w-1/4">
+<span class="font-coord-label text-coord-label text-on-surface-variant block mb-1">LOCATION</span>
+<p class="font-body-main text-on-surface">서울 종로구 가회동</p>
+</div>
+<div class="w-1/2 md:w-1/4">
+<span class="font-coord-label text-coord-label text-on-surface-variant block mb-1">OPENING HOURS</span>
+<p class="font-body-main text-on-surface">09:00 - 18:00</p>
+</div>
+<div class="w-1/2 md:w-1/4">
+<span class="font-coord-label text-coord-label text-on-surface-variant block mb-1">HOLIDAYS</span>
+<p class="font-body-main text-on-surface">연중무휴</p>
+</div>
+<div class="w-1/2 md:w-1/4">
+<span class="font-coord-label text-coord-label text-on-surface-variant block mb-1">FEE</span>
+<p class="font-body-main text-on-surface">무료 관람</p>
+</div>
+</div>
+<!-- Description -->
+<section class="mb-section-gap">
+<h2 class="font-section-title text-section-title text-on-surface mb-4">About the Spot</h2>
+<p class="font-body-main text-on-surface-variant leading-relaxed text-justify">
+                    조선시대 양반들이 거주하던 전통 한옥 밀집 지역으로, 서울의 600년 역사를 고스란히 간직하고 있습니다.
+                    경복궁과 창덕궁, 종묘 사이에 위치하여 예로부터 권력과 문화의 중심지였으며,
+                    오늘날에도 실제 주민들이 거주하며 한옥의 미를 지켜나가고 있는 살아있는 박물관입니다.
+                </p>
+</section>
+<!-- Grid Layout (Asymmetric Scrapbook) -->
+<section class="grid grid-cols-2 gap-4 mb-section-gap">
+<div class="col-span-2 film-grain border border-outline-variant p-1 bg-surface-container-lowest">
+<img class="w-full aspect-[16/9] object-cover" data-alt="A close-up vertical shot of traditional Korean roof tiles (giwa) stacked neatly. The texture of the dark grey clay tiles is detailed and crisp, showing signs of weathering and history. The shot is framed with significant negative space on one side to evoke a high-end magazine layout. The lighting is diffused, emphasizing form and texture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdUiq3z4xS9wIyu53Eks_aSS-nZ9D7C8YSqbA4ohpV_bxwvMmb41PqENJ8_M6G6w6pSv01aQ6H2vopvO9O0l0gYW3_tTQH41McGiiTN-DWdLKucuRyuZSCOZfNWeduN9be-7TlozTyCLgH444eIDiUTlAMNYCc_reI8czBLCEg96h9vQTPsreOaCfHSrdGRUsk3aVCuewFf-bQ5jfNFxhUwVornw7j0ibfcMssgrEmZaQFWMcBgzdE9FY2u8qfx92hErgielF8sx4w"/>
+</div>
+<div class="film-grain border border-outline-variant p-1 bg-surface-container-lowest">
+<img class="w-full aspect-square object-cover" data-alt="A photograph of a narrow alleyway in Bukchon Hanok Village, framed by tall stone walls and traditional wooden gates. A single warm lantern light is visible, casting long shadows on the paved ground. The color palette is dominated by warm ochres, deep browns, and cool greys. The composition follows the rule of thirds, creating a sense of wandering through history." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPT4CYrCSSleJW2LS6OpWSKhCsKUQZ06bowZw9TslEZQ7zxBpzqo8lhFloxVs-t9LzHWLlUZEl2wKN_sMYQ65p-nhyzf42pIqBBVXY0yDNqtykkEh1WQfRqOoYV2E-gkNcH-sTkWbR6NwYqRI5JP51KfuzdvA4btef9dPuFlcvdL7gjNG0prwMJDM2xgX_k1fFIa-nLIjdRfDYVgspC7vEuBJ5gp4UEUVOnIOdmZCrL2gOJKXQ1rOG05kM1gLtlICkoa2XzY1MXuVE"/>
+</div>
+<div class="flex flex-col justify-center px-4 border border-outline-variant bg-surface-container-lowest">
+<span class="material-symbols-outlined text-primary mb-2" style="font-size: 32px;">verified</span>
+<h3 class="font-section-title text-section-title text-on-surface mb-1">인증 가능</h3>
+<p class="font-coord-label text-coord-label text-on-surface-variant">100m 이내 접근 시 스탬프 획득</p>
+</div>
+</section>
+<hr class="hairline-rule mb-section-gap"/>
+<!-- Map Placeholder -->
+<section class="mb-12">
+<div class="flex justify-between items-center mb-4">
+<h2 class="font-section-title text-section-title text-on-surface">Location Map</h2>
+<span class="font-coord-label text-coord-label text-primary">Gahoe-dong, Seoul</span>
+</div>
+<div class="w-full h-48 border border-outline-variant overflow-hidden relative grayscale opacity-80 hover:grayscale-0 transition-all duration-700">
+<img class="w-full h-full object-cover" data-location="Bukchon Hanok Village" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUvn8ZvHD9O-dfHT7HNK01eGrQx8pHKwl_zAHJHOYaQVpnvOO3wfM70W2368YnJXh7wq3QBRj-LcLCYRhw-rSFVDgVqDWkB7YbjJjmTl0jb0s1TeOda_uNYKg79y6A99MLVTlbpOUy9xaxNB7GfG2yZcjddW5kqnk6a4_sBhs9NMEDp2C7OjsdYM0pK74-G7iqTwCv5QUbWtf9d7lL94FuyqBXs-TAjZ2SA0SvYeILbmwmeqW5U0UJik_Og-G5o4vCT50Bs5ddi3qG"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="w-4 h-4 bg-primary rounded-full animate-ping opacity-75"></div>
+<div class="w-3 h-3 bg-primary rounded-full absolute border-2 border-surface-container-lowest"></div>
+</div>
+</div>
+</section>
+</article>
+</main>
+<!-- Persistent Bottom Action -->
+<footer class="fixed bottom-0 left-0 w-full z-50 px-side-padding pb-safe py-6 bg-surface-container-lowest/90 backdrop-blur-md border-t border-outline-variant">
+<div class="max-w-2xl mx-auto">
+<div class="flex justify-between items-center mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant" style="font-size: 18px;">near_me</span>
+<span class="font-body-main text-on-surface-variant text-sm">현재 위치에서 <strong class="text-on-surface">860 m</strong></span>
+</div>
+<span class="font-coord-label text-coord-label text-error">인증 범위 밖</span>
+</div>
+<button class="w-full h-14 flex flex-col items-center justify-center rounded-sm ink-stamp-disabled transition-all" disabled="">
+<span class="font-section-title text-section-title">방문 인증하기</span>
+<span class="font-coord-label text-[10px] opacity-70">100 m 이내에서 인증할 수 있어요</span>
+</button>
+</div>
+</footer>
+<!-- Bottom Nav (Hidden on Detail to prioritize canvas, but present per instructions for top-level flow if necessary) -->
+<!-- The prompt implies a "Back button" and "Persistent bottom action", which acts as a focused sub-page layout. According to Shell Visibility & Relevance, we suppress global nav here. -->
+<script>
+        // Micro-interactions for tactile feel
+        document.querySelectorAll('button:not(:disabled)').forEach(button => {
+            button.addEventListener('mousedown', () => {
+                button.classList.add('scale-95');
+            });
+            button.addEventListener('mouseup', () => {
+                button.classList.remove('scale-95');
+            });
+            button.addEventListener('mouseleave', () => {
+                button.classList.remove('scale-95');
+            });
+        });
+
+        // Simulating the "Ink Impression" for the disabled button state
+        const disabledBtn = document.querySelector('button[disabled]');
+        if(disabledBtn) {
+            disabledBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Visual shake feedback for disabled action
+                disabledBtn.classList.add('translate-x-1');
+                setTimeout(() => disabledBtn.classList.remove('translate-x-1'), 100);
+            });
+        }
+    </script>
+</body></html>
