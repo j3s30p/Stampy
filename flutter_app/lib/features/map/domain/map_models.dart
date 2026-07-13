@@ -64,6 +64,13 @@ final class MapSnapshot {
     pins: pins,
     selectedContentId: contentId,
   );
+
+  MapSnapshot withCurrentLocation(Coordinates? location) => MapSnapshot(
+    center: location ?? center,
+    currentLocation: location,
+    pins: pins,
+    selectedContentId: selectedContentId,
+  );
 }
 
 String _nonEmpty(String value, String name) {

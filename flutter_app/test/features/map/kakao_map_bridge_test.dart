@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:stampy/core/geo/coordinates.dart';
 import 'package:stampy/features/map/data/fake_map_repository.dart';
 import 'package:stampy/features/map/domain/map_models.dart';
 import 'package:stampy/features/map/infrastructure/kakao_map_bridge.dart';
@@ -112,4 +113,26 @@ void main() {
       expect(pins, isNotEmpty);
     },
   );
+
+  test('setMapData preserves current latitude and longitude order', () async {
+    final baseSnapshot = await const FakeMapRepository().loadSnapshot();
+    final currentLocation = Coordinates(
+      latitude: Latitude(37.123456),
+      longitude: Longitude(127.654321),
+    );
+    final snapshot = baseSnapshot.withCurrentLocation(currentLocation);
+
+    final decoded =
+        jsonDecode(bridge.encodeSetMapDataCommand(snapshot))
+            as Map<String, dynamic>;
+    final payload = decoded['payload'] as Map<String, dynamic>;
+    final center = payload['center'] as Map<String, dynamic>;
+    final encodedLocation = payload['currentLocation'] as Map<String, dynamic>;
+
+    expect(encodedLocation, <String, dynamic>{
+      'lat': 37.123456,
+      'lng': 127.654321,
+    });
+    expect(center, encodedLocation);
+  });
 }
