@@ -72,8 +72,7 @@ npx supabase@2.109.1 stop
 Edge Function 코드는 Deno 2.9.2로 별도 검증한다.
 
 ```sh
-cd supabase/functions
-npx -y deno@2.9.2 task quality
+(cd supabase/functions && npx -y deno@2.9.2 task quality)
 ```
 
 로컬 호출에는 디코딩된 공공데이터포털 키와 32자 이상의 호출 전용 토큰이 필요하다. `SUPABASE_SERVICE_ROLE_KEY`는 로컬 Supabase 런타임이 함수 내부 DB 쓰기에만 제공하며 호출 토큰으로 재사용하지 않는다.
