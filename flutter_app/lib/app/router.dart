@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stampy/app/stamp_collect_coordinator.dart';
+import 'package:stampy/app/stamp_collect_refresh_policy.dart';
 import 'package:stampy/app/stamp_collect_success_policy.dart';
 import 'package:stampy/app/theme/app_colors.dart';
 import 'package:stampy/core/auth/auth.dart';
@@ -17,6 +18,7 @@ import 'package:stampy/features/map/domain/map_models.dart';
 import 'package:stampy/features/map/presentation/map_screen.dart';
 import 'package:stampy/features/profile/presentation/profile_screen.dart';
 import 'package:stampy/features/ranking/presentation/ranking_screen.dart';
+import 'package:stampy/features/recommendation/data/recommendation_providers.dart';
 import 'package:stampy/features/stamp/domain/stamp_domain.dart';
 import 'package:stampy/features/stamp/presentation/stamp_collection_screen.dart';
 import 'package:stampy/features/stamp/presentation/stamp_collect_success_screen.dart';
@@ -138,11 +140,18 @@ class _MapStampCollectionRouteState
       collect: controller.collect,
     );
 
+    MapCollectResult? result;
     try {
-      return await coordinator.request(pin);
+      result = await coordinator.request(pin);
+      return result;
     } finally {
       if (mounted) {
-        ref.invalidate(currentLocationProvider);
+        refreshAfterStampCollect(
+          result: result,
+          refreshLocation: () => ref.invalidate(currentLocationProvider),
+          refreshRecommendation: () =>
+              ref.invalidate(nearbyRecommendationProvider),
+        );
       }
     }
   }
