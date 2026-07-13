@@ -5,6 +5,7 @@ import 'package:stampy/app/app_dependencies.dart';
 import 'package:stampy/core/auth/auth.dart';
 import 'package:stampy/core/config/app_config.dart';
 import 'package:stampy/features/map/data/map_providers.dart';
+import 'package:stampy/features/stamp/presentation/stamp_session.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
@@ -27,6 +28,7 @@ Future<void> main() async {
       overrides: [
         authRepositoryProvider.overrideWithValue(repositories.auth),
         mapRepositoryProvider.overrideWithValue(repositories.map),
+        stampRepositoryProvider.overrideWithValue(repositories.stamp),
       ],
       child: const StampyApp(),
     ),

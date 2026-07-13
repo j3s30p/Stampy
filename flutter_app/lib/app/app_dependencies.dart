@@ -3,6 +3,9 @@ import 'package:stampy/core/config/app_config.dart';
 import 'package:stampy/features/map/data/fake_map_repository.dart';
 import 'package:stampy/features/map/data/supabase_map_repository.dart';
 import 'package:stampy/features/map/domain/map_repository.dart';
+import 'package:stampy/features/stamp/data/fake_stamp_repository.dart';
+import 'package:stampy/features/stamp/data/supabase_stamp_repository.dart';
+import 'package:stampy/features/stamp/domain/stamp_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 typedef AppConfigLoader = AppConfig Function();
@@ -12,10 +15,11 @@ typedef BootstrapErrorReporter =
     void Function(Object error, StackTrace stackTrace);
 
 final class AppDependencies {
-  const AppDependencies({required this.auth, required this.map});
+  AppDependencies({required this.auth, required this.map, required this.stamp});
 
   final AuthRepository auth;
   final MapRepository map;
+  final StampRepository stamp;
 }
 
 Future<AppDependencies> createAppDependencies({
@@ -26,9 +30,10 @@ Future<AppDependencies> createAppDependencies({
   try {
     final credentials = loadConfig().supabaseCredentials;
     if (credentials == null) {
-      return const AppDependencies(
-        auth: FakeAuthRepository(),
-        map: FakeMapRepository(),
+      return AppDependencies(
+        auth: const FakeAuthRepository(),
+        map: const FakeMapRepository(),
+        stamp: FakeStampRepository(),
       );
     }
 
@@ -36,19 +41,22 @@ Future<AppDependencies> createAppDependencies({
     return AppDependencies(
       auth: SupabaseAuthRepository(client.auth),
       map: SupabaseMapRepository(client),
+      stamp: SupabaseStampRepository(client),
     );
   } on AppConfigException catch (error, stackTrace) {
     reportError(error, stackTrace);
-    return const AppDependencies(
-      auth: UnavailableAuthRepository(),
-      map: FakeMapRepository(),
+    return AppDependencies(
+      auth: const UnavailableAuthRepository(),
+      map: const FakeMapRepository(),
+      stamp: FakeStampRepository(),
     );
   } on Exception catch (_, stackTrace) {
     const error = AuthRepositoryException('Supabase could not be initialized.');
     reportError(error, stackTrace);
-    return const AppDependencies(
-      auth: UnavailableAuthRepository(),
-      map: FakeMapRepository(),
+    return AppDependencies(
+      auth: const UnavailableAuthRepository(),
+      map: const FakeMapRepository(),
+      stamp: FakeStampRepository(),
     );
   }
 }
