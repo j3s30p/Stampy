@@ -9,7 +9,6 @@ import 'package:stampy/app/theme/app_colors.dart';
 import 'package:stampy/core/location/location.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-import '../data/fake_map_repository.dart';
 import '../domain/map_collect.dart';
 import '../domain/map_models.dart';
 import '../domain/map_repository.dart';
@@ -24,7 +23,7 @@ const String _mapBaseUrl = 'https://stampy.local/';
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({
     super.key,
-    this.repository = const FakeMapRepository(),
+    required this.repository,
     this.collectedContentIds = const <String>{},
     this.resolveCollectAvailability,
     this.onCollectRequested,

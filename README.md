@@ -12,7 +12,7 @@
 - Riverpod + go_router
 - Kakao Maps JS SDK via `webview_flutter`
 - geolocator 기반 현재 위치
-- Supabase Auth/Postgres/RLS/Edge Functions (백엔드 연결 목표)
+- Supabase Auth/Postgres/RLS/Edge Functions
 - 한국관광공사 TourAPI KorService2
 
 ## Layout
@@ -37,7 +37,7 @@ flutter pub get
 flutter run --dart-define=KAKAO_JS_KEY=<카카오 JavaScript 키>
 ```
 
-Supabase 익명 세션까지 연결하려면 두 설정을 함께 추가한다.
+Supabase 익명 세션과 운영 지도 카탈로그를 연결하려면 두 설정을 함께 추가한다.
 
 ```sh
 flutter run \
@@ -65,7 +65,7 @@ npx supabase@2.109.1 db lint --level error --schema public
 npx supabase@2.109.1 stop
 ```
 
-`stamp_spots`는 서버가 관리하는 도장 대상 정본이다. 로그인한 사용자는 조회만 가능하며, 운영 데이터는 가짜 seed 없이 아래 TourAPI 동기화 함수로만 추가한다.
+`stamp_spots`는 서버가 관리하는 도장 대상 정본이다. 로그인한 사용자는 `list_stamp_spots()` RPC로 스칼라 좌표를 조회하며, 운영 데이터는 가짜 seed 없이 아래 TourAPI 동기화 함수로만 추가한다.
 
 ## TourAPI catalog sync
 

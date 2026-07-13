@@ -1,46 +1,36 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stampy/app/app.dart';
+import 'package:stampy/app/app_dependencies.dart';
 import 'package:stampy/core/auth/auth.dart';
 import 'package:stampy/core/config/app_config.dart';
+import 'package:stampy/features/map/data/map_providers.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final authRepository = await _createAuthRepository();
+  final repositories = await createAppDependencies(
+    loadConfig: AppConfig.fromEnvironment,
+    initializeSupabase: (credentials) async {
+      final supabase = await Supabase.initialize(
+        url: credentials.url,
+        publishableKey: credentials.publishableKey,
+      );
+      return supabase.client;
+    },
+    reportError: _reportBootstrapError,
+  );
 
   runApp(
     ProviderScope(
-      overrides: [authRepositoryProvider.overrideWithValue(authRepository)],
+      overrides: [
+        authRepositoryProvider.overrideWithValue(repositories.auth),
+        mapRepositoryProvider.overrideWithValue(repositories.map),
+      ],
       child: const StampyApp(),
     ),
   );
-}
-
-Future<AuthRepository> _createAuthRepository() async {
-  try {
-    final config = AppConfig.fromEnvironment();
-    final credentials = config.supabaseCredentials;
-    if (credentials == null) {
-      return const FakeAuthRepository();
-    }
-
-    final supabase = await Supabase.initialize(
-      url: credentials.url,
-      publishableKey: credentials.publishableKey,
-    );
-    return SupabaseAuthRepository(supabase.client.auth);
-  } on AppConfigException catch (error, stackTrace) {
-    _reportBootstrapError(error, stackTrace);
-    return const UnavailableAuthRepository();
-  } on Exception catch (_, stackTrace) {
-    const error = AuthRepositoryException(
-      'Supabase authentication could not be initialized.',
-    );
-    _reportBootstrapError(error, stackTrace);
-    return const UnavailableAuthRepository();
-  }
 }
 
 void _reportBootstrapError(Object error, StackTrace stackTrace) {
@@ -48,7 +38,7 @@ void _reportBootstrapError(Object error, StackTrace stackTrace) {
     FlutterErrorDetails(
       exception: error,
       stack: stackTrace,
-      library: 'stampy auth bootstrap',
+      library: 'stampy bootstrap',
     ),
   );
 }
