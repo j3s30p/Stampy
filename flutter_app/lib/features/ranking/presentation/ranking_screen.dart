@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stampy/app/theme/app_colors.dart';
 import 'package:stampy/core/widgets/field_journal.dart';
+import 'package:stampy/features/stamp/presentation/stamp_session.dart';
 
-class RankingScreen extends StatelessWidget {
+class RankingScreen extends ConsumerWidget {
   const RankingScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final collectedStampCount = ref.watch(
+      stampSessionProvider.select((session) => session.collectedStamps.length),
+    );
+
     return FieldJournalPage(
       eyebrow: '여행자 기록',
       title: '도시를 걷는\n여행자들의 순위',
@@ -32,19 +38,28 @@ class RankingScreen extends StatelessWidget {
             ),
           ),
         ),
-        const JournalSection(
+        JournalSection(
           index: '02',
-          title: '나의 위치',
+          title: '나의 기록',
           child: JournalNotice(
             number: 'ME',
-            title: '첫 도장을 모으면\n순위가 시작돼요',
-            description: '수집 기록이 생기면 현재 순위와 지난주 대비 변화를 이곳에서 확인할 수 있습니다.',
+            title: _personalRecordTitle(collectedStampCount),
+            description: _personalRecordDescription(collectedStampCount),
           ),
         ),
       ],
     );
   }
 }
+
+String _personalRecordTitle(int collectedStampCount) => collectedStampCount == 0
+    ? '첫 도장을 모으면\n기록이 시작돼요'
+    : '지금까지 도장\n$collectedStampCount개를 모았어요';
+
+String _personalRecordDescription(int collectedStampCount) =>
+    collectedStampCount == 0
+    ? '관광지에 직접 방문해 첫 도장을 수집하고 나만의 여행 기록을 시작해 보세요.'
+    : '지금까지 수집한 전체 도장 기록입니다. 새로운 장소에서 다음 도장을 이어가 보세요.';
 
 class _RankingRow extends StatelessWidget {
   const _RankingRow({
