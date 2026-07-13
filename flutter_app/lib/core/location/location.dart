@@ -1,5 +1,9 @@
 export 'fake_location_repository.dart';
+export 'fake_heading_repository.dart';
 export 'geolocator_location_repository.dart';
+export 'heading_degrees.dart';
+export 'heading_repository.dart';
 export 'location_providers.dart';
 export 'location_repository.dart';
 export 'location_state.dart';
+export 'platform_heading_repository.dart';

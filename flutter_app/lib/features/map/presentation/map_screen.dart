@@ -28,13 +28,18 @@ class MapScreen extends ConsumerStatefulWidget {
   ConsumerState<MapScreen> createState() => _MapScreenState();
 }
 
-class _MapScreenState extends ConsumerState<MapScreen> {
+class _MapScreenState extends ConsumerState<MapScreen>
+    with WidgetsBindingObserver {
   static const _bridge = KakaoMapBridge();
 
   late final WebViewController _webViewController;
 
   MapSnapshot? _snapshot;
   LocationState _locationState = const LocationState.loading();
+  HeadingDegrees? _currentHeading;
+  ProviderSubscription<AsyncValue<HeadingDegrees?>>? _headingSubscription;
+  AppLifecycleState _appLifecycleState = AppLifecycleState.resumed;
+  bool _mapVisible = false;
   bool _bridgeReady = false;
   bool _tilesLoaded = false;
   String? _errorMessage;
@@ -42,6 +47,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _appLifecycleState =
+        WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed;
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(StampyColors.canvas)
@@ -52,6 +60,29 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         },
       );
     unawaited(_loadMap());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final mapVisible = TickerMode.valuesOf(context).enabled;
+    if (_mapVisible != mapVisible) {
+      _mapVisible = mapVisible;
+      _syncHeadingSubscription();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _appLifecycleState = state;
+    _syncHeadingSubscription();
+  }
+
+  @override
+  void dispose() {
+    _headingSubscription?.close();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   Future<void> _loadMap() async {
@@ -65,9 +96,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       }
 
       setState(() {
-        _snapshot = snapshot.withCurrentLocation(
-          _locationState.fix?.coordinates,
-        );
+        _snapshot = _withLiveSensorState(snapshot);
       });
       await _webViewController.loadHtmlString(html, baseUrl: _mapBaseUrl);
     } on Object {
@@ -148,6 +177,28 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
+  Future<void> _sendHeading() async {
+    final snapshot = _snapshot;
+    if (!_bridgeReady || snapshot?.currentLocation == null) {
+      return;
+    }
+
+    await _webViewController.runJavaScript(
+      _bridge.buildSetCurrentHeadingScript(snapshot?.currentHeading),
+    );
+  }
+
+  MapSnapshot _withLiveSensorState(MapSnapshot snapshot) {
+    final withLocation = snapshot.withCurrentLocation(
+      _locationState.fix?.coordinates,
+    );
+    if (withLocation.currentLocation == null) {
+      return withLocation;
+    }
+
+    return withLocation.withCurrentHeading(_currentHeading);
+  }
+
   Future<void> _applyLocationState(LocationState locationState) async {
     if (!mounted) {
       return;
@@ -156,12 +207,69 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     setState(() {
       _locationState = locationState;
       if (locationState.status != LocationStatus.loading) {
-        _snapshot = _snapshot?.withCurrentLocation(
-          locationState.fix?.coordinates,
-        );
+        final snapshot = _snapshot;
+        if (snapshot != null) {
+          _snapshot = _withLiveSensorState(snapshot);
+        }
       }
     });
+    _syncHeadingSubscription();
     await _sendSnapshot();
+  }
+
+  void _syncHeadingSubscription() {
+    final shouldListen =
+        _mapVisible &&
+        _appLifecycleState == AppLifecycleState.resumed &&
+        _locationState.isAvailable;
+
+    if (shouldListen) {
+      if (_headingSubscription != null) {
+        return;
+      }
+
+      unawaited(_sendHeading());
+      _headingSubscription = ref.listenManual<AsyncValue<HeadingDegrees?>>(
+        currentHeadingProvider,
+        (previous, next) {
+          next.when(
+            data: (heading) => unawaited(_applyHeading(heading)),
+            error: (error, stackTrace) => unawaited(_applyHeading(null)),
+            loading: () {},
+          );
+        },
+        fireImmediately: true,
+      );
+      return;
+    }
+
+    _headingSubscription?.close();
+    _headingSubscription = null;
+    if (_currentHeading == null) {
+      return;
+    }
+
+    _currentHeading = null;
+    final snapshot = _snapshot;
+    if (snapshot != null && snapshot.currentLocation != null) {
+      _snapshot = snapshot.withCurrentHeading(null);
+      if (_mapVisible && _appLifecycleState == AppLifecycleState.resumed) {
+        unawaited(_sendHeading());
+      }
+    }
+  }
+
+  Future<void> _applyHeading(HeadingDegrees? heading) async {
+    if (!mounted) {
+      return;
+    }
+
+    _currentHeading = heading;
+    final snapshot = _snapshot;
+    if (snapshot != null && snapshot.currentLocation != null) {
+      _snapshot = snapshot.withCurrentHeading(heading);
+    }
+    await _sendHeading();
   }
 
   String _redactSecret(String message) {
@@ -194,7 +302,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             unawaited(_applyLocationState(const LocationState.loading())),
       );
     });
-
     final selectedPin = _snapshot?.selectedPin;
     final locationStatus = describeMapLocation(_locationState);
 

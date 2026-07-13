@@ -1,4 +1,5 @@
 import 'package:stampy/core/geo/coordinates.dart';
+import 'package:stampy/core/location/heading_degrees.dart';
 
 const int stampVerificationRadiusMeters = 100;
 
@@ -27,7 +28,16 @@ final class MapSnapshot {
     required this.currentLocation,
     required List<MapPin> pins,
     required this.selectedContentId,
+    this.currentHeading,
   }) : pins = List<MapPin>.unmodifiable(pins) {
+    if (currentLocation == null && currentHeading != null) {
+      throw ArgumentError.value(
+        currentHeading,
+        'currentHeading',
+        'requires a current location',
+      );
+    }
+
     final selectedId = selectedContentId;
     if (selectedId != null && pinByContentId(selectedId) == null) {
       throw ArgumentError.value(
@@ -40,6 +50,7 @@ final class MapSnapshot {
 
   final Coordinates center;
   final Coordinates? currentLocation;
+  final HeadingDegrees? currentHeading;
   final List<MapPin> pins;
   final String? selectedContentId;
 
@@ -61,6 +72,7 @@ final class MapSnapshot {
   MapSnapshot withSelection(String? contentId) => MapSnapshot(
     center: center,
     currentLocation: currentLocation,
+    currentHeading: currentHeading,
     pins: pins,
     selectedContentId: contentId,
   );
@@ -68,6 +80,15 @@ final class MapSnapshot {
   MapSnapshot withCurrentLocation(Coordinates? location) => MapSnapshot(
     center: location ?? center,
     currentLocation: location,
+    currentHeading: location == null ? null : currentHeading,
+    pins: pins,
+    selectedContentId: selectedContentId,
+  );
+
+  MapSnapshot withCurrentHeading(HeadingDegrees? heading) => MapSnapshot(
+    center: center,
+    currentLocation: currentLocation,
+    currentHeading: heading,
     pins: pins,
     selectedContentId: selectedContentId,
   );
