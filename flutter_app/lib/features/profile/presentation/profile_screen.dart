@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stampy/app/theme/app_colors.dart';
 import 'package:stampy/core/auth/auth.dart';
+import 'package:stampy/core/location/location.dart';
 import 'package:stampy/core/widgets/field_journal.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -10,6 +11,7 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(currentAuthUserProvider);
+    final location = ref.watch(currentLocationProvider);
     final presentation = session.when(
       data: _presentationForUser,
       error: (error, _) {
@@ -66,10 +68,13 @@ class ProfileScreen extends ConsumerWidget {
           index: '02',
           title: '앱 설정',
           child: Column(
-            children: const [
-              _SettingsRow(label: '위치 권한', value: '연결 전'),
-              _SettingsRow(label: '알림', value: '연결 전'),
-              _SettingsRow(label: '개인정보', value: '보기'),
+            children: [
+              _SettingsRow(
+                label: '위치 권한',
+                value: _locationSettingValue(location),
+              ),
+              const _SettingsRow(label: '알림', value: '연결 전'),
+              const _SettingsRow(label: '개인정보', value: '보기'),
             ],
           ),
         ),
@@ -77,6 +82,22 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 }
+
+String _locationSettingValue(AsyncValue<LocationState> location) =>
+    location.when(
+      skipLoadingOnRefresh: false,
+      skipLoadingOnReload: false,
+      data: (state) => switch (state.status) {
+        LocationStatus.loading => '확인 중',
+        LocationStatus.available => '연결됨',
+        LocationStatus.serviceDisabled => '서비스 꺼짐',
+        LocationStatus.permissionDenied => '권한 필요',
+        LocationStatus.permissionDeniedForever => '설정 필요',
+        LocationStatus.unavailable => '확인 불가',
+      },
+      error: (error, stackTrace) => '확인 불가',
+      loading: () => '확인 중',
+    );
 
 _ProfileSessionPresentation _presentationForUser(AuthUser user) {
   if (user.isGuest) {

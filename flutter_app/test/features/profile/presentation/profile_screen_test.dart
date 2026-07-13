@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stampy/core/auth/auth.dart';
+import 'package:stampy/core/geo/coordinates.dart';
+import 'package:stampy/core/location/location.dart';
 import 'package:stampy/features/profile/presentation/profile_screen.dart';
 
 void main() {
@@ -110,6 +112,9 @@ void main() {
           authRepositoryProvider.overrideWithValue(
             _StubAuthRepository(signIn: () => pending.future),
           ),
+          locationRepositoryProvider.overrideWithValue(
+            FakeLocationRepository(state: const LocationState.unavailable()),
+          ),
         ],
         child: const MaterialApp(home: ProfileScreen()),
       ),
@@ -122,20 +127,93 @@ void main() {
     pending.complete(const AuthUser.guest());
     await tester.pumpAndSettle();
   });
+
+  testWidgets('shows each resolved GPS status without exposing coordinates', (
+    tester,
+  ) async {
+    for (final (state, label) in <(LocationState, String)>[
+      (_availableLocation(), '연결됨'),
+      (const LocationState.serviceDisabled(), '서비스 꺼짐'),
+      (const LocationState.permissionDenied(), '권한 필요'),
+      (const LocationState.permissionDeniedForever(), '설정 필요'),
+      (const LocationState.unavailable(), '확인 불가'),
+    ]) {
+      await _pumpProfile(
+        tester,
+        const FakeAuthRepository(currentUser: AuthUser.guest()),
+        location: FakeLocationRepository(state: state),
+      );
+
+      expect(find.text(label), findsOneWidget);
+      expect(find.textContaining('37.579617'), findsNothing);
+      expect(find.textContaining('126.977041'), findsNothing);
+    }
+  });
+
+  testWidgets('moves from GPS loading to connected', (tester) async {
+    final location = _PendingLocationRepository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(
+            const FakeAuthRepository(currentUser: AuthUser.guest()),
+          ),
+          locationRepositoryProvider.overrideWithValue(location),
+        ],
+        child: const MaterialApp(home: ProfileScreen()),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('확인 중'), findsOneWidget);
+
+    location.result.complete(_availableLocation());
+    await tester.pumpAndSettle();
+    expect(find.text('연결됨'), findsOneWidget);
+  });
+
+  testWidgets('sanitizes an unexpected GPS error', (tester) async {
+    await _pumpProfile(
+      tester,
+      const FakeAuthRepository(currentUser: AuthUser.guest()),
+      location: const _ErrorLocationRepository(),
+    );
+
+    expect(find.text('확인 불가'), findsOneWidget);
+    expect(find.textContaining('private-location-error'), findsNothing);
+  });
 }
 
 Future<void> _pumpProfile(
   WidgetTester tester,
-  AuthRepository repository,
-) async {
+  AuthRepository repository, {
+  LocationRepository? location,
+}) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [authRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        authRepositoryProvider.overrideWithValue(repository),
+        locationRepositoryProvider.overrideWithValue(
+          location ??
+              FakeLocationRepository(state: const LocationState.unavailable()),
+        ),
+      ],
       child: const MaterialApp(home: ProfileScreen()),
     ),
   );
   await tester.pumpAndSettle();
 }
+
+LocationState _availableLocation() => LocationState.available(
+  LocationFix(
+    coordinates: Coordinates(
+      latitude: Latitude(37.579617),
+      longitude: Longitude(126.977041),
+    ),
+    accuracyMeters: 5,
+    timestamp: DateTime.utc(2026, 7, 13, 12),
+  ),
+);
 
 final class _StubAuthRepository implements AuthRepository {
   const _StubAuthRepository({required this.signIn});
@@ -150,4 +228,19 @@ final class _StubAuthRepository implements AuthRepository {
 
   @override
   Future<AuthUser> signInAnonymously() => signIn();
+}
+
+final class _PendingLocationRepository implements LocationRepository {
+  final Completer<LocationState> result = Completer<LocationState>();
+
+  @override
+  Future<LocationState> getCurrentLocation() => result.future;
+}
+
+final class _ErrorLocationRepository implements LocationRepository {
+  const _ErrorLocationRepository();
+
+  @override
+  Future<LocationState> getCurrentLocation() =>
+      Future<LocationState>.error(StateError('private-location-error'));
 }
