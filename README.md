@@ -37,7 +37,21 @@ flutter pub get
 flutter run --dart-define=KAKAO_JS_KEY=<카카오 JavaScript 키>
 ```
 
-지도는 Kakao JavaScript 키 없이도 앱 셸까지 실행할 수 있지만 실제 지도 타일은 표시되지 않는다. 비밀 키나 service-role key는 앱에 넣지 않는다.
+Supabase 익명 세션까지 연결하려면 두 설정을 함께 추가한다.
+
+```sh
+flutter run \
+  --dart-define=KAKAO_JS_KEY=<카카오 JavaScript 키> \
+  --dart-define=SUPABASE_URL=<프로젝트 URL> \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=<publishable key>
+```
+
+- Supabase 설정을 둘 다 생략하면 개발용 guest 모드로 부팅한다.
+- URL과 publishable key 중 하나만 설정하면 비밀값 없는 구성 오류를 기록하고 앱에서는 세션 연결 실패 상태를 표시한다.
+- Supabase Dashboard에서 anonymous sign-in을 활성화해야 한다.
+- 클라이언트에는 publishable key만 사용한다. secret/service-role key는 넣지 않는다.
+
+Kakao JavaScript 키 없이도 앱 셸까지 실행할 수 있지만 실제 지도 타일은 표시되지 않는다.
 
 ## 검증
 
