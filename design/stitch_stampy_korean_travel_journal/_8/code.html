@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f4f0e8; /* Hanji Canvas Base */
+            -webkit-font-smoothing: antialiased;
+        }
+        .hanji-texture {
+            background-image: url("https://www.transparenttextures.com/patterns/paper-fibers.png");
+        }
+        .ink-bleed {
+            filter: blur(0.4px) contrast(1.2);
+        }
+        .stamp-active {
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .stamp-active:active {
+            transform: scale(0.92) rotate(-2deg);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hairline {
+            border-bottom: 1px solid #D8D2C7;
+        }
+        .ghost-stamp {
+            border: 1px dashed #D8D2C7;
+            background-color: transparent;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#007ea1",
+                        "primary-fixed-dim": "#ffb4a2",
+                        "on-tertiary-fixed": "#001f29",
+                        "primary-container": "#ca4a28",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed": "#ffdbd2",
+                        "surface-variant": "#e1e3de",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#e0bfb7",
+                        "on-secondary-container": "#71615a",
+                        "secondary-fixed-dim": "#d6c2ba",
+                        "on-secondary-fixed-variant": "#52443d",
+                        "inverse-primary": "#ffb4a2",
+                        "surface-container-high": "#e7e9e4",
+                        "on-tertiary-container": "#fbfdff",
+                        "tertiary-fixed-dim": "#70d2fa",
+                        "secondary-container": "#f3ded5",
+                        "on-secondary-fixed": "#241914",
+                        "surface-bright": "#f8faf5",
+                        "tertiary-fixed": "#bce9ff",
+                        "primary": "#a83212",
+                        "on-primary-container": "#fffbff",
+                        "inverse-surface": "#2e312e",
+                        "surface-container-low": "#f3f4ef",
+                        "surface-tint": "#ac3414",
+                        "tertiary": "#006480",
+                        "secondary": "#6a5b54",
+                        "on-surface-variant": "#59413b",
+                        "on-tertiary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#3c0800",
+                        "on-tertiary-fixed-variant": "#004d63",
+                        "on-surface": "#191c19",
+                        "outline": "#8c716a",
+                        "surface-dim": "#d9dbd6",
+                        "inverse-on-surface": "#f0f1ec",
+                        "error": "#ba1a1a",
+                        "background": "#f8faf5",
+                        "surface-container-highest": "#e1e3de",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#f3ded5",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#edeee9",
+                        "surface": "#f8faf5",
+                        "on-primary-fixed-variant": "#891d00",
+                        "on-background": "#191c19"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-md": "12px",
+                        "gutter": "16px",
+                        "section-gap": "40px",
+                        "side-padding": "20px",
+                        "stack-sm": "4px",
+                        "unit": "8px"
+                    },
+                    "fontFamily": {
+                        "display-title": ["Pretendard"],
+                        "coord-label": ["Geist Mono"],
+                        "section-title": ["Pretendard"],
+                        "body-main": ["Pretendard"],
+                        "ranking-num": ["Geist Mono"],
+                        "display-title-mobile": ["Pretendard"]
+                    },
+                    "fontSize": {
+                        "display-title": ["28px", {"lineHeight": "1.3", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "coord-label": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "section-title": ["20px", {"lineHeight": "1.4", "fontWeight": "700"}],
+                        "body-main": ["15px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "ranking-num": ["14px", {"lineHeight": "1.0", "fontWeight": "600"}],
+                        "display-title-mobile": ["24px", {"lineHeight": "1.3", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background hanji-texture min-h-screen pb-24">
+<!-- Top AppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-side-padding h-16 bg-background border-b border-outline-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">edit_calendar</span>
+<h1 class="font-display-title-mobile text-display-title-mobile text-primary tracking-tight">Stampy</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low transition-colors p-2 rounded-full">notifications</button>
+</div>
+</header>
+<main class="pt-24 px-side-padding">
+<!-- Progress Header -->
+<section class="mb-section-gap">
+<div class="flex flex-col gap-2">
+<span class="font-coord-label text-coord-label text-secondary uppercase tracking-widest">Archive Progress</span>
+<h2 class="font-display-title-mobile text-display-title-mobile text-on-surface">나의 여행 기록</h2>
+<div class="flex items-baseline gap-2 mt-2">
+<span class="font-ranking-num text-4xl text-primary">8</span>
+<span class="font-ranking-num text-xl text-outline">/ 24</span>
+<span class="font-body-main text-on-surface-variant ml-2">도장 수집됨</span>
+</div>
+<!-- Progress Bar (Editorial Style) -->
+<div class="w-full h-1 bg-outline-variant mt-4 relative">
+<div class="absolute top-0 left-0 h-full bg-primary" style="width: 33.3%"></div>
+</div>
+</div>
+</section>
+<!-- Region Filter Tabs -->
+<nav class="flex overflow-x-auto hide-scrollbar gap-6 mb-8 border-b border-outline-variant pb-2">
+<button class="whitespace-nowrap font-section-title text-primary border-b-2 border-primary pb-2">전체</button>
+<button class="whitespace-nowrap font-section-title text-on-surface-variant hover:text-primary transition-colors pb-2">서울</button>
+<button class="whitespace-nowrap font-section-title text-on-surface-variant hover:text-primary transition-colors pb-2">경기</button>
+<button class="whitespace-nowrap font-section-title text-on-surface-variant hover:text-primary transition-colors pb-2">강원</button>
+<button class="whitespace-nowrap font-section-title text-on-surface-variant hover:text-primary transition-colors pb-2">충청</button>
+<button class="whitespace-nowrap font-section-title text-on-surface-variant hover:text-primary transition-colors pb-2">경상</button>
+<button class="whitespace-nowrap font-section-title text-on-surface-variant hover:text-primary transition-colors pb-2">전라</button>
+<button class="whitespace-nowrap font-section-title text-on-surface-variant hover:text-primary transition-colors pb-2">제주</button>
+</nav>
+<!-- Specimen Archive Layout (Bento-style asymmetric grid) -->
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-6">
+<!-- Collected Stamp 1 -->
+<div class="flex flex-col items-center gap-3">
+<div class="w-full aspect-square bg-surface-container-lowest border border-outline-variant p-4 flex flex-col items-center justify-center relative overflow-hidden group stamp-active cursor-pointer">
+<div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')] opacity-20 pointer-events-none"></div>
+<div class="w-20 h-20 rounded-full border-2 border-primary flex items-center justify-center ink-bleed">
+<span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1;">temple_buddhist</span>
+</div>
+<div class="absolute bottom-2 right-2">
+<span class="font-coord-label text-[8px] text-primary opacity-60">37.5796° N, 126.9770° E</span>
+</div>
+</div>
+<div class="text-center">
+<h3 class="font-section-title text-sm text-on-surface">경복궁</h3>
+<p class="font-ranking-num text-[10px] text-secondary">2024.03.15</p>
+</div>
+</div>
+<!-- Collected Stamp 2 -->
+<div class="flex flex-col items-center gap-3">
+<div class="w-full aspect-square bg-surface-container-lowest border border-outline-variant p-4 flex flex-col items-center justify-center relative overflow-hidden group stamp-active cursor-pointer">
+<div class="w-20 h-20 rounded-full border-2 border-primary flex items-center justify-center ink-bleed rotate-6">
+<span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1;">landscape</span>
+</div>
+<div class="absolute bottom-2 right-2">
+<span class="font-coord-label text-[8px] text-primary opacity-60">37.5512° N, 126.9882° E</span>
+</div>
+</div>
+<div class="text-center">
+<h3 class="font-section-title text-sm text-on-surface">남산서울타워</h3>
+<p class="font-ranking-num text-[10px] text-secondary">2024.03.18</p>
+</div>
+</div>
+<!-- Uncollected Stamp (Ghost) -->
+<div class="flex flex-col items-center gap-3">
+<div class="w-full aspect-square ghost-stamp p-4 flex flex-col items-center justify-center relative opacity-40">
+<div class="w-20 h-20 rounded-full border-2 border-outline border-dashed flex items-center justify-center">
+<span class="material-symbols-outlined text-outline text-4xl">home_work</span>
+</div>
+</div>
+<div class="text-center opacity-40">
+<h3 class="font-section-title text-sm text-on-surface-variant">북촌한옥마을</h3>
+<p class="font-ranking-num text-[10px] text-secondary">미수집</p>
+</div>
+</div>
+<!-- Collected Stamp 3 -->
+<div class="flex flex-col items-center gap-3">
+<div class="w-full aspect-square bg-surface-container-lowest border border-outline-variant p-4 flex flex-col items-center justify-center relative overflow-hidden group stamp-active cursor-pointer">
+<div class="w-20 h-20 rounded-full border-2 border-primary flex items-center justify-center ink-bleed -rotate-3">
+<span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1;">waves</span>
+</div>
+</div>
+<div class="text-center">
+<h3 class="font-section-title text-sm text-on-surface">해운대 해수욕장</h3>
+<p class="font-ranking-num text-[10px] text-secondary">2024.04.02</p>
+</div>
+</div>
+<!-- Uncollected Stamp (Ghost) -->
+<div class="flex flex-col items-center gap-3">
+<div class="w-full aspect-square ghost-stamp p-4 flex flex-col items-center justify-center relative opacity-40">
+<div class="w-20 h-20 rounded-full border-2 border-outline border-dashed flex items-center justify-center">
+<span class="material-symbols-outlined text-outline text-4xl">castle</span>
+</div>
+</div>
+<div class="text-center opacity-40">
+<h3 class="font-section-title text-sm text-on-surface-variant">화성행궁</h3>
+<p class="font-ranking-num text-[10px] text-secondary">미수집</p>
+</div>
+</div>
+<!-- Collected Stamp 4 -->
+<div class="flex flex-col items-center gap-3">
+<div class="w-full aspect-square bg-surface-container-lowest border border-outline-variant p-4 flex flex-col items-center justify-center relative overflow-hidden group stamp-active cursor-pointer">
+<div class="w-20 h-20 rounded-full border-2 border-primary flex items-center justify-center ink-bleed rotate-12">
+<span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1;">forest</span>
+</div>
+</div>
+<div class="text-center">
+<h3 class="font-section-title text-sm text-on-surface">불국사</h3>
+<p class="font-ranking-num text-[10px] text-secondary">2024.04.10</p>
+</div>
+</div>
+<!-- Uncollected Stamp (Ghost) -->
+<div class="flex flex-col items-center gap-3">
+<div class="w-full aspect-square ghost-stamp p-4 flex flex-col items-center justify-center relative opacity-40">
+<div class="w-20 h-20 rounded-full border-2 border-outline border-dashed flex items-center justify-center">
+<span class="material-symbols-outlined text-outline text-4xl">filter_hdr</span>
+</div>
+</div>
+<div class="text-center opacity-40">
+<h3 class="font-section-title text-sm text-on-surface-variant">한라산</h3>
+<p class="font-ranking-num text-[10px] text-secondary">미수집</p>
+</div>
+</div>
+<!-- Collected Stamp 5 -->
+<div class="flex flex-col items-center gap-3">
+<div class="w-full aspect-square bg-surface-container-lowest border border-outline-variant p-4 flex flex-col items-center justify-center relative overflow-hidden group stamp-active cursor-pointer">
+<div class="w-20 h-20 rounded-full border-2 border-primary flex items-center justify-center ink-bleed">
+<span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1;">water_drop</span>
+</div>
+</div>
+<div class="text-center">
+<h3 class="font-section-title text-sm text-on-surface">정동진</h3>
+<p class="font-ranking-num text-[10px] text-secondary">2024.04.22</p>
+</div>
+</div>
+<!-- Uncollected Stamp (Ghost) -->
+<div class="flex flex-col items-center gap-3">
+<div class="w-full aspect-square ghost-stamp p-4 flex flex-col items-center justify-center relative opacity-40">
+<div class="w-20 h-20 rounded-full border-2 border-outline border-dashed flex items-center justify-center">
+<span class="material-symbols-outlined text-outline text-4xl">museum</span>
+</div>
+</div>
+<div class="text-center opacity-40">
+<h3 class="font-section-title text-sm text-on-surface-variant">국립중앙박물관</h3>
+<p class="font-ranking-num text-[10px] text-secondary">미수집</p>
+</div>
+</div>
+</div>
+<!-- Floating Action Button (Contextual) - Not for details, but fits Home/List -->
+<!-- Suppressed for this screen as it's a collection archive -->
+</main>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-side-padding pb-safe h-20 bg-surface-container-lowest border-t border-outline-variant">
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-coord-label text-coord-label mt-1">홈</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">map</span>
+<span class="font-coord-label text-coord-label mt-1">지도</span>
+</a>
+<!-- Active Tab: 도장 -->
+<a class="flex flex-col items-center justify-center text-primary after:content-['•'] after:text-[8px] after:mt-1" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="font-coord-label text-coord-label mt-1">도장</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-coord-label text-coord-label mt-1">랭킹</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-coord-label text-coord-label mt-1">마이</span>
+</a>
+</nav>
+<script>
+        // Simple micro-interaction for stamps
+        document.querySelectorAll('.stamp-active').forEach(stamp => {
+            stamp.addEventListener('click', function() {
+                this.classList.add('scale-95');
+                setTimeout(() => {
+                    this.classList.remove('scale-95');
+                }, 150);
+            });
+        });
+
+        // Tab selection logic
+        const tabs = document.querySelectorAll('nav button');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => {
+                    t.classList.remove('text-primary', 'border-b-2', 'border-primary');
+                    t.classList.add('text-on-surface-variant');
+                });
+                tab.classList.add('text-primary', 'border-b-2', 'border-primary');
+                tab.classList.remove('text-on-surface-variant');
+            });
+        });
+    </script>
+</body></html>

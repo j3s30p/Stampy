@@ -1,5 +1,12 @@
 # 02 · Architecture Decisions
 
+## ADR-008 — Flutter + Supabase로 앱 런타임 재구축
+
+- **Status**: Accepted (2026-07-13)
+- **Context**: 기존 Expo SDK 52 앱은 화면 전면 재설계, 실제 백엔드 부재, 임시 GPS 좌표, Mock 중심 흐름이 겹쳐 점진 업그레이드보다 새 앱 셸의 비용이 낮다.
+- **Decision**: 최신 Flutter stable을 iOS/Android 클라이언트 정본으로 사용한다. Supabase가 Auth/Postgres/RLS/Data API/Edge Function/PostGIS를 맡고, 행동 기반 추천은 SQL/RPC로 계산한다. Kakao Maps는 Flutter WebView를 통해 JS SDK를 사용한다.
+- **Consequences**: 기존 TypeScript UI와 Expo 런타임은 이식하지 않는다. 100m 인증, 좌표 값 객체, TourAPI 정규화, repository contract처럼 검증된 도메인 의미만 Dart와 서버 계약으로 다시 구현한다. FastAPI와 LLM은 자연어 추천이 실제 범위가 될 때까지 도입하지 않는다.
+
 > ADR(Architecture Decision Record) 경량 포맷. 결정을 뒤집고 싶을 때 본 문서의 _Context_ 와 _Consequences_ 를 먼저 점검한다.
 
 ---

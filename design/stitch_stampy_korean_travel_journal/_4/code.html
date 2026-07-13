@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hanji-texture {
+            background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
+            background-repeat: repeat;
+        }
+        .ink-bleed {
+            filter: blur(0.4px) contrast(1.2);
+        }
+        .stamp-active:active {
+            transform: scale(0.95);
+            transition: transform 0.15s ease-in-out;
+        }
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#007ea1",
+                        "primary-fixed-dim": "#ffb4a2",
+                        "on-tertiary-fixed": "#001f29",
+                        "primary-container": "#ca4a28",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed": "#ffdbd2",
+                        "surface-variant": "#e1e3de",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#e0bfb7",
+                        "on-secondary-container": "#71615a",
+                        "secondary-fixed-dim": "#d6c2ba",
+                        "on-secondary-fixed-variant": "#52443d",
+                        "inverse-primary": "#ffb4a2",
+                        "surface-container-high": "#e7e9e4",
+                        "on-tertiary-container": "#fbfdff",
+                        "tertiary-fixed-dim": "#70d2fa",
+                        "secondary-container": "#f3ded5",
+                        "on-secondary-fixed": "#241914",
+                        "surface-bright": "#f8faf5",
+                        "tertiary-fixed": "#bce9ff",
+                        "primary": "#a83212",
+                        "on-primary-container": "#fffbff",
+                        "inverse-surface": "#2e312e",
+                        "surface-container-low": "#f3f4ef",
+                        "surface-tint": "#ac3414",
+                        "tertiary": "#006480",
+                        "secondary": "#6a5b54",
+                        "on-surface-variant": "#59413b",
+                        "on-tertiary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#3c0800",
+                        "on-tertiary-fixed-variant": "#004d63",
+                        "on-surface": "#191c19",
+                        "outline": "#8c716a",
+                        "surface-dim": "#d9dbd6",
+                        "inverse-on-surface": "#f0f1ec",
+                        "error": "#ba1a1a",
+                        "background": "#f8faf5",
+                        "surface-container-highest": "#e1e3de",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#f3ded5",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#edeee9",
+                        "surface": "#f8faf5",
+                        "on-primary-fixed-variant": "#891d00",
+                        "on-background": "#191c19"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-md": "12px",
+                        "gutter": "16px",
+                        "section-gap": "40px",
+                        "side-padding": "20px",
+                        "stack-sm": "4px",
+                        "unit": "8px"
+                    },
+                    "fontFamily": {
+                        "display-title": ["Pretendard"],
+                        "coord-label": ["Geist Mono"],
+                        "section-title": ["Pretendard"],
+                        "body-main": ["Pretendard"],
+                        "ranking-num": ["Geist Mono"],
+                        "display-title-mobile": ["Pretendard"]
+                    },
+                    "fontSize": {
+                        "display-title": ["28px", {"lineHeight": "1.3", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "coord-label": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "section-title": ["20px", {"lineHeight": "1.4", "fontWeight": "700"}],
+                        "body-main": ["15px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "ranking-num": ["14px", {"lineHeight": "1.0", "fontWeight": "600"}],
+                        "display-title-mobile": ["24px", {"lineHeight": "1.3", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body-main text-on-background min-h-screen hanji-texture pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-side-padding h-16 bg-background border-b border-outline-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="arrow_back">arrow_back</span>
+<span class="font-display-title-mobile text-display-title-mobile text-primary">Stampy</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="share">share</span>
+<span class="material-symbols-outlined text-primary" data-icon="notifications">notifications</span>
+</div>
+</header>
+<main class="pt-16">
+<!-- Hero Section: Editorial Photo -->
+<section class="relative w-full aspect-[4/5] md:aspect-video overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A cinematic editorial photograph of the Seoul Street Arts Festival at Seoul Plaza. Vibrant street performers are captured in motion against the backdrop of modern Korean architecture and lush city greenery. The image features soft natural daylight, a subtle film grain, and a warm, archival color grade dominated by earthy tones and Vermilion accents, reflecting a high-quality Korean travel journal aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2tXrQstLqwXqBVHrK_YXLyt-Q_V_NRt7EPta52HeIhfuZAD-1COz9wIrflW6Iy2YcatN9QKJxlL5a6nEiFWaoLwIWIK9_i_ebNOJZeDA9tp3OUovetWWV4ireHVVyqccWq4swpTUwUGhqTUdP2M2xFW_eeRtdutXoe-B951sNaU-2faPcVVSJV77CIh3YXV9nP-bpyC_PmHKKA6BK-rNuEUJlCzwzwWfvkLGy7Zz04uLOZc0E96Rjo19_57fnHCk36MtbHaxxT48b"/>
+<div class="absolute bottom-4 right-4 bg-surface-container-lowest/80 backdrop-blur-sm px-3 py-1.5 border border-outline-variant">
+<span class="font-coord-label text-coord-label text-secondary">37.5665° N, 126.9780° E</span>
+</div>
+</section>
+<!-- Content Section -->
+<article class="px-side-padding mt-8">
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<h1 class="font-display-title-mobile text-display-title-mobile text-on-background tracking-tight">서울거리예술축제</h1>
+<span class="font-coord-label text-coord-label text-secondary opacity-60">ID: SSF-2026-04</span>
+</div>
+<hr class="border-outline-variant my-2"/>
+<div class="flex flex-col gap-4">
+<div class="flex items-start gap-4">
+<span class="material-symbols-outlined text-primary mt-1" data-icon="calendar_today">calendar_today</span>
+<div class="flex flex-col">
+<span class="font-ranking-num text-ranking-num text-on-surface">2026.06.12 — 2026.06.15</span>
+<span class="text-primary font-bold text-sm mt-1">오늘 종료 · 현장에서만 수집 가능</span>
+</div>
+</div>
+<div class="flex items-start gap-4">
+<span class="material-symbols-outlined text-secondary mt-1" data-icon="location_on">location_on</span>
+<div class="flex flex-col">
+<span class="font-body-main text-on-surface">서울광장 일대</span>
+<span class="font-coord-label text-coord-label text-secondary-fixed-dim mt-1">SEOUL PLAZA AREA</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Description -->
+<section class="mt-section-gap">
+<h2 class="font-section-title text-section-title text-on-background mb-4">소개</h2>
+<p class="font-body-main text-secondary leading-relaxed border-l-2 border-primary pl-4 py-1 italic">
+                    일상의 공간을 예술적 무대로 바꾸는 서울의 대표적인 거리 공연 축제입니다.
+                </p>
+<div class="mt-6 text-on-surface-variant text-sm leading-relaxed space-y-4">
+<p>도심 속 광장과 거리가 거대한 캔버스가 됩니다. 전 세계 예술가들이 모여 서커스, 무용, 거리극, 그리고 관객 참여형 퍼포먼스를 선보이며 도시의 새로운 활력을 불어넣습니다.</p>
+</div>
+</section>
+<!-- Map Anchor -->
+<section class="mt-section-gap">
+<div class="border border-outline-variant bg-surface-container-low p-1">
+<div class="w-full h-48 relative overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A minimalist, cartographic map of Seoul Plaza area for a travel journal. The map uses a soft Hanji paper texture background with charcoal ink hairlines for roads and a subtle Vermilion circle marking the festival location. It features monospaced coordinate labels and a clean, quiet aesthetic without heavy digital interface elements." data-location="Seoul Plaza" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVr46lZ7dRZUcgwJwfFmxBIqeyoXw79qzvXljj_eT_nDaZ5gjftC63rAOHnjTWXRcKYdN-_0sDwqbUWHKBPXTYfPuVY1aXHves3RpkuAwlPZ39CVMxUIUYJm-DYc508Vyo_Um-k-6hreix9gJwWrjirYFIV3uocySCkUbKOMSKbIedmnc_PjswRZALyhIedBsoZOV7VTpFZZ4LoDTSBRBvL8nZLwj8Cij8slJ1iM9GmtsgMWs-GFqcI654cT_khOvKR__WjtVmuy8E"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="w-12 h-12 rounded-full border-2 border-primary flex items-center justify-center bg-primary/10 animate-pulse">
+<div class="w-3 h-3 bg-primary rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</article>
+</main>
+<!-- Fixed Action Bar -->
+<div class="fixed bottom-24 left-0 w-full px-side-padding z-40">
+<div class="bg-surface-container-lowest border border-outline-variant p-4 flex flex-col gap-3 shadow-sm">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span>
+<span class="text-xs font-bold">인증 가능 범위에 도착했어요</span>
+</div>
+<button class="w-full bg-primary text-on-primary py-4 font-display-title-mobile text-sm tracking-widest stamp-active ink-bleed">
+                위치 인증하고 도장 받기
+            </button>
+</div>
+</div>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-side-padding pb-safe h-20 bg-surface-container-lowest border-t border-outline-variant">
+<div class="flex flex-col items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-coord-label text-coord-label mt-1">홈</span>
+</div>
+<!-- ACTIVE TAB: MAP -->
+<div class="flex flex-col items-center justify-center text-primary after:content-['•'] after:text-[8px] after:mt-1">
+<span class="material-symbols-outlined" data-icon="map" style="font-variation-settings: 'FILL' 1;">map</span>
+<span class="font-coord-label text-coord-label">지도</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="verified">verified</span>
+<span class="font-coord-label text-coord-label mt-1">도장</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="leaderboard">leaderboard</span>
+<span class="font-coord-label text-coord-label mt-1">랭킹</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-coord-label text-coord-label mt-1">마이</span>
+</div>
+</nav>
+<script>
+        // Simple haptic-like interaction for the button
+        document.querySelector('button').addEventListener('click', function() {
+            this.style.backgroundColor = '#891d00';
+            setTimeout(() => {
+                this.style.backgroundColor = '#a83212';
+                alert('위치가 인증되었습니다! 도장이 보관함에 담겼습니다.');
+            }, 200);
+        });
+    </script>
+</body></html>

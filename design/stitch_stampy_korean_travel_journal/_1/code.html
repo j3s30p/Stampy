@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #F4F0E8;
+            -webkit-font-smoothing: antialiased;
+            overscroll-behavior-y: none;
+        }
+        .hanji-texture {
+            background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
+            background-blend-mode: multiply;
+        }
+        .ink-bleed {
+            filter: blur(0.4px) contrast(1.2);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            font-size: 20px;
+        }
+        .stamp-active {
+            font-variation-settings: 'FILL' 1;
+        }
+        /* Editorial Rule Line */
+        .hairline-rule {
+            height: 1px;
+            background-color: #D8D2C7;
+            width: 100%;
+        }
+        /* Custom image grain */
+        .grain-overlay {
+            position: absolute;
+            inset: 0;
+            background: url('https://www.transparenttextures.com/patterns/felt.png');
+            opacity: 0.05;
+            pointer-events: none;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#007ea1",
+                        "primary-fixed-dim": "#ffb4a2",
+                        "on-tertiary-fixed": "#001f29",
+                        "primary-container": "#ca4a28",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed": "#ffdbd2",
+                        "surface-variant": "#e1e3de",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#e0bfb7",
+                        "on-secondary-container": "#71615a",
+                        "secondary-fixed-dim": "#d6c2ba",
+                        "on-secondary-fixed-variant": "#52443d",
+                        "inverse-primary": "#ffb4a2",
+                        "surface-container-high": "#e7e9e4",
+                        "on-tertiary-container": "#fbfdff",
+                        "tertiary-fixed-dim": "#70d2fa",
+                        "secondary-container": "#f3ded5",
+                        "on-secondary-fixed": "#241914",
+                        "surface-bright": "#f8faf5",
+                        "tertiary-fixed": "#bce9ff",
+                        "primary": "#a83212",
+                        "on-primary-container": "#fffbff",
+                        "inverse-surface": "#2e312e",
+                        "surface-container-low": "#f3f4ef",
+                        "surface-tint": "#ac3414",
+                        "tertiary": "#006480",
+                        "secondary": "#6a5b54",
+                        "on-surface-variant": "#59413b",
+                        "on-tertiary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#3c0800",
+                        "on-tertiary-fixed-variant": "#004d63",
+                        "on-surface": "#191c19",
+                        "outline": "#8c716a",
+                        "surface-dim": "#d9dbd6",
+                        "inverse-on-surface": "#f0f1ec",
+                        "error": "#ba1a1a",
+                        "background": "#f8faf5",
+                        "surface-container-highest": "#e1e3de",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#f3ded5",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#edeee9",
+                        "surface": "#f8faf5",
+                        "on-primary-fixed-variant": "#891d00",
+                        "on-background": "#191c19"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-md": "12px",
+                        "gutter": "16px",
+                        "section-gap": "40px",
+                        "side-padding": "20px",
+                        "stack-sm": "4px",
+                        "unit": "8px"
+                    },
+                    "fontFamily": {
+                        "display-title": ["Pretendard"],
+                        "coord-label": ["Geist Mono"],
+                        "section-title": ["Pretendard"],
+                        "body-main": ["Pretendard"],
+                        "ranking-num": ["Geist Mono"],
+                        "display-title-mobile": ["Pretendard"]
+                    },
+                    "fontSize": {
+                        "display-title": ["28px", {"lineHeight": "1.3", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "coord-label": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "section-title": ["20px", {"lineHeight": "1.4", "fontWeight": "700"}],
+                        "body-main": ["15px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "ranking-num": ["14px", {"lineHeight": "1.0", "fontWeight": "600"}],
+                        "display-title-mobile": ["24px", {"lineHeight": "1.3", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="font-body-main text-on-background selection:bg-primary-fixed selection:text-on-primary-fixed-variant">
+<!-- Top AppBar (from Shared Components JSON) -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-side-padding h-16 bg-background border-b border-outline-variant">
+<div class="flex items-center gap-2">
+<img alt="Stampy Logo" class="w-8 h-8 rounded-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8WOXAeeZjAyCVAzpIXaheqGADmE83QqsigBAlCRbhYTx7W-Tan6xopwdH7BWFwQwKDXWhFPPEL6xDC6-XMo8eXjb7PNslpEtc1FFr4m-fA1z3BpEgFhNuVoFcdq6BeKIDSujuD6jWGX_OFKq_LfAHjd9KlvGj4EC-572Q4KLHb2HmjBfxlMGrnMVWMEi_zF9apPsQctPHqXHhd6eS_euNSTLPWz70GkpBPyxsCicMSK7Pxxg58oPzViEnd8tNO8LG5p146q6_r0rk"/>
+<h1 class="font-display-title-mobile text-display-title-mobile text-primary">Stampy</h1>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<span class="material-symbols-outlined hover:bg-surface-container-low transition-colors p-2 rounded-full cursor-pointer">edit_calendar</span>
+<span class="material-symbols-outlined hover:bg-surface-container-low transition-colors p-2 rounded-full cursor-pointer">notifications</span>
+</div>
+</header>
+<main class="pt-24 pb-32 px-side-padding max-w-md mx-auto hanji-texture min-h-screen">
+<!-- Greeting Section -->
+<section class="mb-section-gap">
+<div class="flex items-center gap-1 mb-1 text-primary">
+<span class="material-symbols-outlined" style="font-size: 14px;">location_on</span>
+<span class="font-coord-label text-coord-label uppercase">서울 종로구 · GPS 정확함</span>
+</div>
+<h2 class="font-display-title-mobile text-display-title-mobile text-on-surface mb-2">재선님, 오늘은 종로에서<br/>어떤 도장을 남겨볼까요?</h2>
+<div class="hairline-rule mt-4 mb-2"></div>
+<div class="flex justify-between items-baseline">
+<span class="font-section-title text-section-title text-on-surface-variant">서울 수집 현황</span>
+<span class="font-ranking-num text-ranking-num text-primary">8 / 24</span>
+</div>
+</section>
+<!-- Featured Destination (Editorial Card) -->
+<section class="mb-section-gap">
+<h3 class="font-coord-label text-coord-label text-on-surface-variant mb-stack-md uppercase tracking-widest">Featured Destination</h3>
+<div class="relative group cursor-pointer overflow-hidden rounded-lg bg-surface-container-low border border-outline-variant">
+<div class="aspect-[4/5] relative">
+<img class="w-full h-full object-cover grayscale-[20%] group-hover:scale-105 transition-transform duration-700" data-alt="A cinematic, high-angle editorial shot of Gyeongbokgung Palace's Geunjeongjeon Hall during a soft golden hour. The palace's traditional Korean architecture features intricate wooden details and a dark tiled roof, set against a backdrop of distant mountains. The lighting is warm and hazy, creating a nostalgic, journal-like atmosphere with a slight film grain and high-quality paper texture. The overall mood is quiet and archival." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-OrmX8xXZUsvdnALDcGz_u9AHSxTFpy--knVLBmispTmp6pwHvman9TqL1kSMaPDdtW3TlQmmQf861eXx3LRYWJia9AqTPn9uqGzQvEpbUQI-l7MyxFI446e-3CwlG_M4SsSbZGDIVm8-zuyMxcRo1R74-5PLw3i1XCDv6fvmXFhrMG5ipQygTje3B3b0m7fU5Olr2Z0n1k9FdwTUl63ZXN-nu9mZrSz-zrbaUvf2fZJe3tOJcgodiCGzit3wH57PaTDlehSRNad5"/>
+<div class="grain-overlay"></div>
+<!-- Distance Badge -->
+<div class="absolute bottom-4 right-4 bg-surface-container-lowest/90 backdrop-blur-sm px-3 py-1 border border-outline-variant rounded-sm">
+<span class="font-coord-label text-coord-label text-on-surface">37.5796° N, 126.9770° E</span>
+</div>
+<!-- Uncollected Stamp Badge -->
+<div class="absolute top-4 left-4 bg-white/10 backdrop-blur-md border border-white/30 rounded-full p-3 flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 0;">verified</span>
+</div>
+</div>
+<div class="p-4 bg-surface-container-lowest">
+<div class="flex justify-between items-end">
+<div>
+<h4 class="font-section-title text-section-title text-on-surface">경복궁 (Gyeongbokgung)</h4>
+<p class="font-body-main text-on-surface-variant text-sm mt-1">조선 왕조의 법궁으로, 가장 웅장한 규모를 자랑합니다.</p>
+</div>
+<span class="font-ranking-num text-ranking-num text-primary whitespace-nowrap">420 m</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Nearby Section -->
+<section class="mb-section-gap">
+<h3 class="font-coord-label text-coord-label text-on-surface-variant mb-stack-md uppercase tracking-widest">Nearby Places</h3>
+<div class="space-y-0">
+<!-- List Item 1 -->
+<div class="py-4 border-t border-outline-variant flex justify-between items-center group cursor-pointer hover:bg-surface-container-low transition-colors px-2 -mx-2 rounded">
+<div class="flex gap-4 items-center">
+<span class="font-ranking-num text-ranking-num text-on-surface-variant">01</span>
+<div>
+<h5 class="font-body-main font-bold text-on-surface">북촌 한옥마을 (Bukchon)</h5>
+<span class="font-coord-label text-[10px] text-secondary uppercase">Historical Architecture</span>
+</div>
+</div>
+<span class="font-ranking-num text-ranking-num text-secondary">860 m</span>
+</div>
+<!-- List Item 2 -->
+<div class="py-4 border-t border-outline-variant flex justify-between items-center group cursor-pointer hover:bg-surface-container-low transition-colors px-2 -mx-2 rounded">
+<div class="flex gap-4 items-center">
+<span class="font-ranking-num text-ranking-num text-on-surface-variant">02</span>
+<div>
+<h5 class="font-body-main font-bold text-on-surface">서울 거리예술 축제</h5>
+<span class="font-coord-label text-[10px] text-secondary uppercase">Seasonal Event</span>
+</div>
+</div>
+<span class="font-ranking-num text-ranking-num text-secondary">1.2 km</span>
+</div>
+<!-- List Item 3 -->
+<div class="py-4 border-t border-b border-outline-variant flex justify-between items-center group cursor-pointer hover:bg-surface-container-low transition-colors px-2 -mx-2 rounded">
+<div class="flex gap-4 items-center">
+<span class="font-ranking-num text-ranking-num text-on-surface-variant">03</span>
+<div>
+<h5 class="font-body-main font-bold text-on-surface">창덕궁 (Changdeokgung)</h5>
+<span class="font-coord-label text-[10px] text-secondary uppercase">UNESCO World Heritage</span>
+</div>
+</div>
+<span class="font-ranking-num text-ranking-num text-secondary">1.8 km</span>
+</div>
+</div>
+</section>
+<!-- Recent Stamps Section -->
+<section>
+<h3 class="font-coord-label text-coord-label text-on-surface-variant mb-stack-md uppercase tracking-widest">Recent Impressions</h3>
+<div class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+<div class="flex-shrink-0 w-16 h-16 rounded-full border-2 border-primary/20 flex items-center justify-center bg-white/50 relative ink-bleed">
+<span class="material-symbols-outlined text-primary stamp-active" style="font-size: 32px;">verified</span>
+<div class="absolute -bottom-2 text-[8px] font-coord-label text-primary whitespace-nowrap">2023.10.12</div>
+</div>
+<div class="flex-shrink-0 w-16 h-16 rounded-full border-2 border-primary/20 flex items-center justify-center bg-white/50 relative ink-bleed">
+<span class="material-symbols-outlined text-primary stamp-active" style="font-size: 32px;">history_edu</span>
+<div class="absolute -bottom-2 text-[8px] font-coord-label text-primary whitespace-nowrap">2023.10.10</div>
+</div>
+<div class="flex-shrink-0 w-16 h-16 rounded-full border-2 border-primary/20 flex items-center justify-center bg-white/50 relative ink-bleed">
+<span class="material-symbols-outlined text-primary stamp-active" style="font-size: 32px;">park</span>
+<div class="absolute -bottom-2 text-[8px] font-coord-label text-primary whitespace-nowrap">2023.10.08</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Shell (from Shared Components JSON) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-side-padding pb-safe h-20 bg-surface-container-lowest border-t border-outline-variant">
+<!-- Active: Home (홈) -->
+<div class="flex flex-col items-center justify-center text-primary after:content-['•'] after:text-[8px] after:mt-1 cursor-pointer scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined stamp-active">home</span>
+<span class="font-coord-label text-coord-label">홈</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary hover:text-primary-container transition-colors cursor-pointer">
+<span class="material-symbols-outlined">map</span>
+<span class="font-coord-label text-coord-label">지도</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary hover:text-primary-container transition-colors cursor-pointer">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-coord-label text-coord-label">도장</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary hover:text-primary-container transition-colors cursor-pointer">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-coord-label text-coord-label">랭킹</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary hover:text-primary-container transition-colors cursor-pointer">
+<span class="material-symbols-outlined">person</span>
+<span class="font-coord-label text-coord-label">마이</span>
+</div>
+</nav>
+<!-- Micro-interaction Script -->
+<script>
+        document.querySelectorAll('nav div, header div span').forEach(el => {
+            el.addEventListener('mousedown', () => {
+                el.style.transform = 'scale(0.95)';
+            });
+            el.addEventListener('mouseup', () => {
+                el.style.transform = '';
+            });
+            el.addEventListener('mouseleave', () => {
+                el.style.transform = '';
+            });
+        });
+    </script>
+</body></html>

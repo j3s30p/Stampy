@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #F4F0E8; /* Level 0: Hanji Canvas */
+            -webkit-font-smoothing: antialiased;
+        }
+        .paper-block {
+            background-color: #FFFCF6; /* Level 1: Paper Surface */
+            border: 1px solid #D8D2C7; /* Hairline Rule */
+        }
+        .ink-bleed {
+            filter: blur(0.2px) contrast(1.2);
+        }
+        .film-grain {
+            position: relative;
+        }
+        .film-grain::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: url("https://www.transparenttextures.com/patterns/stardust.png");
+            opacity: 0.04;
+            pointer-events: none;
+        }
+        .stamp-active {
+            position: relative;
+        }
+        .stamp-active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: #a83212;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#007ea1",
+                        "primary-fixed-dim": "#ffb4a2",
+                        "on-tertiary-fixed": "#001f29",
+                        "primary-container": "#ca4a28",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed": "#ffdbd2",
+                        "surface-variant": "#e1e3de",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#e0bfb7",
+                        "on-secondary-container": "#71615a",
+                        "secondary-fixed-dim": "#d6c2ba",
+                        "on-secondary-fixed-variant": "#52443d",
+                        "inverse-primary": "#ffb4a2",
+                        "surface-container-high": "#e7e9e4",
+                        "on-tertiary-container": "#fbfdff",
+                        "tertiary-fixed-dim": "#70d2fa",
+                        "secondary-container": "#f3ded5",
+                        "on-secondary-fixed": "#241914",
+                        "surface-bright": "#f8faf5",
+                        "tertiary-fixed": "#bce9ff",
+                        "primary": "#a83212",
+                        "on-primary-container": "#fffbff",
+                        "inverse-surface": "#2e312e",
+                        "surface-container-low": "#f3f4ef",
+                        "surface-tint": "#ac3414",
+                        "tertiary": "#006480",
+                        "secondary": "#6a5b54",
+                        "on-surface-variant": "#59413b",
+                        "on-tertiary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#3c0800",
+                        "on-tertiary-fixed-variant": "#004d63",
+                        "on-surface": "#191c19",
+                        "outline": "#8c716a",
+                        "surface-dim": "#d9dbd6",
+                        "inverse-on-surface": "#f0f1ec",
+                        "error": "#ba1a1a",
+                        "background": "#f8faf5",
+                        "surface-container-highest": "#e1e3de",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#f3ded5",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#edeee9",
+                        "surface": "#f8faf5",
+                        "on-primary-fixed-variant": "#891d00",
+                        "on-background": "#191c19",
+                        "hairline": "#D8D2C7"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-md": "12px",
+                        "gutter": "16px",
+                        "section-gap": "40px",
+                        "side-padding": "20px",
+                        "stack-sm": "4px",
+                        "unit": "8px"
+                    },
+                    "fontFamily": {
+                        "display-title": ["Pretendard"],
+                        "coord-label": ["Geist Mono"],
+                        "section-title": ["Pretendard"],
+                        "body-main": ["Pretendard"],
+                        "ranking-num": ["Geist Mono"],
+                        "display-title-mobile": ["Pretendard"]
+                    },
+                    "fontSize": {
+                        "display-title": ["28px", {"lineHeight": "1.3", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "coord-label": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "section-title": ["20px", {"lineHeight": "1.4", "fontWeight": "700"}],
+                        "body-main": ["15px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "ranking-num": ["14px", {"lineHeight": "1.0", "fontWeight": "600"}],
+                        "display-title-mobile": ["24px", {"lineHeight": "1.3", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-main text-on-background min-h-screen pb-32">
+<!-- Top AppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-side-padding h-16 bg-background dark:bg-background border-b border-outline-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">edit_calendar</span>
+<h1 class="font-display-title-mobile text-display-title-mobile text-primary dark:text-primary-fixed-dim">Stampy</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</button>
+</header>
+<main class="pt-24 px-side-padding max-w-md mx-auto">
+<!-- Profile Section -->
+<section class="mb-section-gap flex items-center gap-6">
+<div class="relative">
+<div class="w-20 h-20 rounded-full paper-block flex items-center justify-center overflow-hidden film-grain">
+<img class="w-full h-full object-cover grayscale" data-alt="A sophisticated black and white close-up portrait of a Korean man with a neutral expression. The lighting is soft and editorial, emphasizing the tactile quality of the image as if it were printed on high-quality hanji paper. The background is a clean, creamy white, maintaining the brand's minimal and archival aesthetic. Fine film grain is visible across the surface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXjBFfwt64cS1eJDVKp8elkTJSZCa0riX5CHNkQbDGm6K2XDrlPUlhoC8w6CIQEZpr_TVuvQxHzmzsmCZM8tja1gnwYO2Ub6Etx_93oTkIbES6UeVgTxAok8M24YBewG5TSgVg_ObeEqeaR2uD6IFLIMxwqW6Uu58l2BqxSguReapi2PdxdoBivKatlxm4JyUOqIq8-2WBzZsaAUsfh-KYQlwZrQN2uQzL1Oz1QCLHJY3po1olOaYtcI2J6ASvm5Hd5w6G314WS6yP"/>
+</div>
+<div class="absolute -bottom-1 -right-1 bg-primary text-white w-7 h-7 rounded-full flex items-center justify-center border-2 border-background">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<h2 class="font-display-title text-display-title text-on-surface">재선님</h2>
+<span class="font-coord-label text-coord-label text-secondary uppercase tracking-widest">2023.10.12 가입</span>
+</div>
+</section>
+<!-- Summary Stats Bento -->
+<section class="grid grid-cols-3 gap-3 mb-section-gap">
+<div class="paper-block p-4 flex flex-col items-center justify-center gap-2">
+<span class="font-coord-label text-[10px] text-secondary uppercase">Stamps</span>
+<span class="font-ranking-num text-[20px] text-primary">8</span>
+<span class="text-[11px] font-medium text-on-surface-variant">수집 도장</span>
+</div>
+<div class="paper-block p-4 flex flex-col items-center justify-center gap-2">
+<span class="font-coord-label text-[10px] text-secondary uppercase">Regions</span>
+<span class="font-ranking-num text-[20px] text-primary">3</span>
+<span class="text-[11px] font-medium text-on-surface-variant">방문 지역</span>
+</div>
+<div class="paper-block p-4 flex flex-col items-center justify-center gap-2">
+<span class="font-coord-label text-[10px] text-secondary uppercase">Global</span>
+<span class="font-ranking-num text-[20px] text-primary">12</span>
+<span class="text-[11px] font-medium text-on-surface-variant">현재 순위</span>
+</div>
+</section>
+<!-- Journal Sections -->
+<div class="space-y-10">
+<!-- Recent Collection -->
+<section>
+<div class="flex justify-between items-end mb-4 border-b border-hairline pb-2">
+<h3 class="font-section-title text-section-title text-on-surface">최근 수집 기록</h3>
+<span class="font-coord-label text-coord-label text-secondary">VIEW ALL</span>
+</div>
+<div class="space-y-4">
+<div class="flex items-center gap-4 py-2 group cursor-pointer">
+<div class="w-12 h-12 flex-shrink-0 paper-block flex items-center justify-center rounded-full border-2 border-primary/20">
+<span class="material-symbols-outlined text-primary text-[24px]">temple_buddhist</span>
+</div>
+<div class="flex-grow border-b border-hairline pb-4 flex justify-between items-center group-hover:border-primary transition-colors">
+<div>
+<p class="font-medium text-on-surface">불국사 대웅전</p>
+<p class="font-coord-label text-[10px] text-secondary mt-1">35.7901° N, 129.3321° E</p>
+</div>
+<span class="font-ranking-num text-secondary">24.05.12</span>
+</div>
+</div>
+<div class="flex items-center gap-4 py-2 group cursor-pointer">
+<div class="w-12 h-12 flex-shrink-0 paper-block flex items-center justify-center rounded-full border-2 border-primary/20">
+<span class="material-symbols-outlined text-primary text-[24px]">castle</span>
+</div>
+<div class="flex-grow border-b border-hairline pb-4 flex justify-between items-center group-hover:border-primary transition-colors">
+<div>
+<p class="font-medium text-on-surface">경복궁 근정전</p>
+<p class="font-coord-label text-[10px] text-secondary mt-1">37.5796° N, 126.9770° E</p>
+</div>
+<span class="font-ranking-num text-secondary">24.04.30</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Settings -->
+<section>
+<div class="flex justify-between items-end mb-4 border-b border-hairline pb-2">
+<h3 class="font-section-title text-section-title text-on-surface">설정 및 보안</h3>
+<span class="font-coord-label text-coord-label text-secondary">SYSTEM</span>
+</div>
+<div class="space-y-1">
+<button class="w-full flex items-center justify-between py-4 hover:bg-white/50 transition-colors px-2 -mx-2 rounded">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">location_on</span>
+<span class="text-on-surface">위치 서비스 설정</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-coord-label text-primary font-bold">GPS: ON</span>
+<span class="material-symbols-outlined text-secondary text-sm">chevron_right</span>
+</div>
+</button>
+<div class="h-[1px] w-full bg-hairline"></div>
+<button class="w-full flex items-center justify-between py-4 hover:bg-white/50 transition-colors px-2 -mx-2 rounded">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">security</span>
+<span class="text-on-surface">알림 및 보안</span>
+</div>
+<span class="material-symbols-outlined text-secondary text-sm">chevron_right</span>
+</button>
+<div class="h-[1px] w-full bg-hairline"></div>
+<button class="w-full flex items-center justify-between py-4 hover:bg-white/50 transition-colors px-2 -mx-2 rounded">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">help</span>
+<span class="text-on-surface">고객 지원</span>
+</div>
+<span class="material-symbols-outlined text-secondary text-sm">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- Logout -->
+<section class="pt-4 flex flex-col items-center gap-6">
+<button class="text-secondary opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+<span class="font-coord-label text-xs tracking-tighter">LOGOUT (로그아웃)</span>
+</button>
+<!-- Footer Identity -->
+<div class="flex flex-col items-center gap-1 opacity-20 select-none">
+<p class="font-display-title text-[14px] text-on-surface-variant italic">The Traveler's Field Journal</p>
+<p class="font-coord-label text-[10px] text-on-surface-variant">SEQ NO. 2023-STAMPY-KR</p>
+</div>
+</section>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-side-padding pb-safe h-20 bg-surface-container-lowest dark:bg-surface-container-lowest border-t border-outline-variant">
+<a class="flex flex-col items-center justify-center text-secondary dark:text-on-secondary-fixed-variant hover:text-primary-container transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-coord-label text-coord-label mt-1">홈</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-on-secondary-fixed-variant hover:text-primary-container transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">map</span>
+<span class="font-coord-label text-coord-label mt-1">지도</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-on-secondary-fixed-variant hover:text-primary-container transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-coord-label text-coord-label mt-1">도장</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-on-secondary-fixed-variant hover:text-primary-container transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-coord-label text-coord-label mt-1">랭킹</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim after:content-['•'] after:text-[8px] after:mt-1 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-coord-label text-coord-label mt-1">마이</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction for active state simulation
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (!this.classList.contains('text-primary')) {
+                    document.querySelectorAll('nav a').forEach(l => {
+                        l.className = "flex flex-col items-center justify-center text-secondary dark:text-on-secondary-fixed-variant hover:text-primary-container transition-colors active:scale-90 duration-200";
+                        const icon = l.querySelector('.material-symbols-outlined');
+                        if(icon) icon.style.fontVariationSettings = "'FILL' 0";
+                    });
+                    this.className = "flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim after:content-['•'] after:text-[8px] after:mt-1 active:scale-90 transition-transform duration-200";
+                    const activeIcon = this.querySelector('.material-symbols-outlined');
+                    if(activeIcon) activeIcon.style.fontVariationSettings = "'FILL' 1";
+                }
+            });
+        });
+    </script>
+</body></html>

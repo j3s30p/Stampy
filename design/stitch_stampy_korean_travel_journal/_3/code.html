@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Stampy - 주변 도장 지도</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .ink-bleed {
+            filter: blur(0.4px) contrast(1.2);
+        }
+        .hanji-texture {
+            background-color: #F4F0E8;
+            background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
+        }
+        .paper-surface {
+            background-color: #FFFCF6;
+            background-image: url("https://www.transparenttextures.com/patterns/paper.png");
+        }
+        .hairline-rule {
+            border: 0.5px solid #D8D2C7;
+        }
+        .vermilion-stamp {
+            color: #a83212;
+            border-color: #a83212;
+        }
+        .bottom-sheet-transition {
+            transition: transform 0.4s cubic-bezier(0.33, 1, 0.68, 1);
+        }
+        /* Hide scrollbar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#007ea1",
+                        "primary-fixed-dim": "#ffb4a2",
+                        "on-tertiary-fixed": "#001f29",
+                        "primary-container": "#ca4a28",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed": "#ffdbd2",
+                        "surface-variant": "#e1e3de",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#e0bfb7",
+                        "on-secondary-container": "#71615a",
+                        "secondary-fixed-dim": "#d6c2ba",
+                        "on-secondary-fixed-variant": "#52443d",
+                        "inverse-primary": "#ffb4a2",
+                        "surface-container-high": "#e7e9e4",
+                        "on-tertiary-container": "#fbfdff",
+                        "tertiary-fixed-dim": "#70d2fa",
+                        "secondary-container": "#f3ded5",
+                        "on-secondary-fixed": "#241914",
+                        "surface-bright": "#f8faf5",
+                        "tertiary-fixed": "#bce9ff",
+                        "primary": "#a83212",
+                        "on-primary-container": "#fffbff",
+                        "inverse-surface": "#2e312e",
+                        "surface-container-low": "#f3f4ef",
+                        "surface-tint": "#ac3414",
+                        "tertiary": "#006480",
+                        "secondary": "#6a5b54",
+                        "on-surface-variant": "#59413b",
+                        "on-tertiary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#3c0800",
+                        "on-tertiary-fixed-variant": "#004d63",
+                        "on-surface": "#191c19",
+                        "outline": "#8c716a",
+                        "surface-dim": "#d9dbd6",
+                        "inverse-on-surface": "#f0f1ec",
+                        "error": "#ba1a1a",
+                        "background": "#f8faf5",
+                        "surface-container-highest": "#e1e3de",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#f3ded5",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#edeee9",
+                        "surface": "#f8faf5",
+                        "on-primary-fixed-variant": "#891d00",
+                        "on-background": "#191c19"
+                    },
+                    "spacing": {
+                        "stack-md": "12px",
+                        "gutter": "16px",
+                        "section-gap": "40px",
+                        "side-padding": "20px",
+                        "stack-sm": "4px",
+                        "unit": "8px"
+                    },
+                    "fontFamily": {
+                        "display-title": ["Pretendard"],
+                        "coord-label": ["Geist Mono"],
+                        "section-title": ["Pretendard"],
+                        "body-main": ["Pretendard"],
+                        "ranking-num": ["Geist Mono"],
+                        "display-title-mobile": ["Pretendard"]
+                    },
+                    "fontSize": {
+                        "display-title": ["28px", {"lineHeight": "1.3", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "coord-label": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "section-title": ["20px", {"lineHeight": "1.4", "fontWeight": "700"}],
+                        "body-main": ["15px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "ranking-num": ["14px", {"lineHeight": "1.0", "fontWeight": "600"}],
+                        "display-title-mobile": ["24px", {"lineHeight": "1.3", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-main antialiased overflow-hidden">
+<!-- Top Navigation Anchor (Manual suppression check: Map is top-level, so we render) -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-side-padding h-16 bg-background border-b border-outline-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">edit_calendar</span>
+<h1 class="font-display-title-mobile text-display-title-mobile text-primary">Stampy</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low transition-colors p-2 rounded-full active:scale-95 duration-150 ease-in-out">notifications</button>
+</div>
+</header>
+<!-- Horizontal Filters -->
+<nav class="fixed top-16 left-0 w-full z-40 bg-background/80 backdrop-blur-md px-side-padding py-3 flex gap-2 overflow-x-auto no-scrollbar border-b border-outline-variant/30">
+<button class="px-4 py-1.5 rounded-full bg-primary text-white font-body-main text-sm whitespace-nowrap active:scale-95 transition-transform">전체</button>
+<button class="px-4 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant border border-outline-variant font-body-main text-sm whitespace-nowrap active:scale-95 transition-transform">미수집</button>
+<button class="px-4 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant border border-outline-variant font-body-main text-sm whitespace-nowrap active:scale-95 transition-transform">수집 완료</button>
+<button class="px-4 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant border border-outline-variant font-body-main text-sm whitespace-nowrap active:scale-95 transition-transform">행사</button>
+</nav>
+<!-- Full-screen Map Layer -->
+<main class="relative w-full h-screen bg-[#E5E1D8] overflow-hidden">
+<!-- Mock Map Content -->
+<div class="absolute inset-0 hanji-texture opacity-40 pointer-events-none"></div>
+<!-- Map Visualization (Simulated Cartography) -->
+<svg class="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+<filter id="ink-bleed-filter">
+<fegaussianblur in="SourceGraphic" result="blur" stddeviation="0.5"></fegaussianblur>
+<fecontrast border="2" in="blur" result="contrast"></fecontrast>
+</filter>
+<!-- Grid Lines -->
+<path d="M0 100 L2000 100 M0 300 L2000 300 M0 500 L2000 500 M0 700 L2000 700" stroke="#D8D2C7" stroke-width="0.5"></path>
+<path d="M100 0 L100 2000 M300 0 L300 2000 M500 0 L500 2000 M700 0 L700 2000" stroke="#D8D2C7" stroke-width="0.5"></path>
+<!-- User Location (Blue Dot) -->
+<circle cx="210" cy="480" fill="#007ea1" opacity="0.2" r="8"></circle>
+<circle cx="210" cy="480" fill="#007ea1" r="4"></circle>
+<!-- Gyeongbokgung Radius (100m) -->
+<circle cx="240" cy="420" fill="#a83212" opacity="0.05" r="60" stroke="#a83212" stroke-dasharray="4 2" stroke-width="1"></circle>
+<!-- Markers -->
+<!-- Selected Marker -->
+<g class="cursor-pointer" transform="translate(240, 420)">
+<path d="M0 0 L-10 -20 A 10 10 0 1 1 10 -20 Z" fill="#a83212" filter="url(#ink-bleed-filter)"></path>
+<circle cx="0" cy="-20" fill="#FFFCF6" r="4"></circle>
+</g>
+<!-- Other Markers -->
+<g opacity="0.6" transform="translate(120, 320)">
+<path d="M0 0 L-8 -16 A 8 8 0 1 1 8 -16 Z" fill="#6a5b54"></path>
+</g>
+<g opacity="0.6" transform="translate(350, 550)">
+<path d="M0 0 L-8 -16 A 8 8 0 1 1 8 -16 Z" fill="#6a5b54"></path>
+</g>
+</svg>
+<!-- Map Coordinate Metadata -->
+<div class="absolute top-28 right-5 font-coord-label text-coord-label text-secondary flex flex-col items-end gap-1 select-none">
+<span>37.5796° N</span>
+<span>126.9770° E</span>
+<div class="w-12 h-px bg-outline-variant mt-1"></div>
+<span>ALT 34M</span>
+</div>
+<!-- Floating UI: Compass/Re-center -->
+<div class="absolute right-5 top-1/2 -translate-y-1/2 flex flex-col gap-3">
+<button class="w-10 h-10 rounded-full paper-surface hairline-rule flex items-center justify-center text-secondary active:scale-90 transition-transform">
+<span class="material-symbols-outlined">explore</span>
+</button>
+<button class="w-10 h-10 rounded-full paper-surface hairline-rule flex items-center justify-center text-primary active:scale-90 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">my_location</span>
+</button>
+</div>
+</main>
+<!-- Draggable Paper Bottom Sheet -->
+<div class="fixed inset-x-0 bottom-20 z-40 paper-surface border-t border-outline-variant rounded-t-xl bottom-sheet-transition translate-y-0 shadow-2xl" id="bottomSheet">
+<!-- Handle -->
+<div class="flex justify-center py-3 cursor-grab active:cursor-grabbing">
+<div class="w-12 h-1 bg-outline-variant rounded-full"></div>
+</div>
+<div class="px-side-padding pb-8 pt-2">
+<div class="flex gap-4 items-start">
+<!-- Thumbnail -->
+<div class="relative w-24 h-24 shrink-0 overflow-hidden border border-outline-variant rounded-sm">
+<img class="w-full h-full object-cover" data-alt="A cinematic, high-quality photograph of Gyeongbokgung Palace in Seoul, Korea. The shot captures the intricate traditional eaves of a pavilion against a soft, dawn sky. The lighting is warm and golden, highlighting the vibrant reds and greens of the Dancheong paint. The image has a subtle film grain texture, evoking an editorial travel journal aesthetic with muted paper-like tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuADmU1lxZ8wBshN2vHWemGsncRfr2YabbXZZK09dHQsEkzpgyph8R5GjxBrcG-qUTDkWimG-54Hjr_HiDQ3PoZ1axfLaOMwiWc9WwYX7FR3LugVR_PEk8sb6SD4XsU9cCQ7alVVqgLpYNuo4YhqNlAokSdnXGDYPM-enb9MM6VHDVHuAPalqH8xDWwb-_8ig-gyT_pqKNthgp-m9fae4vWjVUYZ6tqgfpK5Ccu3d3c2Uk4cqMLC9qV0WYUSEjNYRlkIUpkmdAp1395F"/>
+<div class="absolute bottom-1 right-1 font-coord-label text-[8px] text-white bg-black/30 px-1 py-0.5">37.57°N</div>
+</div>
+<!-- Details -->
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<div>
+<h2 class="font-section-title text-section-title text-on-surface">경복궁</h2>
+<span class="text-xs text-secondary font-body-main">고궁 · 역사적 명소</span>
+</div>
+<div class="font-coord-label text-coord-label text-primary bg-primary-fixed/30 px-2 py-1 rounded">182 m</div>
+</div>
+<p class="text-secondary text-sm font-body-main leading-snug mt-2">
+<span class="material-symbols-outlined text-xs align-middle mr-1">near_me</span>
+                        인증 지점까지 182 m 남았어요
+                    </p>
+<div class="mt-4 flex gap-2">
+<button class="flex-1 py-2.5 bg-primary text-white font-section-title text-sm active:scale-95 transition-transform flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">verified</span>
+                            도장 찍기
+                        </button>
+<button class="px-4 py-2.5 border border-outline text-secondary font-section-title text-sm active:scale-95 transition-transform">
+                            상세보기
+                        </button>
+</div>
+</div>
+</div>
+<!-- Neighborhood Stamps (Minimal Horizontal List) -->
+<div class="mt-6 pt-6 border-t border-outline-variant/30">
+<p class="font-coord-label text-coord-label text-on-surface-variant uppercase mb-4">Nearby Discoveries</p>
+<div class="flex gap-4 overflow-x-auto no-scrollbar">
+<div class="shrink-0 flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full border border-outline-variant bg-surface-container-low flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary opacity-40">museum</span>
+</div>
+<span class="text-[10px] font-body-main text-secondary">국립민속박물관</span>
+</div>
+<div class="shrink-0 flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full border border-outline-variant bg-surface-container-low flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary opacity-40">park</span>
+</div>
+<span class="text-[10px] font-body-main text-secondary">광화문 광장</span>
+</div>
+<div class="shrink-0 flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full border border-outline-variant bg-surface-container-low flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary opacity-40">temple_buddhist</span>
+</div>
+<span class="text-[10px] font-body-main text-secondary">조계사</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation Anchor -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-side-padding pb-safe h-20 bg-surface-container-lowest border-t border-outline-variant">
+<!-- Home -->
+<a class="flex flex-col items-center justify-center text-secondary dark:text-on-secondary-fixed-variant hover:text-primary-container transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-coord-label text-coord-label mt-1">홈</span>
+</a>
+<!-- Map (ACTIVE) -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim after:content-['•'] after:text-[8px] after:mt-1 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">map</span>
+<span class="font-coord-label text-coord-label mt-1">지도</span>
+</a>
+<!-- Stamp -->
+<a class="flex flex-col items-center justify-center text-secondary dark:text-on-secondary-fixed-variant hover:text-primary-container transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-coord-label text-coord-label mt-1">도장</span>
+</a>
+<!-- Leaderboard -->
+<a class="flex flex-col items-center justify-center text-secondary dark:text-on-secondary-fixed-variant hover:text-primary-container transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-coord-label text-coord-label mt-1">랭킹</span>
+</a>
+<!-- My -->
+<a class="flex flex-col items-center justify-center text-secondary dark:text-on-secondary-fixed-variant hover:text-primary-container transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-coord-label text-coord-label mt-1">마이</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction for bottom sheet drag simulation
+        let isDragging = false;
+        let startY = 0;
+        const sheet = document.getElementById('bottomSheet');
+
+        sheet.addEventListener('mousedown', startDrag);
+        sheet.addEventListener('touchstart', startDrag);
+
+        function startDrag(e) {
+            isDragging = true;
+            startY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('touchmove', onDrag);
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('touchend', endDrag);
+        }
+
+        function onDrag(e) {
+            if (!isDragging) return;
+            const currentY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+            const diff = currentY - startY;
+            if (diff > 0) {
+                sheet.style.transform = `translateY(${diff}px)`;
+            }
+        }
+
+        function endDrag(e) {
+            isDragging = false;
+            sheet.style.transform = `translateY(0px)`;
+            document.removeEventListener('mousemove', onDrag);
+            document.removeEventListener('touchmove', onDrag);
+        }
+    </script>
+</body></html>

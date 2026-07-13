@@ -5,5 +5,7 @@ web-build/
 ios/
 android/
 repo/
+design/
+flutter_app/
 package-lock.json
 expo-env.d.ts
