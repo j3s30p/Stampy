@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stampy/core/auth/auth_providers.dart';
 
 import '../data/fake_stamp_repository.dart';
 import '../domain/stamp_domain.dart';
@@ -40,11 +41,28 @@ final class StampSessionState {
 final class StampSessionController extends Notifier<StampSessionState> {
   late StampRepository _repository;
   int _activeCollections = 0;
+  int _generation = 0;
+  String? _sessionKey;
 
   @override
   StampSessionState build() {
     _repository = ref.watch(stampRepositoryProvider);
-    unawaited(Future<void>.microtask(_loadCollected));
+    _sessionKey = ref.watch(
+      currentAuthUserProvider.select(
+        (authUser) => switch (authUser) {
+          AsyncData(:final value) => value.id ?? '',
+          _ => null,
+        },
+      ),
+    );
+    final generation = ++_generation;
+    _activeCollections = 0;
+    if (_sessionKey != null) {
+      final repository = _repository;
+      unawaited(
+        Future<void>.microtask(() => _loadCollected(repository, generation)),
+      );
+    }
     return StampSessionState();
   }
 
@@ -56,11 +74,22 @@ final class StampSessionController extends Notifier<StampSessionState> {
   }
 
   Future<CollectStampResult> collect(CollectStampRequest request) async {
+    if (_sessionKey == null) {
+      throw const StampRepositoryException('The stamp session is not ready.');
+    }
+
+    final repository = _repository;
+    final generation = _generation;
     _activeCollections += 1;
     state = state.copyWith(isCollecting: true, clearError: true);
 
     try {
-      final result = await _repository.collect(request);
+      final result = await repository.collect(request);
+      if (!_isCurrent(generation)) {
+        throw const StampRepositoryException(
+          'The stamp session changed during collection.',
+        );
+      }
       final stamp = switch (result) {
         CollectStampSuccess(:final record) => record,
         CollectStampDuplicate(:final existing) => existing,
@@ -73,25 +102,39 @@ final class StampSessionController extends Notifier<StampSessionState> {
       );
       return result;
     } on Object catch (error) {
-      state = state.copyWith(error: error);
+      if (_isCurrent(generation)) {
+        state = state.copyWith(error: error);
+      }
       rethrow;
     } finally {
-      _activeCollections -= 1;
-      state = state.copyWith(isCollecting: _activeCollections > 0);
+      if (_isCurrent(generation)) {
+        _activeCollections -= 1;
+        state = state.copyWith(isCollecting: _activeCollections > 0);
+      }
     }
   }
 
-  Future<void> _loadCollected() async {
+  Future<void> _loadCollected(
+    StampRepository repository,
+    int generation,
+  ) async {
     try {
-      final collected = await _repository.loadCollected();
+      final collected = await repository.loadCollected();
+      if (!_isCurrent(generation)) {
+        return;
+      }
       state = state.copyWith(
         collectedStamps: _mergeByContentId(collected, state.collectedStamps),
         clearError: true,
       );
     } on Object catch (error) {
-      state = state.copyWith(error: error);
+      if (_isCurrent(generation)) {
+        state = state.copyWith(error: error);
+      }
     }
   }
+
+  bool _isCurrent(int generation) => ref.mounted && generation == _generation;
 }
 
 List<CollectedStamp> _mergeByContentId(
