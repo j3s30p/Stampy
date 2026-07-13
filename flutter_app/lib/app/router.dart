@@ -7,9 +7,11 @@ import 'package:go_router/go_router.dart';
 import 'package:stampy/app/stamp_collect_coordinator.dart';
 import 'package:stampy/app/stamp_collect_success_policy.dart';
 import 'package:stampy/app/theme/app_colors.dart';
+import 'package:stampy/core/auth/auth.dart';
 import 'package:stampy/core/location/location.dart';
 import 'package:stampy/core/widgets/stampy_bottom_navigation.dart';
 import 'package:stampy/features/home/presentation/home_screen.dart';
+import 'package:stampy/features/map/data/map_providers.dart';
 import 'package:stampy/features/map/domain/map_collect.dart';
 import 'package:stampy/features/map/domain/map_models.dart';
 import 'package:stampy/features/map/presentation/map_screen.dart';
@@ -97,21 +99,34 @@ class _MapStampCollectionRouteState
 
   @override
   Widget build(BuildContext context) {
-    final session = ref.watch(stampSessionProvider);
-    final collectedContentIds = Set<String>.unmodifiable(
-      session.collectedStamps.map((stamp) => stamp.contentId),
-    );
+    final repository = ref.watch(readyMapRepositoryProvider);
+    return repository.when(
+      skipLoadingOnRefresh: false,
+      skipLoadingOnReload: false,
+      data: (repository) {
+        final session = ref.watch(stampSessionProvider);
+        final collectedContentIds = Set<String>.unmodifiable(
+          session.collectedStamps.map((stamp) => stamp.contentId),
+        );
 
-    return MapScreen(
-      collectedContentIds: collectedContentIds,
-      resolveCollectAvailability: (pin, locationState) =>
-          resolveStampCollectAvailability(
-            pin: pin,
-            locationState: locationState,
-            isSessionCollected: collectedContentIds.contains(pin.contentId),
-          ),
-      onCollectRequested: _requestCollection,
-      onCollectSucceeded: _showCollectionSuccess,
+        return MapScreen(
+          repository: repository,
+          collectedContentIds: collectedContentIds,
+          resolveCollectAvailability: (pin, locationState) =>
+              resolveStampCollectAvailability(
+                pin: pin,
+                locationState: locationState,
+                isSessionCollected: collectedContentIds.contains(pin.contentId),
+              ),
+          onCollectRequested: _requestCollection,
+          onCollectSucceeded: _showCollectionSuccess,
+        );
+      },
+      error: (error, stackTrace) => _MapConnectionError(
+        canRetry: error is! AuthRepositoryException || error.isRetryable,
+        onRetry: () => ref.invalidate(currentAuthUserProvider),
+      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
     );
   }
 
@@ -173,6 +188,36 @@ class _MapStampCollectionRouteState
           }),
     );
   }
+}
+
+class _MapConnectionError extends StatelessWidget {
+  const _MapConnectionError({required this.canRetry, required this.onRetry});
+
+  final bool canRetry;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.cloud_off_outlined, size: 32),
+          const SizedBox(height: 12),
+          Text(
+            '지도 연결을 준비하지 못했어요.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          if (canRetry) ...[
+            const SizedBox(height: 12),
+            FilledButton(onPressed: onRetry, child: const Text('다시 시도')),
+          ],
+        ],
+      ),
+    ),
+  );
 }
 
 CollectedStamp? _stampByContentId(

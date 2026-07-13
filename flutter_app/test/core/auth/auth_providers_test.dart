@@ -119,6 +119,47 @@ void main() {
       expect(repository.signInCalls, 1);
     },
   );
+
+  test(
+    'signed-out auth state is loading until replacement completes',
+    () async {
+      final changes = StreamController<AuthUser?>();
+      addTearDown(changes.close);
+      final replacement = Completer<AuthUser>();
+      final repository = _SpyAuthRepository(
+        currentUser: AuthUser.session(
+          id: 'expired-anonymous-user',
+          isAnonymous: true,
+        ),
+        signedInFuture: replacement.future,
+        authStateChanges: changes.stream,
+      );
+      final container = ProviderContainer(
+        overrides: [authRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+      _listenToCurrentUser(container);
+
+      await container.read(currentAuthUserProvider.future);
+      repository.currentUser = null;
+      changes.add(null);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(container.read(currentAuthUserProvider).isLoading, isTrue);
+      final replacementFuture = container.read(currentAuthUserProvider.future);
+      var replacementResolved = false;
+      replacementFuture.then((_) => replacementResolved = true);
+      await Future<void>.delayed(Duration.zero);
+      expect(replacementResolved, isFalse);
+
+      replacement.complete(
+        AuthUser.session(id: 'replacement-user', isAnonymous: true),
+      );
+
+      expect((await replacementFuture).id, 'replacement-user');
+      expect(repository.signInCalls, 1);
+    },
+  );
 }
 
 void _listenToCurrentUser(ProviderContainer container) {
@@ -133,6 +174,7 @@ final class _SpyAuthRepository implements AuthRepository {
   _SpyAuthRepository({
     this.currentUser,
     this.signedInUser,
+    this.signedInFuture,
     this.error,
     this.authStateChanges = const Stream<AuthUser?>.empty(),
   });
@@ -142,6 +184,7 @@ final class _SpyAuthRepository implements AuthRepository {
   @override
   final Stream<AuthUser?> authStateChanges;
   final AuthUser? signedInUser;
+  final Future<AuthUser>? signedInFuture;
   final Object? error;
   int signInCalls = 0;
 
@@ -151,6 +194,13 @@ final class _SpyAuthRepository implements AuthRepository {
     final failure = error;
     if (failure != null) {
       return Future<AuthUser>.error(failure);
+    }
+
+    final pendingUser = signedInFuture;
+    if (pendingUser != null) {
+      final user = await pendingUser;
+      currentUser = user;
+      return user;
     }
 
     final user =
