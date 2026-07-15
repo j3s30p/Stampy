@@ -10,6 +10,42 @@ import 'package:stampy/features/stamp/presentation/stamp_collection_screen.dart'
 import 'package:stampy/features/stamp/presentation/stamp_session.dart';
 
 void main() {
+  testWidgets('does not render an empty collection while stamps are loading', (
+    tester,
+  ) async {
+    await _pumpCollectionState(tester, StampSessionState());
+
+    expect(find.text('동기화 중'), findsOneWidget);
+    expect(find.text('도장 기록을\n불러오고 있어요'), findsOneWidget);
+    expect(find.text('0 / 24'), findsNothing);
+    expect(find.text('아직 비어 있음'), findsNothing);
+  });
+
+  for (final (loadStatus, badge, title)
+      in <(StampSessionLoadStatus, String, String)>[
+        (StampSessionLoadStatus.loading, '동기화 중', '도장 기록을\n불러오고 있어요'),
+        (StampSessionLoadStatus.failed, '동기화 실패', '도장 기록을\n불러오지 못했어요'),
+      ]) {
+    testWidgets('keeps known cards while ${loadStatus.name}', (tester) async {
+      await _pumpCollectionState(
+        tester,
+        StampSessionState(
+          collectedStamps: <CollectedStamp>[_knownStamp()],
+          loadStatus: loadStatus,
+          error: loadStatus == StampSessionLoadStatus.failed
+              ? StateError('private-stamp-error')
+              : null,
+        ),
+      );
+
+      expect(find.text(badge), findsOneWidget);
+      expect(find.text(title), findsOneWidget);
+      expect(find.text('확인된 도장'), findsOneWidget);
+      expect(find.text('아직 비어 있음'), findsNothing);
+      expect(find.textContaining('private-stamp-error'), findsNothing);
+    });
+  }
+
   testWidgets('reflects a newly collected stamp and keeps 24 journal slots', (
     tester,
   ) async {
@@ -115,3 +151,36 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 }
+
+Future<void> _pumpCollectionState(
+  WidgetTester tester,
+  StampSessionState state,
+) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        stampSessionProvider.overrideWithBuild((ref, notifier) => state),
+      ],
+      child: MaterialApp(
+        theme: StampyTheme.light(),
+        home: const Scaffold(body: StampCollectionScreen()),
+      ),
+    ),
+  );
+  await tester.pump();
+}
+
+CollectedStamp _knownStamp() => CollectedStamp(
+  contentId: 'known-partial-record',
+  title: '확인된 도장',
+  kind: StampCandidateKind.spot,
+  verificationFix: LocationFix(
+    coordinates: Coordinates(
+      latitude: Latitude(37.579617),
+      longitude: Longitude(126.977041),
+    ),
+    accuracyMeters: 5,
+    timestamp: DateTime.utc(2026, 7, 13, 11, 59),
+  ),
+  collectedAt: DateTime.utc(2026, 7, 13, 12),
+);

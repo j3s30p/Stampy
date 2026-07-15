@@ -9,8 +9,17 @@ class RankingScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final collectedStampCount = ref.watch(
-      stampSessionProvider.select((session) => session.collectedStamps.length),
+    final (:collectedStampCount, :loadStatus) = ref.watch(
+      stampSessionProvider.select(
+        (session) => (
+          collectedStampCount: session.collectedStamps.length,
+          loadStatus: session.loadStatus,
+        ),
+      ),
+    );
+    final personalRecord = _personalRecordPresentation(
+      loadStatus,
+      collectedStampCount,
     );
 
     return FieldJournalPage(
@@ -43,8 +52,8 @@ class RankingScreen extends ConsumerWidget {
           title: '나의 기록',
           child: JournalNotice(
             number: 'ME',
-            title: _personalRecordTitle(collectedStampCount),
-            description: _personalRecordDescription(collectedStampCount),
+            title: personalRecord.title,
+            description: personalRecord.description,
           ),
         ),
       ],
@@ -52,14 +61,45 @@ class RankingScreen extends ConsumerWidget {
   }
 }
 
-String _personalRecordTitle(int collectedStampCount) => collectedStampCount == 0
-    ? '첫 도장을 모으면\n기록이 시작돼요'
-    : '지금까지 도장\n$collectedStampCount개를 모았어요';
+({String title, String description}) _personalRecordPresentation(
+  StampSessionLoadStatus loadStatus,
+  int collectedStampCount,
+) {
+  final partialTitle = '확인된 도장\n$collectedStampCount개가 있어요';
+  if (loadStatus == StampSessionLoadStatus.loading && collectedStampCount > 0) {
+    return (
+      title: partialTitle,
+      description: '전체 기록 동기화가 끝나지 않아 현재 확인된 도장만 보여드려요.',
+    );
+  }
+  if (loadStatus == StampSessionLoadStatus.failed && collectedStampCount > 0) {
+    return (
+      title: partialTitle,
+      description: '전체 기록 동기화에 실패해 현재 확인된 도장만 보여드려요. 프로필에서 다시 불러와 주세요.',
+    );
+  }
 
-String _personalRecordDescription(int collectedStampCount) =>
-    collectedStampCount == 0
-    ? '관광지에 직접 방문해 첫 도장을 수집하고 나만의 여행 기록을 시작해 보세요.'
-    : '지금까지 수집한 전체 도장 기록입니다. 새로운 장소에서 다음 도장을 이어가 보세요.';
+  return switch (loadStatus) {
+    StampSessionLoadStatus.loading => (
+      title: '여행 기록을\n불러오고 있어요',
+      description: '수집한 도장을 확인하고 있습니다.',
+    ),
+    StampSessionLoadStatus.failed => (
+      title: '여행 기록을\n불러오지 못했어요',
+      description: '연결 상태를 확인한 뒤 프로필에서 다시 불러와 주세요.',
+    ),
+    StampSessionLoadStatus.loaded =>
+      collectedStampCount == 0
+          ? (
+              title: '첫 도장을 모으면\n기록이 시작돼요',
+              description: '관광지에 직접 방문해 첫 도장을 수집하고 나만의 여행 기록을 시작해 보세요.',
+            )
+          : (
+              title: '지금까지 도장\n$collectedStampCount개를 모았어요',
+              description: '지금까지 수집한 전체 도장 기록입니다. 새로운 장소에서 다음 도장을 이어가 보세요.',
+            ),
+  };
+}
 
 class _RankingRow extends StatelessWidget {
   const _RankingRow({

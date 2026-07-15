@@ -158,6 +158,81 @@ void main() {
     expect(find.text('3'), findsOneWidget);
   });
 
+  testWidgets('shows a loading stamp stat before any stamp is known', (
+    tester,
+  ) async {
+    await _pumpHome(
+      tester,
+      location: FakeLocationRepository(state: _availableLocation()),
+      recommendation: const FakeRecommendationRepository(),
+      stampSession: StampSessionState(),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      _stampStat(tester),
+      isA<JournalStat>()
+          .having((stat) => stat.value, 'value', '—')
+          .having((stat) => stat.suffix, 'suffix', isNull)
+          .having((stat) => stat.label, 'label', '도장 불러오는 중'),
+    );
+  });
+
+  testWidgets('shows a safe failed stamp stat without repository details', (
+    tester,
+  ) async {
+    await _pumpHome(
+      tester,
+      location: FakeLocationRepository(state: _availableLocation()),
+      recommendation: const FakeRecommendationRepository(),
+      stampSession: StampSessionState(
+        loadStatus: StampSessionLoadStatus.failed,
+        error: Exception('private stamp repository detail'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      _stampStat(tester),
+      isA<JournalStat>()
+          .having((stat) => stat.value, 'value', '—')
+          .having((stat) => stat.suffix, 'suffix', isNull)
+          .having((stat) => stat.label, 'label', '도장 불러오기 실패'),
+    );
+    expect(
+      find.textContaining('private stamp repository detail'),
+      findsNothing,
+    );
+  });
+
+  for (final (loadStatus, label) in <(StampSessionLoadStatus, String)>[
+    (StampSessionLoadStatus.loading, '확인된 도장'),
+    (StampSessionLoadStatus.failed, '확인된 도장 · 실패'),
+  ]) {
+    testWidgets('keeps the known count while status is ${loadStatus.name}', (
+      tester,
+    ) async {
+      await _pumpHome(
+        tester,
+        location: FakeLocationRepository(state: _availableLocation()),
+        recommendation: const FakeRecommendationRepository(),
+        stampSession: StampSessionState(
+          collectedStamps: <CollectedStamp>[_stamp('a'), _stamp('b')],
+          loadStatus: loadStatus,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        _stampStat(tester),
+        isA<JournalStat>()
+            .having((stat) => stat.value, 'value', '2')
+            .having((stat) => stat.suffix, 'suffix', '개')
+            .having((stat) => stat.label, 'label', label),
+      );
+    });
+  }
+
   testWidgets('shows loading while the current GPS request is pending', (
     tester,
   ) async {
@@ -184,6 +259,7 @@ Future<void> _pumpHome(
   required LocationRepository location,
   required RecommendationRepository recommendation,
   StampRepository? stamp,
+  StampSessionState? stampSession,
   ValueChanged<Recommendation>? onRecommendationSelected,
 }) => tester.pumpWidget(
   ProviderScope(
@@ -200,12 +276,17 @@ Future<void> _pumpHome(
       locationRepositoryProvider.overrideWithValue(location),
       recommendationRepositoryProvider.overrideWithValue(recommendation),
       if (stamp != null) stampRepositoryProvider.overrideWithValue(stamp),
+      if (stampSession != null)
+        stampSessionProvider.overrideWithBuild((ref, notifier) => stampSession),
     ],
     child: MaterialApp(
       home: HomeScreen(onRecommendationSelected: onRecommendationSelected),
     ),
   ),
 );
+
+JournalStat _stampStat(WidgetTester tester) =>
+    tester.widgetList<JournalStat>(find.byType(JournalStat)).first;
 
 LocationState _availableLocation() => LocationState.available(_locationFix());
 

@@ -14,49 +14,78 @@ class StampCollectionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final collectedStamps = ref.watch(
-      stampSessionProvider.select((state) => state.collectedStamps),
-    );
+    final stampSession = ref.watch(stampSessionProvider);
+    final collectedStamps = stampSession.collectedStamps;
     final textScale = MediaQuery.textScalerOf(context).scale(1);
     final useSingleColumn =
         MediaQuery.sizeOf(context).width < 360 || textScale > 1.3;
     final scaledCardExtent =
         270.0 + (textScale - 1).clamp(0.0, 3.0).toDouble() * 84.0;
-    final slotCount = collectedStamps.length > _collectionGoal
-        ? collectedStamps.length
-        : _collectionGoal;
+    final isLoaded = stampSession.loadStatus == StampSessionLoadStatus.loaded;
+    final slotCount = isLoaded
+        ? collectedStamps.length > _collectionGoal
+              ? collectedStamps.length
+              : _collectionGoal
+        : collectedStamps.length;
+    final statusNotice = switch (stampSession.loadStatus) {
+      StampSessionLoadStatus.loading => const JournalNotice(
+        number: 'SYNC',
+        title: '도장 기록을\n불러오고 있어요',
+        description: '이 세션에 연결된 수집 기록을 확인하고 있습니다.',
+      ),
+      StampSessionLoadStatus.failed => const JournalNotice(
+        number: 'SYNC',
+        title: '도장 기록을\n불러오지 못했어요',
+        description: '연결 상태를 확인한 뒤 프로필에서 다시 불러와 주세요.',
+      ),
+      StampSessionLoadStatus.loaded => null,
+    };
 
     return FieldJournalPage(
       eyebrow: '나의 여행 기록',
       title: '모은 도장을\n한눈에 펼쳐보세요',
       description: '방문한 장소의 이름과 날짜가 쌓일수록 나만의 한국 여행 도감이 완성됩니다.',
       trailing: JournalBadge(
-        label: '${collectedStamps.length} / $_collectionGoal',
-        emphasized: collectedStamps.isNotEmpty,
+        label: switch (stampSession.loadStatus) {
+          StampSessionLoadStatus.loading => '동기화 중',
+          StampSessionLoadStatus.failed => '동기화 실패',
+          StampSessionLoadStatus.loaded =>
+            '${collectedStamps.length} / $_collectionGoal',
+        },
+        emphasized: isLoaded && collectedStamps.isNotEmpty,
       ),
       children: [
         JournalSection(
           index: '01',
           title: '도장 컬렉션',
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: useSingleColumn ? 1 : 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              mainAxisExtent: useSingleColumn ? scaledCardExtent : 238,
-            ),
-            itemCount: slotCount,
-            itemBuilder: (context, index) {
-              if (index < collectedStamps.length) {
-                return _CollectedStampCard(
-                  index: index + 1,
-                  stamp: collectedStamps[index],
-                );
-              }
-              return _EmptyStamp(index: index + 1);
-            },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ?statusNotice,
+              if (statusNotice != null && slotCount > 0)
+                const SizedBox(height: 12),
+              if (slotCount > 0)
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: useSingleColumn ? 1 : 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    mainAxisExtent: useSingleColumn ? scaledCardExtent : 238,
+                  ),
+                  itemCount: slotCount,
+                  itemBuilder: (context, index) {
+                    if (index < collectedStamps.length) {
+                      return _CollectedStampCard(
+                        index: index + 1,
+                        stamp: collectedStamps[index],
+                      );
+                    }
+                    return _EmptyStamp(index: index + 1);
+                  },
+                ),
+            ],
           ),
         ),
       ],
