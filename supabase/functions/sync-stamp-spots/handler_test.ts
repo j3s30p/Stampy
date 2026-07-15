@@ -12,16 +12,22 @@ const CONFIG: SyncStampSpotsConfig = {
 
 const resolvedResponse = (response: Response): Promise<Response> => Promise.resolve(response);
 
-const createRequest = (contentIds: unknown, token = SYNC_TOKEN): Request => {
+const createPayloadRequest = (payload: unknown, token = SYNC_TOKEN): Request => {
   return new Request('https://stampy.supabase.co/functions/v1/sync-stamp-spots', {
     method: 'POST',
     headers: {
       authorization: `Bearer ${token}`,
       'content-type': 'application/json',
     },
-    body: JSON.stringify({ contentIds }),
+    body: JSON.stringify(payload),
   });
 };
+
+const createRequest = (contentIds: unknown, token = SYNC_TOKEN): Request =>
+  createPayloadRequest({ contentIds }, token);
+
+const createNearbyRequest = (nearby: unknown, token = SYNC_TOKEN): Request =>
+  createPayloadRequest({ nearby }, token);
 
 const tourApiResponse = (
   contentId: string,
@@ -48,6 +54,26 @@ const tourApiResponse = (
           item: options.itemAsObject ? item : [item],
         },
         totalCount: 1,
+      },
+    },
+  });
+};
+
+const locationBasedResponse = (
+  contentIds: readonly unknown[],
+  resultCode = '0000',
+): Response => {
+  return Response.json({
+    response: {
+      header: {
+        resultCode,
+        resultMsg: 'OK',
+      },
+      body: {
+        items: contentIds.length === 0
+          ? ''
+          : { item: contentIds.map((contentid) => ({ contentid })) },
+        totalCount: contentIds.length,
       },
     },
   });
@@ -148,6 +174,275 @@ Deno.test('maps content type 15 to event and accepts the documented object item 
   ]);
 });
 
+Deno.test('discovers nearby content IDs with official coordinate ordering', async () => {
+  const requests: Request[] = [];
+  const fetcher = (
+    input: string | URL | Request,
+    init?: RequestInit,
+  ): Promise<Response> => {
+    const request = new Request(input, init);
+    requests.push(request);
+    const url = new URL(request.url);
+
+    if (url.pathname.endsWith('/locationBasedList2')) {
+      return resolvedResponse(locationBasedResponse(['126508', '126509']));
+    }
+    if (url.pathname.endsWith('/detailCommon2')) {
+      return resolvedResponse(tourApiResponse(url.searchParams.get('contentId') ?? ''));
+    }
+
+    return resolvedResponse(new Response(null, { status: 201 }));
+  };
+  const response = await createSyncStampSpotsHandler(CONFIG, fetcher)(
+    createNearbyRequest({
+      latitude: 37.579617,
+      longitude: 126.977041,
+      radiusMeters: 1000,
+      limit: 2,
+    }),
+  );
+
+  equal(response.status, 200);
+  deepStrictEqual(await response.json(), {
+    syncedCount: 2,
+    contentIds: ['126508', '126509'],
+  });
+  equal(requests.length, 4);
+
+  const discoveryUrl = new URL(requests[0].url);
+  equal(discoveryUrl.pathname, '/B551011/KorService2/locationBasedList2');
+  equal(discoveryUrl.searchParams.get('serviceKey'), CONFIG.tourApiServiceKey);
+  match(discoveryUrl.search, /serviceKey=decoded%2B%2Fservice%3Dkey/);
+  equal(discoveryUrl.searchParams.get('MobileOS'), 'ETC');
+  equal(discoveryUrl.searchParams.get('MobileApp'), 'Stampy');
+  equal(discoveryUrl.searchParams.get('_type'), 'json');
+  equal(discoveryUrl.searchParams.get('mapX'), '126.977041');
+  equal(discoveryUrl.searchParams.get('mapY'), '37.579617');
+  equal(discoveryUrl.searchParams.get('radius'), '1000');
+  equal(discoveryUrl.searchParams.get('numOfRows'), '2');
+  equal(discoveryUrl.searchParams.get('pageNo'), '1');
+  equal(discoveryUrl.searchParams.get('arrange'), 'E');
+
+  const detailIds = requests
+    .filter((request) => new URL(request.url).pathname.endsWith('/detailCommon2'))
+    .map((request) => new URL(request.url).searchParams.get('contentId'));
+  deepStrictEqual(detailIds, ['126508', '126509']);
+  equal(new URL(requests[3].url).pathname, '/rest/v1/stamp_spots');
+});
+
+Deno.test('requires exactly one sync request mode before external calls', async () => {
+  let calls = 0;
+  const fetcher = (): Promise<Response> => {
+    calls += 1;
+    return resolvedResponse(new Response(null, { status: 500 }));
+  };
+  const handler = createSyncStampSpotsHandler(CONFIG, fetcher);
+  const nearby = {
+    latitude: 37.579617,
+    longitude: 126.977041,
+    radiusMeters: 1000,
+    limit: 5,
+  };
+
+  for (const payload of [{}, { contentIds: ['126508'], nearby }]) {
+    const response = await handler(createPayloadRequest(payload));
+    equal(response.status, 400);
+    deepStrictEqual(await response.json(), { error: 'invalid_request' });
+  }
+
+  equal(calls, 0);
+});
+
+Deno.test('rejects invalid nearby bounds before external calls', async () => {
+  let calls = 0;
+  const fetcher = (): Promise<Response> => {
+    calls += 1;
+    return resolvedResponse(new Response(null, { status: 500 }));
+  };
+  const handler = createSyncStampSpotsHandler(CONFIG, fetcher);
+  const valid = {
+    latitude: 37.579617,
+    longitude: 126.977041,
+    radiusMeters: 1000,
+    limit: 5,
+  };
+  const invalidNearby = [
+    null,
+    { ...valid, latitude: 91 },
+    { ...valid, longitude: -181 },
+    { ...valid, radiusMeters: 0 },
+    { ...valid, radiusMeters: 20_001 },
+    { ...valid, radiusMeters: 1.5 },
+    { ...valid, limit: 0 },
+    { ...valid, limit: 21 },
+    { ...valid, limit: 1.5 },
+  ];
+
+  for (const nearby of invalidNearby) {
+    const response = await handler(createNearbyRequest(nearby));
+    equal(response.status, 400);
+    deepStrictEqual(await response.json(), { error: 'invalid_nearby' });
+  }
+
+  const nonFinite = new Request(
+    'https://stampy.supabase.co/functions/v1/sync-stamp-spots',
+    {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${SYNC_TOKEN}`,
+        'content-type': 'application/json',
+      },
+      body: '{"nearby":{"latitude":1e400,"longitude":126.977041,"radiusMeters":1000,"limit":5}}',
+    },
+  );
+  const nonFiniteResponse = await handler(nonFinite);
+  equal(nonFiniteResponse.status, 400);
+  deepStrictEqual(await nonFiniteResponse.json(), { error: 'invalid_nearby' });
+  equal(calls, 0);
+});
+
+Deno.test('deduplicates and caps discovered content IDs to the requested limit', async () => {
+  const detailIds: string[] = [];
+  let databaseCalls = 0;
+  const fetcher = (
+    input: string | URL | Request,
+    init?: RequestInit,
+  ): Promise<Response> => {
+    const request = new Request(input, init);
+    const url = new URL(request.url);
+
+    if (url.pathname.endsWith('/locationBasedList2')) {
+      return resolvedResponse(
+        locationBasedResponse(['126508', '126508', 126509, '126510']),
+      );
+    }
+    if (url.pathname.endsWith('/detailCommon2')) {
+      const contentId = url.searchParams.get('contentId') ?? '';
+      detailIds.push(contentId);
+      return resolvedResponse(tourApiResponse(contentId));
+    }
+
+    databaseCalls += 1;
+    return resolvedResponse(new Response(null, { status: 201 }));
+  };
+  const response = await createSyncStampSpotsHandler(CONFIG, fetcher)(
+    createNearbyRequest({
+      latitude: 37.579617,
+      longitude: 126.977041,
+      radiusMeters: 20_000,
+      limit: 2,
+    }),
+  );
+
+  equal(response.status, 200);
+  deepStrictEqual(await response.json(), {
+    syncedCount: 2,
+    contentIds: ['126508', '126509'],
+  });
+  deepStrictEqual(detailIds, ['126508', '126509']);
+  equal(databaseCalls, 1);
+});
+
+Deno.test('returns a safe not-found error for an empty nearby result', async () => {
+  let calls = 0;
+  const fetcher = (): Promise<Response> => {
+    calls += 1;
+    return resolvedResponse(locationBasedResponse([]));
+  };
+  const response = await createSyncStampSpotsHandler(CONFIG, fetcher)(
+    createNearbyRequest({
+      latitude: 37.579617,
+      longitude: 126.977041,
+      radiusMeters: 1000,
+      limit: 5,
+    }),
+  );
+
+  equal(response.status, 404);
+  deepStrictEqual(await response.json(), { error: 'nearby_content_not_found' });
+  equal(calls, 1);
+});
+
+Deno.test('returns safe errors for unavailable or invalid nearby responses', async () => {
+  const upstreamCases: readonly {
+    readonly response: () => Response;
+    readonly error: string;
+  }[] = [
+    {
+      response: () => new Response(null, { status: 503 }),
+      error: 'tour_api_unavailable',
+    },
+    {
+      response: () => locationBasedResponse(['126508'], '03'),
+      error: 'tour_api_invalid_response',
+    },
+    {
+      response: () => locationBasedResponse(['not-a-content-id']),
+      error: 'tour_api_invalid_response',
+    },
+    {
+      response: () => new Response('<OpenAPI_ServiceResponse />'),
+      error: 'tour_api_invalid_response',
+    },
+  ];
+
+  for (const upstreamCase of upstreamCases) {
+    let calls = 0;
+    const fetcher = (): Promise<Response> => {
+      calls += 1;
+      return resolvedResponse(upstreamCase.response());
+    };
+    const response = await createSyncStampSpotsHandler(CONFIG, fetcher)(
+      createNearbyRequest({
+        latitude: 37.579617,
+        longitude: 126.977041,
+        radiusMeters: 1000,
+        limit: 5,
+      }),
+    );
+
+    equal(response.status, 502);
+    deepStrictEqual(await response.json(), { error: upstreamCase.error });
+    equal(calls, 1);
+  }
+});
+
+Deno.test('does not write nearby catalog rows when a detail lookup fails', async () => {
+  let databaseCalls = 0;
+  const fetcher = (
+    input: string | URL | Request,
+    init?: RequestInit,
+  ): Promise<Response> => {
+    const request = new Request(input, init);
+    const url = new URL(request.url);
+
+    if (url.pathname.endsWith('/locationBasedList2')) {
+      return resolvedResponse(locationBasedResponse(['126508', '126509']));
+    }
+    if (url.pathname.endsWith('/detailCommon2')) {
+      const contentId = url.searchParams.get('contentId') ?? '';
+      return resolvedResponse(
+        tourApiResponse(contentId, {}, { resultCode: contentId === '126508' ? '0000' : '03' }),
+      );
+    }
+
+    databaseCalls += 1;
+    return resolvedResponse(new Response(null, { status: 201 }));
+  };
+  const response = await createSyncStampSpotsHandler(CONFIG, fetcher)(
+    createNearbyRequest({
+      latitude: 37.579617,
+      longitude: 126.977041,
+      radiusMeters: 1000,
+      limit: 2,
+    }),
+  );
+
+  equal(response.status, 502);
+  deepStrictEqual(await response.json(), { error: 'tour_api_invalid_response' });
+  equal(databaseCalls, 0);
+});
+
 Deno.test('deduplicates repeated content IDs before calling TourAPI', async () => {
   let tourApiCalls = 0;
   let databaseCalls = 0;
@@ -183,8 +478,17 @@ Deno.test('rejects missing or incorrect sync credentials before external calls',
   const handler = createSyncStampSpotsHandler(CONFIG, fetcher);
   const missing = createRequest(['126508']);
   missing.headers.delete('authorization');
+  const malformed = new Request(
+    'https://stampy.supabase.co/functions/v1/sync-stamp-spots',
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: 'not-json',
+    },
+  );
 
   equal((await handler(missing)).status, 401);
+  equal((await handler(malformed)).status, 401);
   equal((await handler(createRequest(['126508'], 'ordinary-user-jwt'))).status, 401);
   equal(calls, 0);
 });

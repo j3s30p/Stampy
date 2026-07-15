@@ -1,6 +1,8 @@
 const TOUR_API_DETAIL_URL = 'https://apis.data.go.kr/B551011/KorService2/detailCommon2';
+const TOUR_API_LOCATION_URL = 'https://apis.data.go.kr/B551011/KorService2/locationBasedList2';
 const SUPPORTED_CONTENT_TYPE_IDS = new Set(['12', '14', '15', '25', '28', '32', '38', '39']);
 const MAX_CONTENT_IDS = 20;
+const MAX_NEARBY_RADIUS_METERS = 20_000;
 const UPSTREAM_TIMEOUT_MS = 10_000;
 
 type Fetcher = (
@@ -21,6 +23,17 @@ interface StampSpotRow {
   readonly kind: 'spot' | 'event';
   readonly location: string;
 }
+
+interface NearbyRequest {
+  readonly latitude: number;
+  readonly longitude: number;
+  readonly radiusMeters: number;
+  readonly limit: number;
+}
+
+type SyncSource =
+  | { readonly kind: 'content_ids'; readonly contentIds: readonly string[] }
+  | { readonly kind: 'nearby'; readonly nearby: NearbyRequest };
 
 class SyncFailure extends Error {
   constructor(
@@ -45,7 +58,14 @@ export const createSyncStampSpotsHandler = (
     }
 
     try {
-      const contentIds = await readContentIds(request);
+      const source = await readSyncSource(request);
+      const contentIds = source.kind === 'content_ids'
+        ? source.contentIds
+        : await fetchNearbyContentIds(
+          source.nearby,
+          config.tourApiServiceKey,
+          fetcher,
+        );
       const rows = await Promise.all(
         contentIds.map((contentId) =>
           fetchTourApiSpot(contentId, config.tourApiServiceKey, fetcher)
@@ -95,7 +115,7 @@ const timingSafeEqual = async (actual: string, expected: string): Promise<boolea
   return difference === 0;
 };
 
-const readContentIds = async (request: Request): Promise<readonly string[]> => {
+const readSyncSource = async (request: Request): Promise<SyncSource> => {
   if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) {
     throw new SyncFailure(400, 'invalid_request');
   }
@@ -108,20 +128,39 @@ const readContentIds = async (request: Request): Promise<readonly string[]> => {
     throw new SyncFailure(400, 'invalid_request');
   }
 
-  if (!isRecord(payload) || !Array.isArray(payload.contentIds)) {
+  if (!isRecord(payload)) {
     throw new SyncFailure(400, 'invalid_request');
   }
 
-  if (payload.contentIds.length === 0 || payload.contentIds.length > MAX_CONTENT_IDS) {
+  const hasContentIds = Object.hasOwn(payload, 'contentIds');
+  const hasNearby = Object.hasOwn(payload, 'nearby');
+
+  if (hasContentIds === hasNearby) {
+    throw new SyncFailure(400, 'invalid_request');
+  }
+
+  if (hasContentIds) {
+    return { kind: 'content_ids', contentIds: readContentIds(payload.contentIds) };
+  }
+
+  return { kind: 'nearby', nearby: readNearbyRequest(payload.nearby) };
+};
+
+const readContentIds = (value: unknown): readonly string[] => {
+  if (!Array.isArray(value)) {
+    throw new SyncFailure(400, 'invalid_request');
+  }
+
+  if (value.length === 0 || value.length > MAX_CONTENT_IDS) {
     throw new SyncFailure(400, 'invalid_content_ids');
   }
 
-  const normalized = payload.contentIds.map((value) => {
-    if (typeof value !== 'string') {
+  const normalized = value.map((contentIdValue) => {
+    if (typeof contentIdValue !== 'string') {
       throw new SyncFailure(400, 'invalid_content_ids');
     }
 
-    const contentId = value.trim();
+    const contentId = contentIdValue.trim();
 
     if (!/^\d{1,32}$/.test(contentId)) {
       throw new SyncFailure(400, 'invalid_content_ids');
@@ -131,6 +170,92 @@ const readContentIds = async (request: Request): Promise<readonly string[]> => {
   });
 
   return [...new Set(normalized)];
+};
+
+const readNearbyRequest = (value: unknown): NearbyRequest => {
+  if (!isRecord(value)) {
+    throw new SyncFailure(400, 'invalid_nearby');
+  }
+
+  const { latitude, longitude, radiusMeters, limit } = value;
+
+  if (
+    typeof latitude !== 'number' ||
+    !Number.isFinite(latitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    typeof longitude !== 'number' ||
+    !Number.isFinite(longitude) ||
+    longitude < -180 ||
+    longitude > 180 ||
+    typeof radiusMeters !== 'number' ||
+    !Number.isInteger(radiusMeters) ||
+    radiusMeters < 1 ||
+    radiusMeters > MAX_NEARBY_RADIUS_METERS ||
+    typeof limit !== 'number' ||
+    !Number.isInteger(limit) ||
+    limit < 1 ||
+    limit > MAX_CONTENT_IDS
+  ) {
+    throw new SyncFailure(400, 'invalid_nearby');
+  }
+
+  return { latitude, longitude, radiusMeters, limit };
+};
+
+const fetchNearbyContentIds = async (
+  nearby: NearbyRequest,
+  serviceKey: string,
+  fetcher: Fetcher,
+): Promise<readonly string[]> => {
+  const url = new URL(TOUR_API_LOCATION_URL);
+  url.search = new URLSearchParams({
+    serviceKey,
+    MobileOS: 'ETC',
+    MobileApp: 'Stampy',
+    _type: 'json',
+    mapX: String(nearby.longitude),
+    mapY: String(nearby.latitude),
+    radius: String(nearby.radiusMeters),
+    numOfRows: String(nearby.limit),
+    pageNo: '1',
+    arrange: 'E',
+  }).toString();
+
+  const payload = await fetchTourApiJson(url, fetcher);
+  const root = asRecord(payload);
+  const response = asRecord(root?.response);
+  const header = asRecord(response?.header);
+
+  if (toText(header?.resultCode) !== '0000') {
+    throw new SyncFailure(502, 'tour_api_invalid_response');
+  }
+
+  const body = asRecord(response?.body);
+  const items = asRecord(body?.items);
+  const rawItem = items?.item;
+  const candidates = Array.isArray(rawItem) ? rawItem : rawItem === undefined ? [] : [rawItem];
+
+  if (candidates.length === 0) {
+    throw new SyncFailure(404, 'nearby_content_not_found');
+  }
+
+  const contentIds = candidates.map((candidate) => {
+    const contentId = toText(asRecord(candidate)?.contentid);
+
+    if (!contentId || !/^\d{1,32}$/.test(contentId)) {
+      throw new SyncFailure(502, 'tour_api_invalid_response');
+    }
+
+    return contentId;
+  });
+  const uniqueContentIds = [...new Set(contentIds)].slice(0, nearby.limit);
+
+  if (uniqueContentIds.length === 0) {
+    throw new SyncFailure(404, 'nearby_content_not_found');
+  }
+
+  return uniqueContentIds;
 };
 
 const fetchTourApiSpot = async (
@@ -149,6 +274,12 @@ const fetchTourApiSpot = async (
     pageNo: '1',
   }).toString();
 
+  const payload = await fetchTourApiJson(url, fetcher);
+
+  return normalizeTourApiSpot(payload, contentId);
+};
+
+const fetchTourApiJson = async (url: URL, fetcher: Fetcher): Promise<unknown> => {
   let response: Response;
 
   try {
@@ -172,7 +303,7 @@ const fetchTourApiSpot = async (
     throw new SyncFailure(502, 'tour_api_invalid_response');
   }
 
-  return normalizeTourApiSpot(payload, contentId);
+  return payload;
 };
 
 const normalizeTourApiSpot = (payload: unknown, requestedContentId: string): StampSpotRow => {
