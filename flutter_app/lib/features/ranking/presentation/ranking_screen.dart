@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stampy/app/theme/app_colors.dart';
 import 'package:stampy/core/widgets/field_journal.dart';
+import 'package:stampy/features/ranking/data/ranking_providers.dart';
+import 'package:stampy/features/ranking/domain/ranking_domain.dart';
 import 'package:stampy/features/stamp/presentation/stamp_session.dart';
 
 class RankingScreen extends ConsumerWidget {
@@ -20,21 +23,18 @@ class RankingScreen extends ConsumerWidget {
       loadStatus,
       collectedStampCount,
     );
+    final weeklyRanking = ref.watch(weeklyRankingProvider);
 
     return FieldJournalPage(
       eyebrow: '여행자 기록',
       title: '도시를 걷는\n여행자들의 순위',
-      description: '여행자들의 도장 기록을 비교하는 기능을 준비하고 있습니다.',
-      trailing: const JournalBadge(label: '준비 중'),
+      description: '경쟁보다 꾸준한 탐험에 집중할 수 있도록 이번 주 수집한 도장 수를 비교합니다.',
+      trailing: JournalBadge(label: _weeklyRankingBadge(weeklyRanking)),
       children: [
         JournalSection(
           index: '01',
           title: '주간 랭킹',
-          child: const JournalNotice(
-            number: 'RANK',
-            title: '주간 랭킹을\n준비하고 있어요',
-            description: '여행자들의 도장 기록을 비교하는 기능은 아직 준비 중이에요.',
-          ),
+          child: _weeklyRankingContent(weeklyRanking, ref),
         ),
         JournalSection(
           index: '02',
@@ -48,6 +48,158 @@ class RankingScreen extends ConsumerWidget {
       ],
     );
   }
+}
+
+String _weeklyRankingBadge(
+  AsyncValue<List<WeeklyRankingEntry>> weeklyRanking,
+) => switch (weeklyRanking) {
+  AsyncData(:final value) => value.isEmpty ? '기록 없음' : '이번 주',
+  AsyncError() => '연결 실패',
+  _ => '집계 중',
+};
+
+Widget _weeklyRankingContent(
+  AsyncValue<List<WeeklyRankingEntry>> weeklyRanking,
+  WidgetRef ref,
+) => switch (weeklyRanking) {
+  AsyncData(:final value) when value.isEmpty => const JournalNotice(
+    number: 'RANK',
+    title: '이번 주 첫 도장을\n기다리고 있어요',
+    description: '아직 수집 기록이 없어요. 첫 도장을 모으면 주간 랭킹이 시작됩니다.',
+  ),
+  AsyncData(:final value) => _WeeklyRankingList(entries: value),
+  AsyncError() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const JournalNotice(
+        number: 'RANK',
+        title: '주간 랭킹을\n불러오지 못했어요',
+        description: '연결 상태를 확인한 뒤 다시 시도해 주세요.',
+      ),
+      const SizedBox(height: 12),
+      OutlinedButton.icon(
+        onPressed: () => ref.invalidate(weeklyRankingProvider),
+        icon: const Icon(Icons.refresh),
+        label: const Text('다시 시도'),
+      ),
+    ],
+  ),
+  _ => const JournalNotice(
+    number: 'RANK',
+    title: '이번 주 기록을\n집계하고 있어요',
+    description: '여행자들이 수집한 도장 수를 확인하고 있습니다.',
+  ),
+};
+
+class _WeeklyRankingList extends StatelessWidget {
+  const _WeeklyRankingList({required this.entries});
+
+  final List<WeeklyRankingEntry> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        border: Border(
+          top: BorderSide(color: StampyColors.hairline),
+          bottom: BorderSide(color: StampyColors.hairline),
+        ),
+      ),
+      child: Column(
+        children: [
+          for (var index = 0; index < entries.length; index += 1) ...[
+            if (index > 0) const Divider(height: 1),
+            _RankingRow(entry: entries[index]),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RankingRow extends StatelessWidget {
+  const _RankingRow({required this.entry});
+
+  final WeeklyRankingEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = entry.isCurrentUser ? '나' : '익명 여행자';
+    final useStackedLayout = MediaQuery.textScalerOf(context).scale(1) > 1.3;
+    return Semantics(
+      container: true,
+      label: '${entry.rank}위, $name, 도장 ${entry.stampCount}개',
+      child: ExcludeSemantics(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 62),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 48,
+                  child: Text(
+                    entry.rank.toString().padLeft(2, '0'),
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: StampyColors.accent,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: useStackedLayout
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _RankingName(
+                              name: name,
+                              emphasized: entry.isCurrentUser,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '도장 ${entry.stampCount}개',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        )
+                      : Row(
+                          children: [
+                            Expanded(
+                              child: _RankingName(
+                                name: name,
+                                emphasized: entry.isCurrentUser,
+                              ),
+                            ),
+                            Text(
+                              '도장 ${entry.stampCount}개',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RankingName extends StatelessWidget {
+  const _RankingName({required this.name, required this.emphasized});
+
+  final String name;
+  final bool emphasized;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    name,
+    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+      fontWeight: emphasized ? FontWeight.w600 : null,
+    ),
+  );
 }
 
 ({String title, String description}) _personalRecordPresentation(
