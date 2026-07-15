@@ -1,12 +1,7 @@
 node_modules/
-.expo/
-dist/
-web-build/
-ios/
-android/
 repo/
 design/
+design_repo/
 flutter_app/
 supabase/functions/
 package-lock.json
-expo-env.d.ts

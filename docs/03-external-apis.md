@@ -7,7 +7,7 @@
 ### 인증
 
 - 인증키는 **URL 인코딩 된 것** 과 **디코딩 된 것** 두 형태로 발급된다. `serviceKey` 파라미터에는 _디코딩 된 키_ 를 axios/fetch 가 다시 인코딩하도록 넘기는 것이 안전하다. 이미 인코딩된 키를 그대로 넣으면 `%` 가 이중 인코딩되어 401.
-- Flutter 정본에서는 디코딩 키를 Edge Function의 `TOUR_API_SERVICE_KEY` secret으로만 보관한다. 앱의 `dart-define`이나 `EXPO_PUBLIC_*`에 넣지 않는다.
+- 디코딩 키는 Edge Function의 `TOUR_API_SERVICE_KEY` secret으로만 보관한다. Flutter `dart-define`이나 다른 클라이언트 설정에 넣지 않는다.
 
 ### 운영 도장 스팟 동기화
 
@@ -19,8 +19,8 @@
 
 ### 좌표 표현
 
-- `mapx` = **경도** (longitude), `mapy` = **위도** (latitude). OGC 관습(x=lon, y=lat)을 따르지만 흔히 swap 한다. mapper 에서 반드시 `asLongitude(parseFloat(mapx))`, `asLatitude(parseFloat(mapy))` 로 변환한다.
-- 일부 응답에 `""` (빈 문자열) 좌표 가 있다. 매핑 시 `null` 로 떨궈 도메인 진입 차단.
+- `mapx` = **경도** (longitude), `mapy` = **위도** (latitude). OGC 관습(x=lon, y=lat)을 따르지만 흔히 swap 한다. Edge Function에서 순서를 고정해 정규화하고 Flutter repository 경계에서 `Longitude` / `Latitude` 값 객체로 변환한다.
+- 일부 응답에 `""` (빈 문자열) 좌표가 있다. Edge Function은 유한한 숫자와 범위를 검증해 잘못된 항목의 도메인 진입을 차단한다.
 
 ### 응답 포맷
 
@@ -47,12 +47,12 @@
 
 ### WebView 통합
 
-- Android 에서는 `originWhitelist={['*']}` 를 명시하지 않으면 `postMessage` 가 silent drop.
-- iOS WKWebView 는 `injectedJavaScriptBeforeContentLoaded` 가 필요한 케이스가 있음 (SDK 로드 전 환경 주입).
-- CSP: Kakao SDK 는 `dapi.kakao.com` 외에도 `t1.daumcdn.net`, `map.daumcdn.net` 호출. HTML 템플릿의 `<meta http-equiv="Content-Security-Policy">` 화이트리스트 필수.
+- Flutter는 `flutter_app/assets/map/kakao_map.html`을 읽고 JavaScript 키를 JSON 문자열로 주입한 뒤 `https://stampy.local/` base URL로 로드한다.
+- JavaScript → Dart 이벤트는 `StampyBridge` 채널과 프로토콜 버전 1을 사용한다. 알 수 없는 타입, 초과 필드, 잘못된 길이의 값은 거부한다.
+- 오류 메시지는 앱으로 보내기 전에 JavaScript 키와 `appkey` 값을 마스킹한다.
 
-## Expo Location
+## Geolocator
 
-- 권한은 `requestForegroundPermissionsAsync` 만 사용. 백그라운드 위치는 도장 인증 UX 가 요구하지 않으므로 권한 패널을 늘리지 않는다.
-- `getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })` 이 도심 5~30m, `High` 는 3~10m 이지만 발열·배터리 비용. Balanced 를 기본값으로 시작.
-- 반환된 `coords.accuracy` (단위: m, 1σ) 가 `STAMP_RADIUS_METERS` 보다 크면 인증을 거부한다 (Stage 2 skill 에서 강제).
+- 위치 서비스 상태와 권한을 확인하고 필요할 때 전경 권한만 요청한다. 백그라운드 위치는 사용하지 않는다.
+- `Geolocator.getCurrentPosition`은 `LocationAccuracy.high`와 15초 제한을 사용한다.
+- 반환된 `accuracy`가 없거나 유효하지 않거나 100m를 초과하면 도장 인증을 거부한다.

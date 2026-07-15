@@ -1,61 +1,47 @@
-# 04 · Mock-first Repository Contract
+# 04 · Flutter Repository Contract
 
-> 2026-06-12 이후 Stampy 는 1인 개발 체제다. 이 문서는 역할 분리표가 아니라, 모든 기능을 백엔드·스토리지·네트워크 준비 상태와 무관하게 먼저 개발하고 검증하기 위한 Mock-first 작업 순서 계약이다.
+> Flutter 화면과 외부 시스템을 분리하는 repository 계약과 Fake 사용 범위를 정의한다.
 
-## 작업 순서 매트릭스
+## 작업 순서
 
-| 추상화 계층              | 먼저 만든다                              | 연결 단계에서 추가한다                                   |
-| ------------------------ | ---------------------------------------- | -------------------------------------------------------- |
-| 화면 / 라우트            | `app/`, `features/*/ui/`                 | 필요한 route wiring 보강                                 |
-| 도메인 모델·타입         | `features/*/model/`                      | real 응답에 맞춘 필드 추가도 도메인 타입 PR 이 먼저      |
-| Repository **interface** | `features/*/api/*Repository.ts`          | 기존 interface 를 깨야 하면 별도 contract 변경 PR        |
-| Repository **Mock impl** | `Mock*Repository.ts`                     | 시나리오 확장, fixture 추가                              |
-| Repository **Real impl** | 없음                                     | `Http*Repository.ts`, `AsyncStorage*Repository.ts`       |
-| HTTP 클라이언트 / 재시도 | 최소 contract 만 필요하면 interface 부터 | `core/network/` 실제 호출·재시도·에러 정규화             |
-| 도메인 상수·brand 타입   | `shared/`                                | real integration 이 요구하는 공통 타입은 여기로 승격     |
-| Mock fixture 데이터      | `shared/mocks/`                          | 테스트·시연 시나리오를 대표하도록 유지                   |
-| DI 조립                  | Mock 을 기본 주입                        | 환경변수 토글로 같은 interface 의 real impl 을 선택 주입 |
+| 계층             | 먼저 정의한다                                      | 연결 구현                                    |
+| ---------------- | -------------------------------------------------- | -------------------------------------------- |
+| 화면·라우트      | `flutter_app/lib/app/`, `features/*/presentation/` | provider를 통해 repository 상태를 구독       |
+| 도메인           | `features/*/domain/`의 모델과 repository interface | 외부 응답 필드를 도메인에 직접 노출하지 않음 |
+| 테스트·개발 구현 | `features/*/data/fake_*_repository.dart`           | 결정적인 fixture로 UI와 도메인 흐름 검증     |
+| 운영 구현        | 같은 interface의 `supabase_*_repository.dart`      | Supabase RPC 응답을 도메인 값으로 정규화     |
+| 인증·위치        | `core/auth/`, `core/location/`의 interface         | Supabase Auth와 geolocator adapter           |
+| 조립             | `app/app_dependencies.dart`                        | `main.dart`에서 Riverpod provider override   |
 
-## 인터페이스 정본 원칙
+도메인 모델과 repository interface가 앱 내부 계약의 정본이다. Fake와 Supabase 구현은 같은 타입을 반환하며, raw JSON·Postgres 컬럼·플랫폼 예외는 각 data 또는 adapter 경계 밖으로 노출하지 않는다.
 
-도메인 타입 = **contract**. Mock 과 real repository 구현은 같은 타입을 반환한다.
+## 의존성 조립
 
-```ts
-// features/tour/model/types.ts  ← contract 의 단일 출처
-export interface TourSpot { ... }
+`AppConfig`는 `dart-define`의 `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `KAKAO_JS_KEY`를 검증한다.
 
-// features/tour/api/TourRepository.ts  ← interface 를 먼저 정의
-export interface TourRepository {
-  searchNearby(center: Coordinates, radiusMeters: number): Promise<TourSpot[]>;
-  byId(contentId: string): Promise<TourSpot | null>;
-}
+- Debug·profile에서 Supabase 설정을 모두 생략하면 Fake repository로 부팅할 수 있다.
+- Supabase URL과 publishable key 중 하나만 있으면 구성 오류다.
+- Release는 세 값이 모두 필요하다. 설정 또는 초기화 실패 시 `UnavailableAuthRepository`가 앱 셸 진입을 차단하며, 함께 주입된 나머지 Fake 구현은 오류 상태를 구성하는 placeholder일 뿐 제품 화면에 노출되지 않는다.
 
-// features/tour/api/MockTourRepository.ts  ← 기본 주입 구현
-export class MockTourRepository implements TourRepository { ... }
+별도 환경변수로 Fake와 운영 구현을 강제 전환하지 않는다. 구성의 존재 여부와 빌드 모드가 유일한 선택 기준이다.
 
-// features/tour/api/HttpTourRepository.ts  ← 백엔드 연결 단계에서 같은 interface 에 추가
-export class HttpTourRepository implements TourRepository {
-  // raw DTO → TourSpot 변환은 이 경계에서만
-}
-```
+## Fake 사용 범위
 
-타입을 바꾸려면 모델과 interface 를 먼저 갱신하고, Mock 구현·fixture 로 앱 흐름을 검증한 뒤 real mapper 를 따라 갱신한다. 역순으로 raw DTO 에 맞춰 UI 나 도메인 타입을 끌고 가지 않는다.
+Fake repository는 단위·위젯 테스트와 로컬 UI 개발을 위한 구현이다. 운영 데이터를 흉내 내는 순위, 방문 수, 계정 연동 상태를 제품 화면에 사실처럼 표시하는 용도로 사용하지 않는다.
 
-## Mock 의 위치와 격리
+새 repository 작업은 다음 순서를 따른다.
 
-- 모든 fixture 는 `src/shared/mocks/` 한 곳. feature 별로 흩지 않는다 (cross-feature 시나리오를 한 곳에서 조립할 수 있어야 한다).
-- 파일 컨벤션: `<도메인>.fixture.ts` — 예: `tourSpots.fixture.ts`, `stamps.fixture.ts`.
-- Production 코드는 `@shared/mocks/*` import 금지. Mock repository (`Mock*Repository`) 만 import 허용. 현재 ESLint `no-restricted-imports` 로 강제한다.
+1. domain 모델과 interface를 정의한다.
+2. Fake 구현으로 도메인·화면 행동을 검증한다.
+3. 같은 테스트 가능한 계약에 Supabase 구현을 연결한다.
+4. Release 구성에서 실제 구현이 선택되는지 검증한다.
 
-## 주입 / Swap 전략
+## 서버 경계
 
-- 기본 주입은 **Mock**. 화면을 띄우는 데 API 키, 쿼터, 네트워크, 스토리지 구현에 의존하지 않는다.
-- Swap 지점은 `src/core/di/`. 환경변수 `EXPO_PUBLIC_USE_REAL_API` 가 `true` 이고 필요한 키가 있을 때만 real impl 을 inject 한다.
-- `EXPO_PUBLIC_USE_REAL_API=true` 인데 필수 키가 없으면 명시적으로 실패시킨다. 그 외 개발·시연 기본값은 Mock 으로 부팅 가능해야 한다.
-- real impl 이 안정화돼도 Mock 은 테스트·시연·오프라인 개발용으로 유지한다.
+- 앱은 publishable key와 익명 사용자 JWT만 사용한다.
+- service-role key, TourAPI key, 동기화 토큰은 Supabase Edge Function 밖으로 노출하지 않는다.
+- 도장 대상은 `stamp_spots`, 사용자 수집 기록은 RLS가 적용된 `collected_stamps`가 정본이다.
+- 추천·도장 수집·목록 조회는 migration으로 관리되는 RPC 계약을 사용한다.
+- TourAPI raw 응답은 Edge Function에서 검증·정규화한 뒤 DB에 저장한다.
 
-## 연결 단계 트리거
-
-- real API / storage 연결은 같은 interface 를 이미 만족하는 Mock 흐름이 있을 때 시작한다.
-- 연결 PR 은 raw DTO, storage key, 네트워크 에러를 해당 repository 경계에서 도메인 타입과 앱 에러로 정규화한다.
-- 연결 후에도 UI 는 repository interface 만 바라본다. feature 간 직접 import 가 필요해지면 `core/` 또는 `shared/` 로 끌어올린다.
+계약을 바꿀 때는 Dart repository 테스트, pgTAP, 로컬 Auth→RPC smoke를 함께 갱신한다.
