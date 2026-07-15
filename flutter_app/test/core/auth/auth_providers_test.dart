@@ -5,19 +5,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stampy/core/auth/auth.dart';
 
 void main() {
-  test('default provider exposes the guest user', () async {
+  test('default provider starts signed out without automatic login', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
     _listenToCurrentUser(container);
 
     final user = await container.read(currentAuthUserProvider.future);
 
-    expect(user.isGuest, isTrue);
-    expect(user.id, isNull);
+    expect(user.isSignedOut, isTrue);
   });
 
-  test('restored user skips anonymous sign-in', () async {
-    final existing = AuthUser.session(id: 'restored-user', isAnonymous: true);
+  test('restores an existing member session', () async {
+    final existing = AuthUser.session(id: 'restored-user', isAnonymous: false);
     final repository = _SpyAuthRepository(currentUser: existing);
     final container = ProviderContainer(
       overrides: [authRepositoryProvider.overrideWithValue(repository)],
@@ -31,133 +30,115 @@ void main() {
     expect(repository.signInCalls, 0);
   });
 
-  test('concurrent and repeated reads create one anonymous session', () async {
-    final signedIn = AuthUser.session(
-      id: 'new-anonymous-user',
-      isAnonymous: true,
-    );
+  test('signs in only after an explicit Kakao action', () async {
+    final signedIn = AuthUser.session(id: 'kakao-member', isAnonymous: false);
     final repository = _SpyAuthRepository(signedInUser: signedIn);
     final container = ProviderContainer(
       overrides: [authRepositoryProvider.overrideWithValue(repository)],
     );
     addTearDown(container.dispose);
     _listenToCurrentUser(container);
+    await container.read(currentAuthUserProvider.future);
 
-    final first = container.read(currentAuthUserProvider.future);
-    final second = container.read(currentAuthUserProvider.future);
-    final users = await Future.wait(<Future<AuthUser>>[first, second]);
-    final third = await container.read(currentAuthUserProvider.future);
+    await container.read(currentAuthUserProvider.notifier).signInWithKakao();
 
-    expect(users.map((user) => user.id), everyElement('new-anonymous-user'));
-    expect(third.id, 'new-anonymous-user');
+    expect(
+      container.read(currentAuthUserProvider).requireValue.id,
+      'kakao-member',
+    );
     expect(repository.signInCalls, 1);
   });
 
-  test('provider does not retry a failed anonymous sign-in', () async {
-    final repository = _SpyAuthRepository(error: StateError('offline'));
+  test(
+    'exposes a Kakao launch failure without retrying automatically',
+    () async {
+      final repository = _SpyAuthRepository(error: StateError('offline'));
+      final container = ProviderContainer(
+        overrides: [authRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+      _listenToCurrentUser(container);
+      await container.read(currentAuthUserProvider.future);
+
+      await container.read(currentAuthUserProvider.notifier).signInWithKakao();
+
+      expect(
+        container.read(currentAuthUserProvider),
+        isA<AsyncError<AuthUser>>(),
+      );
+      expect(repository.signInCalls, 1);
+    },
+  );
+
+  test('signed-out auth state stays signed out', () async {
+    final changes = StreamController<AuthUser?>();
+    addTearDown(changes.close);
+    final repository = _SpyAuthRepository(
+      currentUser: AuthUser.session(id: 'member', isAnonymous: false),
+      authStateChanges: changes.stream,
+    );
     final container = ProviderContainer(
       overrides: [authRepositoryProvider.overrideWithValue(repository)],
     );
     addTearDown(container.dispose);
     _listenToCurrentUser(container);
+    await container.read(currentAuthUserProvider.future);
 
-    await expectLater(
-      container.read(currentAuthUserProvider.future),
-      throwsStateError,
+    repository.currentUser = null;
+    changes.add(null);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(
+      container.read(currentAuthUserProvider).requireValue.isSignedOut,
+      isTrue,
     );
-    await Future<void>.delayed(const Duration(milliseconds: 350));
+    expect(repository.signInCalls, 0);
+  });
 
-    expect(repository.signInCalls, 1);
+  test('sign out clears the current member session', () async {
+    final repository = _SpyAuthRepository(
+      currentUser: AuthUser.session(id: 'member', isAnonymous: false),
+    );
+    final container = ProviderContainer(
+      overrides: [authRepositoryProvider.overrideWithValue(repository)],
+    );
+    addTearDown(container.dispose);
+    _listenToCurrentUser(container);
+    await container.read(currentAuthUserProvider.future);
+
+    await container.read(currentAuthUserProvider.notifier).signOut();
+
+    expect(
+      container.read(currentAuthUserProvider).requireValue.isSignedOut,
+      isTrue,
+    );
+    expect(repository.signOutCalls, 1);
   });
 
   test(
-    'signed-out auth state creates one replacement anonymous user',
+    'sign out stays closed when local session clearing reports an error',
     () async {
-      final changes = StreamController<AuthUser?>();
-      addTearDown(changes.close);
       final repository = _SpyAuthRepository(
-        currentUser: AuthUser.session(
-          id: 'expired-anonymous-user',
-          isAnonymous: true,
-        ),
-        signedInUser: AuthUser.session(
-          id: 'replacement-anonymous-user',
-          isAnonymous: true,
-        ),
-        authStateChanges: changes.stream,
-      );
-      final container = ProviderContainer(
-        overrides: [authRepositoryProvider.overrideWithValue(repository)],
-      );
-      addTearDown(container.dispose);
-
-      final replacement = Completer<AuthUser>();
-      final subscription = container.listen<AsyncValue<AuthUser>>(
-        currentAuthUserProvider,
-        (previous, next) {
-          next.whenData((user) {
-            if (user.id == 'replacement-anonymous-user' &&
-                !replacement.isCompleted) {
-              replacement.complete(user);
-            }
-          });
-        },
-        fireImmediately: true,
-      );
-      addTearDown(subscription.close);
-
-      final initial = await container.read(currentAuthUserProvider.future);
-      expect(initial.id, 'expired-anonymous-user');
-
-      repository.currentUser = null;
-      changes.add(null);
-      changes.add(null);
-      final updated = await replacement.future;
-      await Future<void>.delayed(Duration.zero);
-
-      expect(updated.id, 'replacement-anonymous-user');
-      expect(repository.signInCalls, 1);
-    },
-  );
-
-  test(
-    'signed-out auth state is loading until replacement completes',
-    () async {
-      final changes = StreamController<AuthUser?>();
-      addTearDown(changes.close);
-      final replacement = Completer<AuthUser>();
-      final repository = _SpyAuthRepository(
-        currentUser: AuthUser.session(
-          id: 'expired-anonymous-user',
-          isAnonymous: true,
-        ),
-        signedInFuture: replacement.future,
-        authStateChanges: changes.stream,
+        currentUser: AuthUser.session(id: 'member', isAnonymous: false),
+        signOutError: StateError('remote sign-out failed'),
       );
       final container = ProviderContainer(
         overrides: [authRepositoryProvider.overrideWithValue(repository)],
       );
       addTearDown(container.dispose);
       _listenToCurrentUser(container);
-
       await container.read(currentAuthUserProvider.future);
-      repository.currentUser = null;
-      changes.add(null);
-      await Future<void>.delayed(Duration.zero);
 
-      expect(container.read(currentAuthUserProvider).isLoading, isTrue);
-      final replacementFuture = container.read(currentAuthUserProvider.future);
-      var replacementResolved = false;
-      replacementFuture.then((_) => replacementResolved = true);
-      await Future<void>.delayed(Duration.zero);
-      expect(replacementResolved, isFalse);
-
-      replacement.complete(
-        AuthUser.session(id: 'replacement-user', isAnonymous: true),
+      await expectLater(
+        container.read(currentAuthUserProvider.notifier).signOut(),
+        throwsStateError,
       );
 
-      expect((await replacementFuture).id, 'replacement-user');
-      expect(repository.signInCalls, 1);
+      expect(
+        container.read(currentAuthUserProvider).requireValue.isSignedOut,
+        isTrue,
+      );
+      expect(repository.currentUser, isNull);
     },
   );
 }
@@ -174,39 +155,42 @@ final class _SpyAuthRepository implements AuthRepository {
   _SpyAuthRepository({
     this.currentUser,
     this.signedInUser,
-    this.signedInFuture,
     this.error,
+    this.signOutError,
     this.authStateChanges = const Stream<AuthUser?>.empty(),
   });
 
   @override
   AuthUser? currentUser;
-  @override
-  final Stream<AuthUser?> authStateChanges;
-  final AuthUser? signedInUser;
-  final Future<AuthUser>? signedInFuture;
-  final Object? error;
-  int signInCalls = 0;
 
   @override
-  Future<AuthUser> signInAnonymously() async {
+  final Stream<AuthUser?> authStateChanges;
+
+  final AuthUser? signedInUser;
+  final Object? error;
+  final Object? signOutError;
+  int signInCalls = 0;
+  int signOutCalls = 0;
+
+  @override
+  Future<void> signInWithKakao() async {
     signInCalls += 1;
     final failure = error;
     if (failure != null) {
-      return Future<AuthUser>.error(failure);
+      throw failure;
     }
-
-    final pendingUser = signedInFuture;
-    if (pendingUser != null) {
-      final user = await pendingUser;
-      currentUser = user;
-      return user;
-    }
-
-    final user =
+    currentUser =
         signedInUser ??
-        AuthUser.session(id: 'fallback-anonymous', isAnonymous: true);
-    currentUser = user;
-    return user;
+        AuthUser.session(id: 'fallback-member', isAnonymous: false);
+  }
+
+  @override
+  Future<void> signOut() async {
+    signOutCalls += 1;
+    currentUser = null;
+    final failure = signOutError;
+    if (failure != null) {
+      throw failure;
+    }
   }
 }

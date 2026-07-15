@@ -4,8 +4,8 @@
 
 - **Status**: Accepted (2026-07-13)
 - **Context**: 기존 Expo SDK 52 앱은 화면 전면 재설계, 실제 백엔드 부재, 임시 GPS 좌표, Mock 중심 흐름이 겹쳐 점진 업그레이드보다 새 앱 셸의 비용이 낮다.
-- **Decision**: 최신 Flutter stable을 iOS/Android 클라이언트 정본으로 사용한다. Supabase가 Auth/Postgres/RLS/Data API/Edge Function/PostGIS를 맡고, 행동 기반 추천은 SQL/RPC로 계산한다. Kakao Maps는 Flutter WebView를 통해 JS SDK를 사용한다.
-- **Consequences**: Stampy v1은 행동 기반 추천 한 곳 → 지도 → 현재 GPS 기반 100m 인증 → 도장 수집에 집중한다. 기존 TypeScript UI와 Expo 런타임은 제거하고, 검증된 도메인 의미만 Dart와 서버 계약으로 다시 구현한다. 관광지·행사 탐색 및 상세 화면은 v1 범위가 아니다. FastAPI와 LLM은 자연어 추천이 실제 범위가 될 때까지 도입하지 않는다.
+- **Decision**: 최신 Flutter stable을 iOS/Android 클라이언트 정본으로 사용한다. Supabase가 Auth/Postgres/RLS/Data API/Edge Function/PostGIS를 맡고, 행동 기반 추천은 SQL/RPC로 계산한다. 앱 셸은 Supabase Kakao OAuth 회원만 진입할 수 있으며 익명 로그인은 사용하지 않는다. Kakao Maps는 Flutter WebView를 통해 JS SDK를 사용한다.
+- **Consequences**: Stampy v1은 카카오 인증 → 행동 기반 추천 한 곳 → 지도 → 현재 GPS 기반 100m 인증 → 도장 수집에 집중한다. 기존 TypeScript UI와 Expo 런타임은 제거하고, 검증된 도메인 의미만 Dart와 서버 계약으로 다시 구현한다. 관광지·행사 탐색 및 상세 화면은 v1 범위가 아니다. FastAPI와 LLM은 자연어 추천이 실제 범위가 될 때까지 도입하지 않는다.
 
 > ADR(Architecture Decision Record) 경량 포맷. 결정을 뒤집고 싶을 때 본 문서의 _Context_ 와 _Consequences_ 를 먼저 점검한다.
 

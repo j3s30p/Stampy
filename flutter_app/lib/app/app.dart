@@ -4,6 +4,7 @@ import 'package:stampy/app/router.dart';
 import 'package:stampy/app/theme/app_theme.dart';
 import 'package:stampy/core/auth/auth.dart';
 import 'package:stampy/core/widgets/field_journal.dart';
+import 'package:stampy/features/auth/presentation/kakao_login_screen.dart';
 
 class StampyApp extends ConsumerWidget {
   const StampyApp({super.key});
@@ -17,13 +18,28 @@ class StampyApp extends ConsumerWidget {
       return const StampyBootstrapFailureApp();
     }
 
-    final router = ref.watch(appRouterProvider);
+    if (authUser case AsyncData(:final value) when !value.isSignedOut) {
+      final router = ref.watch(appRouterProvider);
+      return MaterialApp.router(
+        title: 'Stampy',
+        debugShowCheckedModeBanner: false,
+        theme: StampyTheme.light(),
+        routerConfig: router,
+      );
+    }
 
-    return MaterialApp.router(
+    return MaterialApp(
       title: 'Stampy',
       debugShowCheckedModeBanner: false,
       theme: StampyTheme.light(),
-      routerConfig: router,
+      home: Scaffold(
+        body: KakaoLoginScreen(
+          isLoading: authUser.isLoading,
+          errorMessage: authUser.hasError ? '연결 상태를 확인한 뒤 다시 시도해 주세요.' : null,
+          onSignIn: () =>
+              ref.read(currentAuthUserProvider.notifier).signInWithKakao(),
+        ),
+      ),
     );
   }
 }

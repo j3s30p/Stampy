@@ -19,7 +19,7 @@
 
 `AppConfig`는 `dart-define`의 `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `KAKAO_JS_KEY`를 검증한다.
 
-- Debug·profile에서 Supabase 설정을 모두 생략하면 Fake repository로 부팅할 수 있다.
+- Supabase 설정이 없으면 Auth는 unavailable 상태로 앱 셸 진입을 차단한다. Fake repository는 테스트에서만 명시적으로 주입한다.
 - Supabase URL과 publishable key 중 하나만 있으면 구성 오류다.
 - Release는 세 값이 모두 필요하다. 설정 또는 초기화 실패 시 `UnavailableAuthRepository`가 앱 셸 진입을 차단하며, 함께 주입된 나머지 Fake 구현은 오류 상태를 구성하는 placeholder일 뿐 제품 화면에 노출되지 않는다.
 
@@ -38,7 +38,7 @@ Fake repository는 단위·위젯 테스트와 로컬 UI 개발을 위한 구현
 
 ## 서버 경계
 
-- 앱은 publishable key와 익명 사용자 JWT만 사용한다.
+- 앱은 publishable key와 카카오로 인증된 회원 JWT만 사용한다.
 - service-role key, TourAPI key, 동기화 토큰은 Supabase Edge Function 밖으로 노출하지 않는다.
 - 도장 대상은 `stamp_spots`, 사용자 수집 기록은 RLS가 적용된 `collected_stamps`가 정본이다.
 - 추천·도장 수집·목록 조회는 migration으로 관리되는 RPC 계약을 사용한다.

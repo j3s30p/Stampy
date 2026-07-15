@@ -5,13 +5,24 @@ final class UnavailableAuthRepository implements AuthRepository {
   const UnavailableAuthRepository();
 
   @override
-  AuthUser? get currentUser => null;
+  AuthUser? get currentUser => throw const AuthRepositoryException(
+    'Authentication is unavailable.',
+    isRetryable: false,
+  );
 
   @override
   Stream<AuthUser?> get authStateChanges => const Stream<AuthUser?>.empty();
 
   @override
-  Future<AuthUser> signInAnonymously() => Future<AuthUser>.error(
+  Future<void> signInWithKakao() => Future<void>.error(
+    const AuthRepositoryException(
+      'Authentication is unavailable.',
+      isRetryable: false,
+    ),
+  );
+
+  @override
+  Future<void> signOut() => Future<void>.error(
     const AuthRepositoryException(
       'Authentication is unavailable.',
       isRetryable: false,

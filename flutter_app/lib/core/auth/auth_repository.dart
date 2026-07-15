@@ -5,7 +5,9 @@ abstract interface class AuthRepository {
 
   Stream<AuthUser?> get authStateChanges;
 
-  Future<AuthUser> signInAnonymously();
+  Future<void> signInWithKakao();
+
+  Future<void> signOut();
 }
 
 final class AuthRepositoryException implements Exception {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stampy/app/theme/app_theme.dart';
+import 'package:stampy/core/auth/auth.dart';
 import 'package:stampy/core/geo/geo.dart';
 import 'package:stampy/core/location/location_state.dart';
 import 'package:stampy/features/stamp/data/fake_stamp_repository.dart';
@@ -55,7 +56,10 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [stampRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          authRepositoryProvider.overrideWithValue(_memberAuth()),
+          stampRepositoryProvider.overrideWithValue(repository),
+        ],
         child: MaterialApp(
           theme: StampyTheme.light(),
           home: const Scaffold(body: StampCollectionScreen()),
@@ -125,7 +129,10 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [stampRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          authRepositoryProvider.overrideWithValue(_memberAuth()),
+          stampRepositoryProvider.overrideWithValue(repository),
+        ],
         child: MaterialApp(
           theme: StampyTheme.light(),
           builder: (context, child) => MediaQuery(
@@ -151,6 +158,10 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 }
+
+FakeAuthRepository _memberAuth() => FakeAuthRepository(
+  currentUser: AuthUser.session(id: 'member', isAnonymous: false),
+);
 
 Future<void> _pumpCollectionState(
   WidgetTester tester,

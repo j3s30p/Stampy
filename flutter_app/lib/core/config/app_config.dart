@@ -11,20 +11,20 @@ final class AppConfig {
       'SUPABASE_PUBLISHABLE_KEY',
     ),
     kakaoJavaScriptKey: kakaoJavaScriptKey,
-    allowGuestMode: !kReleaseMode,
+    allowMissingServices: !kReleaseMode,
   );
 
   factory AppConfig.fromValues({
     String supabaseUrl = '',
     String supabasePublishableKey = '',
     String kakaoJavaScriptKey = '',
-    bool allowGuestMode = true,
+    bool allowMissingServices = true,
   }) {
     final url = supabaseUrl.trim();
     final publishableKey = supabasePublishableKey.trim();
     final kakaoKey = kakaoJavaScriptKey.trim();
 
-    if (!allowGuestMode) {
+    if (!allowMissingServices) {
       final missingNames = <String>[
         if (url.isEmpty) 'SUPABASE_URL',
         if (publishableKey.isEmpty) 'SUPABASE_PUBLISHABLE_KEY',

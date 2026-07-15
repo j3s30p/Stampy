@@ -11,6 +11,9 @@ final mapRepositoryProvider = Provider<MapRepository>(
 
 final readyMapRepositoryProvider = Provider<AsyncValue<MapRepository>>((ref) {
   final authUser = ref.watch(currentAuthUserProvider);
+  if (authUser case AsyncData(:final value) when value.isSignedOut) {
+    return const AsyncLoading<MapRepository>();
+  }
   return authUser.whenData((_) => ref.watch(mapRepositoryProvider));
 });
 
@@ -22,7 +25,17 @@ final mapSelectionRequestProvider =
 final class MapSelectionRequestController
     extends Notifier<MapSelectionRequest?> {
   @override
-  MapSelectionRequest? build() => null;
+  MapSelectionRequest? build() {
+    ref.watch(
+      currentAuthUserProvider.select(
+        (authUser) => switch (authUser) {
+          AsyncData(:final value) => value.isSignedOut ? null : value.id,
+          _ => null,
+        },
+      ),
+    );
+    return null;
+  }
 
   void select(String contentId) {
     state = MapSelectionRequest(

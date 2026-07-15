@@ -9,24 +9,26 @@ import 'package:stampy/features/recommendation/data/recommendation_providers.dar
 import 'package:stampy/features/recommendation/domain/recommendation_domain.dart';
 
 void main() {
-  test('guest mode never reaches the recommendation repository', () async {
-    final location = FakeLocationRepository(state: _availableLocation());
-    final recommendation = _ControlledRecommendationRepository();
-    final container = _container(
-      location: location,
-      recommendation: recommendation,
-    );
-    addTearDown(container.dispose);
-    _listen(container);
+  test(
+    'signed-out state never reaches the recommendation repository',
+    () async {
+      final location = FakeLocationRepository(state: _availableLocation());
+      final recommendation = _ControlledRecommendationRepository();
+      final container = _container(
+        location: location,
+        recommendation: recommendation,
+      );
+      addTearDown(container.dispose);
+      _listen(container);
 
-    expect(await container.read(nearbyRecommendationProvider.future), isNull);
-    expect(location.requestCount, 0);
-    expect(recommendation.loadCalls, 0);
-  });
+      expect(await container.read(nearbyRecommendationProvider.future), isNull);
+      expect(location.requestCount, 0);
+      expect(recommendation.loadCalls, 0);
+    },
+  );
 
   test('waits for authenticated user and current GPS before loading', () async {
-    final signIn = Completer<AuthUser>();
-    final auth = _ControlledAuthRepository(signInFuture: signIn.future);
+    final auth = _ControlledAuthRepository();
     final location = _PendingLocationRepository();
     final recommendation = _ControlledRecommendationRepository();
     final pendingRecommendation = recommendation.queueLoad();
@@ -43,7 +45,7 @@ void main() {
     expect(location.requestCount, 0);
     expect(recommendation.loadCalls, 0);
 
-    signIn.complete(AuthUser.session(id: 'user-a', isAnonymous: true));
+    auth.emit(AuthUser.session(id: 'user-a', isAnonymous: false));
     await location.started.future;
     expect(recommendation.loadCalls, 0);
 
@@ -160,11 +162,9 @@ void main() {
     expect(recommendation.loadCalls, 2);
   });
 
-  test('signed-out loading clears the previous user recommendation', () async {
-    final replacement = Completer<AuthUser>();
+  test('signed-out state clears the previous user recommendation', () async {
     final auth = _ControlledAuthRepository(
       currentUser: AuthUser.session(id: 'user-a', isAnonymous: true),
-      signInFuture: replacement.future,
     );
     final recommendation = _ControlledRecommendationRepository();
     final userALoad = recommendation.queueLoad();
@@ -179,17 +179,20 @@ void main() {
     _listen(container);
 
     await userALoad.started.future;
-    auth.signOut();
+    await auth.signOut();
     await _flush();
 
-    expect(container.read(currentAuthUserProvider).isLoading, isTrue);
-    expect(container.read(nearbyRecommendationProvider).isLoading, isTrue);
+    expect(
+      container.read(currentAuthUserProvider).requireValue.isSignedOut,
+      isTrue,
+    );
+    expect(container.read(nearbyRecommendationProvider).requireValue, isNull);
 
     userALoad.result.complete(_recommendation('spot-a', '경복궁'));
     await _flush();
-    expect(container.read(nearbyRecommendationProvider).isLoading, isTrue);
+    expect(container.read(nearbyRecommendationProvider).requireValue, isNull);
 
-    replacement.complete(AuthUser.session(id: 'user-b', isAnonymous: true));
+    auth.emit(AuthUser.session(id: 'user-b', isAnonymous: false));
     await userBLoad.started.future;
     userBLoad.result.complete(_recommendation('spot-b', '창덕궁'));
     await _flush();
@@ -340,10 +343,9 @@ Recommendation _recommendation(String contentId, String title) =>
     );
 
 final class _ControlledAuthRepository implements AuthRepository {
-  _ControlledAuthRepository({this.currentUser, this.signInFuture});
+  _ControlledAuthRepository({this.currentUser});
 
   final StreamController<AuthUser?> _changes = StreamController<AuthUser?>();
-  final Future<AuthUser>? signInFuture;
 
   @override
   AuthUser? currentUser;
@@ -352,14 +354,8 @@ final class _ControlledAuthRepository implements AuthRepository {
   Stream<AuthUser?> get authStateChanges => _changes.stream;
 
   @override
-  Future<AuthUser> signInAnonymously() async {
-    final user =
-        await (signInFuture ??
-            Future<AuthUser>.value(
-              AuthUser.session(id: 'fallback-user', isAnonymous: true),
-            ));
-    currentUser = user;
-    return user;
+  Future<void> signInWithKakao() async {
+    emit(AuthUser.session(id: 'fallback-member', isAnonymous: false));
   }
 
   void emit(AuthUser user) {
@@ -367,7 +363,8 @@ final class _ControlledAuthRepository implements AuthRepository {
     _changes.add(user);
   }
 
-  void signOut() {
+  @override
+  Future<void> signOut() async {
     currentUser = null;
     _changes.add(null);
   }
@@ -381,13 +378,16 @@ final class _ErrorAuthRepository implements AuthRepository {
   final Object error;
 
   @override
-  AuthUser? get currentUser => null;
+  AuthUser? get currentUser => throw error;
 
   @override
   Stream<AuthUser?> get authStateChanges => const Stream<AuthUser?>.empty();
 
   @override
-  Future<AuthUser> signInAnonymously() => Future<AuthUser>.error(error);
+  Future<void> signInWithKakao() => Future<void>.error(error);
+
+  @override
+  Future<void> signOut() => Future<void>.error(error);
 }
 
 final class _PendingLocationRepository implements LocationRepository {

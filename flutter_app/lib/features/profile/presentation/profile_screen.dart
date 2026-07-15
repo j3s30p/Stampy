@@ -35,6 +35,10 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
     final retryTarget = presentation.retryTarget;
+    final canSignOut = switch (session) {
+      AsyncData(:final value) => !value.isSignedOut,
+      _ => false,
+    };
 
     return FieldJournalPage(
       eyebrow: '마이 페이지',
@@ -93,8 +97,31 @@ class ProfileScreen extends ConsumerWidget {
             ],
           ),
         ),
+        if (canSignOut)
+          JournalSection(
+            index: '03',
+            title: '계정',
+            child: OutlinedButton.icon(
+              onPressed: () => _signOut(context, ref),
+              icon: const Icon(Icons.logout),
+              label: const Text('로그아웃'),
+            ),
+          ),
       ],
     );
+  }
+}
+
+Future<void> _signOut(BuildContext context, WidgetRef ref) async {
+  try {
+    await ref.read(currentAuthUserProvider.notifier).signOut();
+  } on Object {
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('로그아웃하지 못했어요. 다시 시도해 주세요.')));
   }
 }
 
@@ -118,11 +145,11 @@ _ProfileSessionPresentation _presentationForUser(
   AuthUser user,
   StampSessionState stampSession,
 ) {
-  if (user.isGuest) {
+  if (user.isSignedOut) {
     return const _ProfileSessionPresentation(
-      badge: 'GUEST',
-      title: '개발용 게스트 모드',
-      description: 'Supabase 설정 없이 기기 안에서 Stampy를 둘러보고 있습니다.',
+      badge: 'SIGNED OUT',
+      title: '로그인이 필요해요',
+      description: '카카오 로그인 후 여행 기록을 확인할 수 있습니다.',
     );
   }
 

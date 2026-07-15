@@ -91,7 +91,12 @@ void main() {
     () async {
       final repository = FakeStampRepository(clock: () => collectedAt);
       final container = ProviderContainer(
-        overrides: [stampRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          authRepositoryProvider.overrideWithValue(
+            FakeAuthRepository(currentUser: _member()),
+          ),
+          stampRepositoryProvider.overrideWithValue(repository),
+        ],
       );
       addTearDown(container.dispose);
       _listenToStampSession(container);
@@ -122,7 +127,12 @@ void main() {
     () async {
       final repository = FakeStampRepository(clock: () => collectedAt);
       final container = ProviderContainer(
-        overrides: [stampRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          authRepositoryProvider.overrideWithValue(
+            FakeAuthRepository(currentUser: _member()),
+          ),
+          stampRepositoryProvider.overrideWithValue(repository),
+        ],
       );
       addTearDown(container.dispose);
 
@@ -157,8 +167,7 @@ void main() {
   );
 
   test('waits for auth before loading or collecting', () async {
-    final signIn = Completer<AuthUser>();
-    final auth = _ControlledAuthRepository(signInFuture: signIn.future);
+    final auth = _ControlledAuthRepository();
     final repository = _ControlledStampRepository();
     final load = repository.queueLoad();
     final container = _container(auth: auth, stamp: repository);
@@ -176,7 +185,7 @@ void main() {
     );
     expect(repository.collectCalls, 0);
 
-    signIn.complete(AuthUser.session(id: 'anonymous-user', isAnonymous: true));
+    auth.emitUser(_member());
     await _waitForAuth(container);
     await load.started.future;
     _expectLoadStatus(container, StampSessionLoadStatus.loading);
@@ -214,10 +223,8 @@ void main() {
   });
 
   test('clears signed-out state and ignores the previous user load', () async {
-    final replacement = Completer<AuthUser>();
     final auth = _ControlledAuthRepository(
       currentUser: AuthUser.session(id: 'user-a', isAnonymous: true),
-      signInFuture: replacement.future,
     );
     final repository = _ControlledStampRepository();
     final userALoad = repository.queueLoad();
@@ -229,10 +236,13 @@ void main() {
     await _waitForAuth(container);
     await userALoad.started.future;
 
-    auth.signOut();
+    await auth.signOut();
     await _flush();
 
-    expect(container.read(currentAuthUserProvider).isLoading, isTrue);
+    expect(
+      container.read(currentAuthUserProvider).requireValue.isSignedOut,
+      isTrue,
+    );
     expect(container.read(stampSessionProvider).collectedStamps, isEmpty);
     _expectLoadStatus(container, StampSessionLoadStatus.loading);
     userALoad.result.complete(<CollectedStamp>[_stamp('stamp-a', 'A')]);
@@ -240,9 +250,9 @@ void main() {
     expect(container.read(stampSessionProvider).collectedStamps, isEmpty);
     _expectLoadStatus(container, StampSessionLoadStatus.loading);
 
-    final replacementUser = container.read(currentAuthUserProvider.future);
-    replacement.complete(AuthUser.session(id: 'user-b', isAnonymous: true));
-    expect((await replacementUser).id, 'user-b');
+    auth.emitUser(AuthUser.session(id: 'user-b', isAnonymous: false));
+    await _flush();
+    expect(container.read(currentAuthUserProvider).requireValue.id, 'user-b');
     await userBLoad.started.future;
     _expectLoadStatus(container, StampSessionLoadStatus.loading);
     userBLoad.result.complete(<CollectedStamp>[_stamp('stamp-b', 'B')]);
@@ -432,10 +442,9 @@ LocationFix _fix() => LocationFix(
 );
 
 final class _ControlledAuthRepository implements AuthRepository {
-  _ControlledAuthRepository({this.currentUser, this.signInFuture});
+  _ControlledAuthRepository({this.currentUser});
 
   final StreamController<AuthUser?> _changes = StreamController<AuthUser?>();
-  final Future<AuthUser>? signInFuture;
 
   @override
   AuthUser? currentUser;
@@ -444,14 +453,9 @@ final class _ControlledAuthRepository implements AuthRepository {
   Stream<AuthUser?> get authStateChanges => _changes.stream;
 
   @override
-  Future<AuthUser> signInAnonymously() async {
-    final user =
-        await (signInFuture ??
-            Future<AuthUser>.value(
-              AuthUser.session(id: 'fallback-user', isAnonymous: true),
-            ));
-    currentUser = user;
-    return user;
+  Future<void> signInWithKakao() async {
+    final user = AuthUser.session(id: 'fallback-member', isAnonymous: false);
+    emitUser(user);
   }
 
   void emitUser(AuthUser user) {
@@ -459,7 +463,8 @@ final class _ControlledAuthRepository implements AuthRepository {
     _changes.add(user);
   }
 
-  void signOut() {
+  @override
+  Future<void> signOut() async {
     currentUser = null;
     _changes.add(null);
   }
@@ -473,14 +478,20 @@ final class _ErrorAuthRepository implements AuthRepository {
   final Object error;
 
   @override
-  AuthUser? get currentUser => null;
+  AuthUser? get currentUser => throw error;
 
   @override
   Stream<AuthUser?> get authStateChanges => const Stream<AuthUser?>.empty();
 
   @override
-  Future<AuthUser> signInAnonymously() => Future<AuthUser>.error(error);
+  Future<void> signInWithKakao() => Future<void>.error(error);
+
+  @override
+  Future<void> signOut() => Future<void>.error(error);
 }
+
+AuthUser _member([String id = 'member']) =>
+    AuthUser.session(id: id, isAnonymous: false);
 
 final class _ControlledStampRepository implements StampRepository {
   final List<_Pending<List<CollectedStamp>>> _loads =

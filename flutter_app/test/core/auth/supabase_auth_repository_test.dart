@@ -5,9 +5,9 @@ import 'package:stampy/core/auth/auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
 
 void main() {
-  test('maps the current Supabase user without signing in again', () {
+  test('maps a restored permanent Supabase user', () {
     final client = _FakeGoTrueClient(
-      currentUser: _supabaseUser(id: 'existing-user', isAnonymous: true),
+      currentUser: _supabaseUser(id: 'existing-user', isAnonymous: false),
     );
     addTearDown(client.dispose);
     final repository = SupabaseAuthRepository(client);
@@ -15,63 +15,65 @@ void main() {
     final user = repository.currentUser;
 
     expect(user?.id, 'existing-user');
-    expect(user?.isAnonymous, isTrue);
-    expect(client.signInCalls, 0);
+    expect(user?.isAnonymous, isFalse);
   });
 
-  test('maps a newly created anonymous session', () async {
-    final anonymousUser = _supabaseUser(
-      id: 'anonymous-user',
-      isAnonymous: true,
-    );
+  test('does not expose a legacy anonymous session as a member', () {
     final client = _FakeGoTrueClient(
-      signInResponse: AuthResponse(session: _session(anonymousUser)),
+      currentUser: _supabaseUser(id: 'anonymous-user', isAnonymous: true),
     );
     addTearDown(client.dispose);
     final repository = SupabaseAuthRepository(client);
 
-    final user = await repository.signInAnonymously();
-
-    expect(user.id, 'anonymous-user');
-    expect(user.isAnonymous, isTrue);
-    expect(client.signInCalls, 1);
+    expect(repository.currentUser, isNull);
   });
 
-  test('rejects a malformed anonymous sign-in response', () async {
-    const privateId = 'private-malformed-user-id';
+  test('launches Kakao OAuth with the app callback', () async {
+    final client = _FakeGoTrueClient();
+    addTearDown(client.dispose);
+    OAuthProvider? provider;
+    final repository = SupabaseAuthRepository(
+      client,
+      launchOAuth: (selectedProvider, {String? redirectTo}) async {
+        provider = selectedProvider;
+        // Capture the named parameter without shadowing the outer variable.
+        final callback = redirectTo;
+        expect(callback, kakaoAuthRedirectUrl);
+        return true;
+      },
+    );
+
+    await repository.signInWithKakao();
+
+    expect(provider, OAuthProvider.kakao);
+  });
+
+  test('clears a legacy anonymous session before Kakao OAuth', () async {
     final client = _FakeGoTrueClient(
-      signInResponse: AuthResponse(
-        user: _supabaseUser(id: privateId, isAnonymous: true),
-      ),
+      currentUser: _supabaseUser(id: 'anonymous-user', isAnonymous: true),
     );
     addTearDown(client.dispose);
-    final repository = SupabaseAuthRepository(client);
+    final repository = SupabaseAuthRepository(
+      client,
+      launchOAuth: (_, {redirectTo}) async => true,
+    );
+
+    await repository.signInWithKakao();
+
+    expect(client.signOutCalls, 1);
+    expect(client.currentUser, isNull);
+  });
+
+  test('rejects a Kakao OAuth screen that could not be opened', () async {
+    final client = _FakeGoTrueClient();
+    addTearDown(client.dispose);
+    final repository = SupabaseAuthRepository(
+      client,
+      launchOAuth: (_, {redirectTo}) async => false,
+    );
 
     await expectLater(
-      repository.signInAnonymously(),
-      throwsA(
-        isA<AuthRepositoryException>().having(
-          (error) => error.toString(),
-          'message',
-          isNot(contains(privateId)),
-        ),
-      ),
-    );
-  });
-
-  test('rejects a non-anonymous sign-in response', () async {
-    final permanentUser = _supabaseUser(
-      id: 'permanent-user',
-      isAnonymous: false,
-    );
-    final client = _FakeGoTrueClient(
-      signInResponse: AuthResponse(session: _session(permanentUser)),
-    );
-    addTearDown(client.dispose);
-    final repository = SupabaseAuthRepository(client);
-
-    await expectLater(
-      repository.signInAnonymously(),
+      repository.signInWithKakao(),
       throwsA(isA<AuthRepositoryException>()),
     );
   });
@@ -88,34 +90,41 @@ void main() {
 
     expect(await signedOut, isNull);
   });
+
+  test('delegates sign out to Supabase Auth', () async {
+    final client = _FakeGoTrueClient(
+      currentUser: _supabaseUser(id: 'member', isAnonymous: false),
+    );
+    addTearDown(client.dispose);
+    final repository = SupabaseAuthRepository(client);
+
+    await repository.signOut();
+
+    expect(client.signOutCalls, 1);
+    expect(client.currentUser, isNull);
+  });
 }
 
 final class _FakeGoTrueClient extends GoTrueClient {
   _FakeGoTrueClient({
     this.currentUser,
-    AuthResponse? signInResponse,
     this.authStateChanges = const Stream<AuthState>.empty(),
-  }) : _signInResponse = signInResponse ?? AuthResponse(),
-       super(autoRefreshToken: false);
+  }) : super(autoRefreshToken: false);
 
   @override
-  final User? currentUser;
+  User? currentUser;
 
   final Stream<AuthState> authStateChanges;
 
   @override
   Stream<AuthState> get onAuthStateChange => authStateChanges;
 
-  final AuthResponse _signInResponse;
-  int signInCalls = 0;
+  int signOutCalls = 0;
 
   @override
-  Future<AuthResponse> signInAnonymously({
-    Map<String, dynamic>? data,
-    String? captchaToken,
-  }) async {
-    signInCalls += 1;
-    return _signInResponse;
+  Future<void> signOut({SignOutScope scope = SignOutScope.local}) async {
+    signOutCalls += 1;
+    currentUser = null;
   }
 }
 
@@ -126,11 +135,4 @@ User _supabaseUser({required String id, required bool isAnonymous}) => User(
   aud: 'authenticated',
   createdAt: '2026-07-13T00:00:00Z',
   isAnonymous: isAnonymous,
-);
-
-Session _session(User user) => Session(
-  accessToken: 'test-access-token',
-  refreshToken: 'test-refresh-token',
-  tokenType: 'bearer',
-  user: user,
 );

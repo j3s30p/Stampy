@@ -105,22 +105,22 @@ void main() {
     expect(find.textContaining('private transport detail'), findsNothing);
   });
 
-  testWidgets('does not describe an unqueried guest result as all collected', (
+  testWidgets('does not describe a signed-out result as all collected', (
     tester,
   ) async {
     await _pumpHome(
       tester,
-      auth: const FakeAuthRepository(),
+      auth: FakeAuthRepository(),
       location: FakeLocationRepository(state: _availableLocation()),
       recommendation: const FakeRecommendationRepository(),
       stamp: FakeStampRepository(initialStamps: <CollectedStamp>[_stamp('a')]),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('게스트 모드'), findsOneWidget);
-    expect(find.text('추천 데이터 연결이 필요해요'), findsOneWidget);
+    expect(find.text('로그인 필요'), findsOneWidget);
+    expect(find.text('카카오 로그인이 필요해요'), findsOneWidget);
     expect(find.text('1km 안의 미수집 도장을 모두 모았어요'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('1'), findsNothing);
   });
 
   testWidgets('shows loaded stamps and updates immediately after collection', (

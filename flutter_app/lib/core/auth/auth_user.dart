@@ -1,5 +1,5 @@
 final class AuthUser {
-  const AuthUser.guest() : id = null, isAnonymous = false;
+  const AuthUser.signedOut() : id = null, isAnonymous = false;
 
   factory AuthUser.session({required String id, required bool isAnonymous}) {
     final normalizedId = id.trim();
@@ -15,5 +15,5 @@ final class AuthUser {
   final String? id;
   final bool isAnonymous;
 
-  bool get isGuest => id == null;
+  bool get isSignedOut => id == null;
 }
