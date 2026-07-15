@@ -3,6 +3,8 @@ import 'stamp.dart';
 abstract interface class StampRepository {
   Future<List<CollectedStamp>> loadCollected();
 
+  Future<int> loadCollectedSigunguCount();
+
   Future<CollectStampResult> collect(CollectStampRequest request);
 }
 

@@ -130,6 +130,7 @@ void main() {
   ) async {
     final repository = FakeStampRepository(
       initialStamps: <CollectedStamp>[_stamp('a'), _stamp('b')],
+      collectedSigunguCount: 2,
       clock: () => DateTime.utc(2026, 7, 13, 13),
     );
     await _pumpHome(
@@ -154,9 +155,9 @@ void main() {
     expect(
       stats[1],
       isA<JournalStat>()
-          .having((stat) => stat.value, 'value', '—')
-          .having((stat) => stat.suffix, 'suffix', isNull)
-          .having((stat) => stat.label, 'label', '지역 집계 전'),
+          .having((stat) => stat.value, 'value', '2')
+          .having((stat) => stat.suffix, 'suffix', '곳')
+          .having((stat) => stat.label, 'label', '방문한 시군구'),
     );
     expect(
       stats[2],
@@ -165,11 +166,7 @@ void main() {
           .having((stat) => stat.suffix, 'suffix', isNull)
           .having((stat) => stat.label, 'label', '이번 주 순위'),
     );
-    expect(
-      stats.where((stat) => stat.value == '0' && stat.suffix == '곳'),
-      isEmpty,
-    );
-    expect(find.text('방문한 지역'), findsNothing);
+    expect(find.text('지역 집계 전'), findsNothing);
     expect(find.text('이번 주 순위'), findsOneWidget);
 
     final container = ProviderScope.containerOf(
@@ -188,6 +185,84 @@ void main() {
     await tester.pump();
 
     expect(find.text('3'), findsOneWidget);
+  });
+
+  testWidgets('새 도장 수집 후 방문한 시군구 수를 다시 불러온다', (tester) async {
+    final repository = _SequencedSigunguCountStampRepository(<int>[0, 1]);
+    await _pumpHome(
+      tester,
+      location: FakeLocationRepository(state: _availableLocation()),
+      recommendation: const FakeRecommendationRepository(),
+      stamp: repository,
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      _sigunguStat(tester),
+      isA<JournalStat>()
+          .having((stat) => stat.value, 'value', '0')
+          .having((stat) => stat.suffix, 'suffix', '곳')
+          .having((stat) => stat.label, 'label', '방문한 시군구'),
+    );
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(HomeScreen)),
+    );
+    await container
+        .read(stampSessionProvider.notifier)
+        .collect(
+          CollectStampRequest(
+            contentId: 'new-sigungu',
+            title: '새 시군구 도장',
+            kind: StampCandidateKind.spot,
+            verificationFix: _locationFix(),
+          ),
+        );
+    await tester.pumpAndSettle();
+
+    expect(_sigunguStat(tester).value, '1');
+    expect(repository.sigunguCountLoadCalls, 2);
+  });
+
+  testWidgets('시군구 집계 로딩을 실제 수치처럼 표시하지 않는다', (tester) async {
+    final pending = Completer<int>();
+    await _pumpHome(
+      tester,
+      location: FakeLocationRepository(state: _availableLocation()),
+      recommendation: const FakeRecommendationRepository(),
+      collectedSigunguCount: () => pending.future,
+    );
+    await tester.pump();
+
+    expect(
+      _sigunguStat(tester),
+      isA<JournalStat>()
+          .having((stat) => stat.value, 'value', '—')
+          .having((stat) => stat.suffix, 'suffix', isNull)
+          .having((stat) => stat.label, 'label', '지역 불러오는 중'),
+    );
+    pending.complete(0);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('시군구 집계 실패를 실제 수치처럼 표시하지 않는다', (tester) async {
+    await _pumpHome(
+      tester,
+      location: FakeLocationRepository(state: _availableLocation()),
+      recommendation: const FakeRecommendationRepository(),
+      collectedSigunguCount: () =>
+          Future<int>.error(StateError('private-sigungu-error')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      _sigunguStat(tester),
+      isA<JournalStat>()
+          .having((stat) => stat.value, 'value', '—')
+          .having((stat) => stat.suffix, 'suffix', isNull)
+          .having((stat) => stat.label, 'label', '지역 불러오기 실패'),
+    );
+    expect(find.textContaining('private-sigungu-error'), findsNothing);
   });
 
   testWidgets('이번 주 top 3에 든 현재 사용자 순위를 보여준다', (tester) async {
@@ -365,6 +440,7 @@ Future<void> _pumpHome(
   StampRepository? stamp,
   StampSessionState? stampSession,
   Future<List<WeeklyRankingEntry>> Function()? weeklyRanking,
+  Future<int> Function()? collectedSigunguCount,
   ValueChanged<Recommendation>? onRecommendationSelected,
 }) => tester.pumpWidget(
   ProviderScope(
@@ -383,6 +459,10 @@ Future<void> _pumpHome(
       if (stamp != null) stampRepositoryProvider.overrideWithValue(stamp),
       if (stampSession != null)
         stampSessionProvider.overrideWithBuild((ref, notifier) => stampSession),
+      if (collectedSigunguCount != null)
+        collectedSigunguCountProvider.overrideWith(
+          (ref) => collectedSigunguCount(),
+        ),
       weeklyRankingProvider.overrideWith(
         (ref) =>
             weeklyRanking?.call() ??
@@ -402,6 +482,9 @@ JournalStat _stampStat(WidgetTester tester) =>
 
 JournalStat _rankStat(WidgetTester tester) =>
     tester.widgetList<JournalStat>(find.byType(JournalStat)).last;
+
+JournalStat _sigunguStat(WidgetTester tester) =>
+    tester.widgetList<JournalStat>(find.byType(JournalStat)).elementAt(1);
 
 LocationState _availableLocation() => LocationState.available(_locationFix());
 
@@ -458,4 +541,38 @@ final class _PendingLocationRepository implements LocationRepository {
 
   @override
   Future<LocationState> getCurrentLocation() => result.future;
+}
+
+final class _SequencedSigunguCountStampRepository implements StampRepository {
+  _SequencedSigunguCountStampRepository(this._sigunguCounts);
+
+  final List<int> _sigunguCounts;
+  final List<CollectedStamp> _stamps = <CollectedStamp>[];
+  int sigunguCountLoadCalls = 0;
+
+  @override
+  Future<List<CollectedStamp>> loadCollected() =>
+      Future<List<CollectedStamp>>.value(
+        List<CollectedStamp>.unmodifiable(_stamps),
+      );
+
+  @override
+  Future<int> loadCollectedSigunguCount() {
+    final count = _sigunguCounts[sigunguCountLoadCalls];
+    sigunguCountLoadCalls += 1;
+    return Future<int>.value(count);
+  }
+
+  @override
+  Future<CollectStampResult> collect(CollectStampRequest request) {
+    final stamp = CollectedStamp(
+      contentId: request.contentId,
+      title: request.title,
+      kind: request.kind,
+      verificationFix: request.verificationFix,
+      collectedAt: DateTime.utc(2026, 7, 13, 13),
+    );
+    _stamps.add(stamp);
+    return Future<CollectStampResult>.value(CollectStampResult.success(stamp));
+  }
 }

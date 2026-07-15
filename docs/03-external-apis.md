@@ -18,6 +18,13 @@
 - 함수 요청은 `contentIds` 또는 `nearby` 중 정확히 하나만 허용한다. 발견하거나 명시한 ID는 `detailCommon2`로 각각 조회하고, 모든 항목 검증이 끝난 뒤 한 번에 upsert한다. 요청하지 않은 기존 행은 삭제하지 않는다.
 - 함수 호출 자격은 별도 `STAMP_SPOT_SYNC_TOKEN`으로 검증한다. service-role 키는 함수 내부 DB 쓰기에만 사용한다.
 
+### 법정동 시군구 코드
+
+- 2026-01-12부터 기존 `areaCode` / `sigunguCode`는 미표출 항목이다. 현행 대체 필드인 `lDongRegnCd` / `lDongSignguCd`를 사용한다. 근거: [한국관광공사 입출력 항목 변경 공지](https://www.data.go.kr/bbs/ntc/selectNotice.do?originId=NOTICE_0000000004459).
+- `detailCommon2` 응답 경계에서 두 필드를 `ldong_region_code` / `ldong_sigungu_code`로 정규화한다. 둘 다 숫자로만 이루어진 `text`일 때 한 쌍으로 저장하고, 누락되거나 한쪽만 있으면 둘 다 `null`로 저장한다.
+- 시군구 코드는 시도에 종속되므로 단독으로 고유하지 않다. 방문 시군구 집계는 반드시 두 코드의 복합쌍을 사용한다. 코드 길이도 고정하지 않는다.
+- 법정동 코드는 행정구역 개편으로 바뀔 수 있는 도장 스팟 속성이다. 수집 기록에 복제하지 않고 운영 카탈로그 재동기화로 갱신한다. 근거: [2026-07-01 법정동 코드 변경 공지](https://www.data.go.kr/bbs/ntc/selectNotice.do?originId=NOTICE_0000000004801).
+
 ### 좌표 표현
 
 - `mapx` = **경도** (longitude), `mapy` = **위도** (latitude). OGC 관습(x=lon, y=lat)을 따르지만 흔히 swap 한다. Edge Function에서 순서를 고정해 정규화하고 Flutter repository 경계에서 `Longitude` / `Latitude` 값 객체로 변환한다.

@@ -40,6 +40,8 @@ const tourApiResponse = (
     title: '경복궁',
     mapx: '126.977041',
     mapy: '37.579617',
+    lDongRegnCd: '11',
+    lDongSignguCd: '110',
     ...overrides,
   };
 
@@ -133,6 +135,8 @@ Deno.test('syncs a validated TourAPI spot with longitude before latitude', async
       title: '경복궁',
       kind: 'spot',
       location: 'SRID=4326;POINT(126.977041 37.579617)',
+      ldong_region_code: '11',
+      ldong_sigungu_code: '110',
     },
   ]);
 });
@@ -170,8 +174,50 @@ Deno.test('maps content type 15 to event and accepts the documented object item 
       title: '서울 축제',
       kind: 'event',
       location: 'SRID=4326;POINT(126.977041 37.579617)',
+      ldong_region_code: '11',
+      ldong_sigungu_code: '110',
     },
   ]);
+});
+
+Deno.test('writes an explicit null pair when TourAPI omits either legal district code', async () => {
+  for (
+    const overrides of [
+      { lDongRegnCd: '', lDongSignguCd: '' },
+      { lDongRegnCd: '11', lDongSignguCd: '' },
+    ]
+  ) {
+    const databaseRequests: Request[] = [];
+    const fetcher = (
+      input: string | URL | Request,
+      init?: RequestInit,
+    ): Promise<Response> => {
+      const request = new Request(input, init);
+      if (new URL(request.url).hostname === 'apis.data.go.kr') {
+        return resolvedResponse(tourApiResponse('126508', overrides));
+      }
+      databaseRequests.push(request);
+      return resolvedResponse(new Response(null, { status: 201 }));
+    };
+
+    const response = await createSyncStampSpotsHandler(CONFIG, fetcher)(
+      createRequest(['126508']),
+    );
+
+    equal(response.status, 200);
+    equal(databaseRequests.length, 1);
+    const rows = await databaseRequests[0].json();
+    deepStrictEqual(rows, [
+      {
+        content_id: '126508',
+        title: '경복궁',
+        kind: 'spot',
+        location: 'SRID=4326;POINT(126.977041 37.579617)',
+        ldong_region_code: null,
+        ldong_sigungu_code: null,
+      },
+    ]);
+  }
 });
 
 Deno.test('discovers nearby content IDs with official coordinate ordering', async () => {
@@ -567,6 +613,38 @@ Deno.test('rejects blank and out-of-range TourAPI coordinates', async () => {
     );
 
     equal(response.status, 502);
+    equal(databaseCalls, 0);
+  }
+});
+
+Deno.test('rejects non-numeric TourAPI legal district codes', async () => {
+  for (
+    const overrides of [
+      { lDongRegnCd: '서울' },
+      { lDongSignguCd: '110.0' },
+      { lDongRegnCd: { code: '11' } },
+      { lDongSignguCd: true },
+    ]
+  ) {
+    let databaseCalls = 0;
+    const fetcher = (
+      input: string | URL | Request,
+      init?: RequestInit,
+    ): Promise<Response> => {
+      const request = new Request(input, init);
+      if (new URL(request.url).hostname === 'apis.data.go.kr') {
+        return resolvedResponse(tourApiResponse('126508', overrides));
+      }
+      databaseCalls += 1;
+      return resolvedResponse(new Response(null, { status: 201 }));
+    };
+
+    const response = await createSyncStampSpotsHandler(CONFIG, fetcher)(
+      createRequest(['126508']),
+    );
+
+    equal(response.status, 502);
+    deepStrictEqual(await response.json(), { error: 'tour_api_invalid_response' });
     equal(databaseCalls, 0);
   }
 });

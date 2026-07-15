@@ -22,6 +22,8 @@ interface StampSpotRow {
   readonly title: string;
   readonly kind: 'spot' | 'event';
   readonly location: string;
+  readonly ldong_region_code: string | null;
+  readonly ldong_sigungu_code: string | null;
 }
 
 interface NearbyRequest {
@@ -335,22 +337,32 @@ const normalizeTourApiSpot = (payload: unknown, requestedContentId: string): Sta
   const contentTypeId = toText(item.contenttypeid);
   const longitude = toCoordinate(item.mapx, -180, 180);
   const latitude = toCoordinate(item.mapy, -90, 90);
+  const ldongRegionCode = toText(item.lDongRegnCd);
+  const ldongSigunguCode = toText(item.lDongSignguCd);
 
   if (
     title.length === 0 ||
     !contentTypeId ||
     !SUPPORTED_CONTENT_TYPE_IDS.has(contentTypeId) ||
     longitude === null ||
-    latitude === null
+    latitude === null ||
+    !isOptionalTextValue(item.lDongRegnCd) ||
+    !isOptionalTextValue(item.lDongSignguCd) ||
+    (ldongRegionCode !== null && !/^\d+$/.test(ldongRegionCode)) ||
+    (ldongSigunguCode !== null && !/^\d+$/.test(ldongSigunguCode))
   ) {
     throw new SyncFailure(502, 'tour_api_invalid_response');
   }
+
+  const hasLdongPair = ldongRegionCode !== null && ldongSigunguCode !== null;
 
   return {
     content_id: requestedContentId,
     title,
     kind: contentTypeId === '15' ? 'event' : 'spot',
     location: `SRID=4326;POINT(${longitude} ${latitude})`,
+    ldong_region_code: hasLdongPair ? ldongRegionCode : null,
+    ldong_sigungu_code: hasLdongPair ? ldongSigunguCode : null,
   };
 };
 
@@ -404,6 +416,13 @@ const toText = (value: unknown): string | null => {
 
   const text = String(value).trim();
   return text.length > 0 ? text : null;
+};
+
+const isOptionalTextValue = (value: unknown): boolean => {
+  return value === undefined ||
+    value === null ||
+    typeof value === 'string' ||
+    typeof value === 'number';
 };
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {

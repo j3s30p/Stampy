@@ -18,6 +18,8 @@ const fixture = {
   kind: 'spot',
   latitude: -48.876543,
   longitude: -123.456789,
+  ldongRegionCode: '11',
+  ldongSigunguCode: '11110',
 };
 const createdUserIds = [];
 let failure;
@@ -32,6 +34,8 @@ try {
       title: fixture.title,
       kind: fixture.kind,
       location: `SRID=4326;POINT(${fixture.longitude} ${fixture.latitude})`,
+      ldong_region_code: fixture.ldongRegionCode,
+      ldong_sigungu_code: fixture.ldongSigunguCode,
     },
   });
 
@@ -66,6 +70,9 @@ try {
   const collectedA = await authenticatedRpc(userA.accessToken, 'list_collected_stamps');
   assertSingleFixture(collectedA, 'user A collected list');
 
+  const sigunguCountA = await authenticatedRpc(userA.accessToken, 'get_collected_sigungu_count');
+  assert(sigunguCountA === 1, 'user A collected sigungu count is not one');
+
   const weeklyRankingA = await authenticatedRpc(userA.accessToken, 'list_weekly_ranking');
   assertWeeklyRanking(weeklyRankingA, true, 'user A weekly ranking');
 
@@ -78,6 +85,9 @@ try {
 
   const collectedB = await authenticatedRpc(userB.accessToken, 'list_collected_stamps');
   assert(collectedB.length === 0, 'user B can see user A collected RPC rows');
+
+  const sigunguCountB = await authenticatedRpc(userB.accessToken, 'get_collected_sigungu_count');
+  assert(sigunguCountB === 0, 'user B collected sigungu count is not zero');
 
   const weeklyRankingB = await authenticatedRpc(userB.accessToken, 'list_weekly_ranking');
   assertWeeklyRanking(weeklyRankingB, false, 'user B weekly ranking');

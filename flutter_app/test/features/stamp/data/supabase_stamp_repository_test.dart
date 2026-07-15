@@ -10,6 +10,47 @@ import 'package:stampy/features/stamp/domain/stamp_domain.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
+  test('loads the collected sigungu count from its scalar RPC', () async {
+    final client = _client((request) async {
+      expect(request.method, 'POST');
+      expect(
+        request.url,
+        Uri.parse(
+          'https://example.supabase.co/rest/v1/rpc/get_collected_sigungu_count',
+        ),
+      );
+      expect(request.headers['authorization'], 'Bearer user-access-token');
+      expect(request.headers['apikey'], 'publishable-key');
+      return _jsonResponse(2, request);
+    });
+    addTearDown(client.dispose);
+
+    expect(
+      await SupabaseStampRepository(client).loadCollectedSigunguCount(),
+      2,
+    );
+  });
+
+  for (final response in <Object?>[
+    -1,
+    1.5,
+    '2',
+    <int>[2],
+    null,
+  ]) {
+    test('rejects invalid collected sigungu count $response', () async {
+      final client = _client(
+        (request) async => _jsonResponse(response, request),
+      );
+      addTearDown(client.dispose);
+
+      await expectLater(
+        SupabaseStampRepository(client).loadCollectedSigunguCount(),
+        throwsA(isA<StampRepositoryException>()),
+      );
+    });
+  }
+
   test(
     'lists collected stamps with authenticated scalar RPC mapping',
     () async {
@@ -351,7 +392,7 @@ SupabaseClient _client(
   httpClient: MockClient(handler),
 );
 
-http.Response _jsonResponse(Object value, http.Request request) =>
+http.Response _jsonResponse(Object? value, http.Request request) =>
     http.Response(
       jsonEncode(value),
       200,

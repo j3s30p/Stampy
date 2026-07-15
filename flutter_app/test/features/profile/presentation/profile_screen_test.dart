@@ -375,6 +375,9 @@ final class _ControlledStampRepository implements StampRepository {
   }
 
   @override
+  Future<int> loadCollectedSigunguCount() => Future<int>.value(0);
+
+  @override
   Future<CollectStampResult> collect(CollectStampRequest request) =>
       Future<CollectStampResult>.error(
         const StampRepositoryException('Collection is not used in this test.'),

@@ -523,6 +523,9 @@ final class _ControlledStampRepository implements StampRepository {
   }
 
   @override
+  Future<int> loadCollectedSigunguCount() => Future<int>.value(0);
+
+  @override
   Future<CollectStampResult> collect(CollectStampRequest request) {
     final pending = _collections[collectCalls];
     collectCalls += 1;
