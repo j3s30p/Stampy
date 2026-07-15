@@ -13,6 +13,79 @@ void main() {
   final collectedAt = DateTime.utc(2026, 7, 13, 12);
   final request = _request('tour-126508', '경복궁');
 
+  test('retrying a failed load preserves stamps collected afterward', () async {
+    final auth = _ControlledAuthRepository(
+      currentUser: AuthUser.session(id: 'user-a', isAnonymous: true),
+    );
+    final repository = _ControlledStampRepository();
+    final load = repository.queueLoad();
+    final retryLoad = repository.queueLoad();
+    final collection = repository.queueCollect();
+    final container = _container(auth: auth, stamp: repository);
+    addTearDown(auth.dispose);
+    addTearDown(container.dispose);
+    _listenToStampSession(container);
+    await _waitForAuth(container);
+    await load.started.future;
+
+    load.result.completeError(StateError('offline'));
+    await _flush();
+
+    _expectLoadStatus(container, StampSessionLoadStatus.failed);
+    expect(container.read(stampSessionProvider).error, isA<StateError>());
+
+    final controller = container.read(stampSessionProvider.notifier);
+    final collectionResult = controller.collect(request);
+    await collection.started.future;
+    collection.result.complete(
+      CollectStampResult.success(_stamp(request.contentId, request.title)),
+    );
+    await collectionResult;
+
+    _expectLoadStatus(container, StampSessionLoadStatus.failed);
+    expect(container.read(stampSessionProvider).collectedStamps, hasLength(1));
+
+    final retry = controller.retryLoad();
+    await retryLoad.started.future;
+
+    _expectLoadStatus(container, StampSessionLoadStatus.loading);
+    expect(container.read(stampSessionProvider).collectedStamps, hasLength(1));
+
+    retryLoad.result.completeError(StateError('still offline'));
+    await retry;
+
+    _expectLoadStatus(container, StampSessionLoadStatus.failed);
+    expect(container.read(stampSessionProvider).collectedStamps, hasLength(1));
+  });
+
+  test('collection failures do not change the session load status', () async {
+    final auth = _ControlledAuthRepository(
+      currentUser: AuthUser.session(id: 'user-a', isAnonymous: true),
+    );
+    final repository = _ControlledStampRepository();
+    final load = repository.queueLoad();
+    final collection = repository.queueCollect();
+    final container = _container(auth: auth, stamp: repository);
+    addTearDown(auth.dispose);
+    addTearDown(container.dispose);
+    _listenToStampSession(container);
+    await _waitForAuth(container);
+    await load.started.future;
+    load.result.complete(const <CollectedStamp>[]);
+    await _flush();
+
+    final result = container
+        .read(stampSessionProvider.notifier)
+        .collect(request);
+    await collection.started.future;
+    final expectation = expectLater(result, throwsStateError);
+    collection.result.completeError(StateError('offline'));
+    await expectation;
+
+    _expectLoadStatus(container, StampSessionLoadStatus.loaded);
+    expect(container.read(stampSessionProvider).error, isA<StateError>());
+  });
+
   test(
     'collect updates session state and duplicate remains one record',
     () async {
@@ -96,6 +169,7 @@ void main() {
     await _flush();
 
     expect(repository.loadCalls, 0);
+    _expectLoadStatus(container, StampSessionLoadStatus.loading);
     await expectLater(
       container.read(stampSessionProvider.notifier).collect(request),
       throwsA(isA<StampRepositoryException>()),
@@ -105,10 +179,12 @@ void main() {
     signIn.complete(AuthUser.session(id: 'anonymous-user', isAnonymous: true));
     await _waitForAuth(container);
     await load.started.future;
+    _expectLoadStatus(container, StampSessionLoadStatus.loading);
     load.result.complete(const <CollectedStamp>[]);
     await _flush();
 
     expect(repository.loadCalls, 1);
+    _expectLoadStatus(container, StampSessionLoadStatus.loaded);
   });
 
   test('does not reload for a new auth value with the same user id', () async {
@@ -130,6 +206,7 @@ void main() {
     await _flush();
 
     expect(repository.loadCalls, 1);
+    _expectLoadStatus(container, StampSessionLoadStatus.loaded);
     expect(
       container.read(stampSessionProvider).collectedStamps.single.contentId,
       'stamp-a',
@@ -157,14 +234,17 @@ void main() {
 
     expect(container.read(currentAuthUserProvider).isLoading, isTrue);
     expect(container.read(stampSessionProvider).collectedStamps, isEmpty);
+    _expectLoadStatus(container, StampSessionLoadStatus.loading);
     userALoad.result.complete(<CollectedStamp>[_stamp('stamp-a', 'A')]);
     await _flush();
     expect(container.read(stampSessionProvider).collectedStamps, isEmpty);
+    _expectLoadStatus(container, StampSessionLoadStatus.loading);
 
     final replacementUser = container.read(currentAuthUserProvider.future);
     replacement.complete(AuthUser.session(id: 'user-b', isAnonymous: true));
     expect((await replacementUser).id, 'user-b');
     await userBLoad.started.future;
+    _expectLoadStatus(container, StampSessionLoadStatus.loading);
     userBLoad.result.complete(<CollectedStamp>[_stamp('stamp-b', 'B')]);
     await _flush();
 
@@ -172,6 +252,7 @@ void main() {
       container.read(stampSessionProvider).collectedStamps.single.contentId,
       'stamp-b',
     );
+    _expectLoadStatus(container, StampSessionLoadStatus.loaded);
     expect(repository.loadCalls, 2);
   });
 
@@ -309,6 +390,11 @@ void _listenToStampSession(ProviderContainer container) {
   );
   addTearDown(subscription.close);
 }
+
+void _expectLoadStatus(
+  ProviderContainer container,
+  StampSessionLoadStatus status,
+) => expect(container.read(stampSessionProvider).loadStatus, status);
 
 Future<void> _waitForAuth(ProviderContainer container) async {
   await container.read(currentAuthUserProvider.future);

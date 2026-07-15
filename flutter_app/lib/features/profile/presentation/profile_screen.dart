@@ -4,6 +4,7 @@ import 'package:stampy/app/theme/app_colors.dart';
 import 'package:stampy/core/auth/auth.dart';
 import 'package:stampy/core/location/location.dart';
 import 'package:stampy/core/widgets/field_journal.dart';
+import 'package:stampy/features/stamp/presentation/stamp_session.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -12,8 +13,9 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(currentAuthUserProvider);
     final location = ref.watch(currentLocationProvider);
+    final stampSession = ref.watch(stampSessionProvider);
     final presentation = session.when(
-      data: _presentationForUser,
+      data: (user) => _presentationForUser(user, stampSession),
       error: (error, _) {
         final isRetryable =
             error is! AuthRepositoryException || error.isRetryable;
@@ -23,7 +25,7 @@ class ProfileScreen extends ConsumerWidget {
           description: isRetryable
               ? '연결 상태를 확인한 뒤 다시 시도해 주세요.'
               : 'Supabase 설정을 확인한 뒤 앱을 다시 실행해 주세요.',
-          isRetryable: isRetryable,
+          retryTarget: isRetryable ? _ProfileRetryTarget.auth : null,
         );
       },
       loading: () => const _ProfileSessionPresentation(
@@ -32,6 +34,7 @@ class ProfileScreen extends ConsumerWidget {
         description: '안전한 여행 기록 공간을 준비하고 있습니다.',
       ),
     );
+    final retryTarget = presentation.retryTarget;
 
     return FieldJournalPage(
       eyebrow: '마이 페이지',
@@ -53,12 +56,24 @@ class ProfileScreen extends ConsumerWidget {
                 title: presentation.title,
                 description: presentation.description,
               ),
-              if (presentation.isRetryable) ...[
+              if (retryTarget != null) ...[
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
-                  onPressed: () => ref.invalidate(currentAuthUserProvider),
+                  onPressed: () async {
+                    switch (retryTarget) {
+                      case _ProfileRetryTarget.auth:
+                        ref.invalidate(currentAuthUserProvider);
+                      case _ProfileRetryTarget.stamps:
+                        await ref
+                            .read(stampSessionProvider.notifier)
+                            .retryLoad();
+                    }
+                  },
                   icon: const Icon(Icons.refresh),
-                  label: const Text('다시 시도'),
+                  label: Text(switch (retryTarget) {
+                    _ProfileRetryTarget.auth => '다시 시도',
+                    _ProfileRetryTarget.stamps => '여행 기록 다시 불러오기',
+                  }),
                 ),
               ],
             ],
@@ -99,7 +114,10 @@ String _locationSettingValue(AsyncValue<LocationState> location) =>
       loading: () => '확인 중',
     );
 
-_ProfileSessionPresentation _presentationForUser(AuthUser user) {
+_ProfileSessionPresentation _presentationForUser(
+  AuthUser user,
+  StampSessionState stampSession,
+) {
   if (user.isGuest) {
     return const _ProfileSessionPresentation(
       badge: 'GUEST',
@@ -108,22 +126,37 @@ _ProfileSessionPresentation _presentationForUser(AuthUser user) {
     );
   }
 
+  final description = switch (stampSession.loadStatus) {
+    StampSessionLoadStatus.loading => '여행 기록을 동기화하고 있습니다.',
+    StampSessionLoadStatus.loaded =>
+      '여행 기록이 연결됐습니다. 수집한 도장 ${stampSession.collectedStamps.length}개를 불러왔습니다.',
+    StampSessionLoadStatus.failed =>
+      '여행 기록 동기화에 실패했습니다. 연결 상태를 확인한 뒤 다시 시도해 주세요.',
+  };
+  final retryTarget = stampSession.loadStatus == StampSessionLoadStatus.failed
+      ? _ProfileRetryTarget.stamps
+      : null;
+
   if (user.isAnonymous) {
-    return const _ProfileSessionPresentation(
+    return _ProfileSessionPresentation(
       badge: 'ANONYMOUS',
       title: '익명 세션 연결',
-      description: 'Supabase 익명 사용자 ID가 연결됐습니다. 여행 기록 동기화는 준비 중입니다.',
-      emphasized: true,
+      description: description,
+      emphasized: stampSession.loadStatus == StampSessionLoadStatus.loaded,
+      retryTarget: retryTarget,
     );
   }
 
-  return const _ProfileSessionPresentation(
+  return _ProfileSessionPresentation(
     badge: 'MEMBER',
     title: '계정 연결',
-    description: '계정 ID가 연결됐습니다. 여행 기록 동기화는 준비 중입니다.',
-    emphasized: true,
+    description: description,
+    emphasized: stampSession.loadStatus == StampSessionLoadStatus.loaded,
+    retryTarget: retryTarget,
   );
 }
+
+enum _ProfileRetryTarget { auth, stamps }
 
 final class _ProfileSessionPresentation {
   const _ProfileSessionPresentation({
@@ -131,14 +164,14 @@ final class _ProfileSessionPresentation {
     required this.title,
     required this.description,
     this.emphasized = false,
-    this.isRetryable = false,
+    this.retryTarget,
   });
 
   final String badge;
   final String title;
   final String description;
   final bool emphasized;
-  final bool isRetryable;
+  final _ProfileRetryTarget? retryTarget;
 }
 
 class _SettingsRow extends StatelessWidget {
