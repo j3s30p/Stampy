@@ -1,19 +1,41 @@
+import 'package:flutter/foundation.dart';
+
 final class AppConfig {
   const AppConfig._({required this.supabaseCredentials});
+
+  static const kakaoJavaScriptKey = String.fromEnvironment('KAKAO_JS_KEY');
 
   factory AppConfig.fromEnvironment() => AppConfig.fromValues(
     supabaseUrl: const String.fromEnvironment('SUPABASE_URL'),
     supabasePublishableKey: const String.fromEnvironment(
       'SUPABASE_PUBLISHABLE_KEY',
     ),
+    kakaoJavaScriptKey: kakaoJavaScriptKey,
+    allowGuestMode: !kReleaseMode,
   );
 
   factory AppConfig.fromValues({
     String supabaseUrl = '',
     String supabasePublishableKey = '',
+    String kakaoJavaScriptKey = '',
+    bool allowGuestMode = true,
   }) {
     final url = supabaseUrl.trim();
     final publishableKey = supabasePublishableKey.trim();
+    final kakaoKey = kakaoJavaScriptKey.trim();
+
+    if (!allowGuestMode) {
+      final missingNames = <String>[
+        if (url.isEmpty) 'SUPABASE_URL',
+        if (publishableKey.isEmpty) 'SUPABASE_PUBLISHABLE_KEY',
+        if (kakaoKey.isEmpty) 'KAKAO_JS_KEY',
+      ];
+      if (missingNames.isNotEmpty) {
+        throw AppConfigException(
+          'Required release settings are missing: ${missingNames.join(', ')}.',
+        );
+      }
+    }
 
     if (url.isEmpty && publishableKey.isEmpty) {
       return const AppConfig._(supabaseCredentials: null);
