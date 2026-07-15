@@ -18,9 +18,41 @@ class HomeScreen extends ConsumerWidget {
     final authUser = ref.watch(currentAuthUserProvider);
     final location = ref.watch(currentLocationProvider);
     final recommendation = ref.watch(nearbyRecommendationProvider);
-    final collectedStampCount = ref.watch(
-      stampSessionProvider.select((session) => session.collectedStamps.length),
+    final (:collectedStampCount, :loadStatus) = ref.watch(
+      stampSessionProvider.select(
+        (session) => (
+          collectedStampCount: session.collectedStamps.length,
+          loadStatus: session.loadStatus,
+        ),
+      ),
     );
+    final stampStat = switch ((loadStatus, collectedStampCount)) {
+      (StampSessionLoadStatus.loaded, final count) => (
+        value: '$count',
+        suffix: '개',
+        label: '수집한 도장',
+      ),
+      (StampSessionLoadStatus.loading, final count) when count > 0 => (
+        value: '$count',
+        suffix: '개',
+        label: '확인된 도장',
+      ),
+      (StampSessionLoadStatus.failed, final count) when count > 0 => (
+        value: '$count',
+        suffix: '개',
+        label: '확인된 도장 · 실패',
+      ),
+      (StampSessionLoadStatus.loading, _) => (
+        value: '—',
+        suffix: null,
+        label: '도장 불러오는 중',
+      ),
+      (StampSessionLoadStatus.failed, _) => (
+        value: '—',
+        suffix: null,
+        label: '도장 불러오기 실패',
+      ),
+    };
     final presentation = _recommendationPresentation(
       authUser,
       location,
@@ -60,9 +92,9 @@ class HomeScreen extends ConsumerWidget {
             children: [
               Expanded(
                 child: JournalStat(
-                  value: '$collectedStampCount',
-                  suffix: '개',
-                  label: '수집한 도장',
+                  value: stampStat.value,
+                  suffix: stampStat.suffix,
+                  label: stampStat.label,
                 ),
               ),
               Container(width: 1, height: 52, color: StampyColors.hairline),
