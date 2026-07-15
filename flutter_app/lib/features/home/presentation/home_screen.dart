@@ -100,12 +100,12 @@ class HomeScreen extends ConsumerWidget {
               Container(width: 1, height: 52, color: StampyColors.hairline),
               const SizedBox(width: 20),
               const Expanded(
-                child: JournalStat(value: '0', suffix: '곳', label: '방문한 지역'),
+                child: JournalStat(value: '—', label: '지역 집계 전'),
               ),
               Container(width: 1, height: 52, color: StampyColors.hairline),
               const SizedBox(width: 20),
               const Expanded(
-                child: JournalStat(value: '—', label: '이번 주 순위'),
+                child: JournalStat(value: '—', label: '랭킹 준비 중'),
               ),
             ],
           ),

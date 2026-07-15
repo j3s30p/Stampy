@@ -138,7 +138,37 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('2'), findsOneWidget);
+    final stats = tester
+        .widgetList<JournalStat>(find.byType(JournalStat))
+        .toList(growable: false);
+    expect(stats, hasLength(3));
+    expect(
+      stats[0],
+      isA<JournalStat>()
+          .having((stat) => stat.value, 'value', '2')
+          .having((stat) => stat.suffix, 'suffix', '개')
+          .having((stat) => stat.label, 'label', '수집한 도장'),
+    );
+    expect(
+      stats[1],
+      isA<JournalStat>()
+          .having((stat) => stat.value, 'value', '—')
+          .having((stat) => stat.suffix, 'suffix', isNull)
+          .having((stat) => stat.label, 'label', '지역 집계 전'),
+    );
+    expect(
+      stats[2],
+      isA<JournalStat>()
+          .having((stat) => stat.value, 'value', '—')
+          .having((stat) => stat.suffix, 'suffix', isNull)
+          .having((stat) => stat.label, 'label', '랭킹 준비 중'),
+    );
+    expect(
+      stats.where((stat) => stat.value == '0' && stat.suffix == '곳'),
+      isEmpty,
+    );
+    expect(find.text('방문한 지역'), findsNothing);
+    expect(find.text('이번 주 순위'), findsNothing);
 
     final container = ProviderScope.containerOf(
       tester.element(find.byType(HomeScreen)),
