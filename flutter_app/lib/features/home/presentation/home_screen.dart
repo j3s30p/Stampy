@@ -21,6 +21,7 @@ class HomeScreen extends ConsumerWidget {
     final location = ref.watch(currentLocationProvider);
     final recommendation = ref.watch(nearbyRecommendationProvider);
     final weeklyRank = _currentWeeklyRank(ref.watch(weeklyRankingProvider));
+    final collectedSigunguCount = ref.watch(collectedSigunguCountProvider);
     final (:collectedStampCount, :loadStatus) = ref.watch(
       stampSessionProvider.select(
         (session) => (
@@ -55,6 +56,15 @@ class HomeScreen extends ConsumerWidget {
         suffix: null,
         label: '도장 불러오기 실패',
       ),
+    };
+    final sigunguStat = switch (collectedSigunguCount) {
+      AsyncData(:final value) => (
+        value: '$value',
+        suffix: '곳',
+        label: '방문한 시군구',
+      ),
+      AsyncError() => (value: '—', suffix: null, label: '지역 불러오기 실패'),
+      _ => (value: '—', suffix: null, label: '지역 불러오는 중'),
     };
     final presentation = _recommendationPresentation(
       authUser,
@@ -102,8 +112,12 @@ class HomeScreen extends ConsumerWidget {
               ),
               Container(width: 1, height: 52, color: StampyColors.hairline),
               const SizedBox(width: 20),
-              const Expanded(
-                child: JournalStat(value: '—', label: '지역 집계 전'),
+              Expanded(
+                child: JournalStat(
+                  value: sigunguStat.value,
+                  suffix: sigunguStat.suffix,
+                  label: sigunguStat.label,
+                ),
               ),
               Container(width: 1, height: 52, color: StampyColors.hairline),
               const SizedBox(width: 20),

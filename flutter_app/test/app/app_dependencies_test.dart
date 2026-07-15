@@ -49,8 +49,12 @@ void main() {
         'publishable-key',
         httpClient: MockClient((request) async {
           rpcRequests.add(request);
+          final responseBody =
+              request.url.path.endsWith('/get_collected_sigungu_count')
+              ? 0
+              : const <Object>[];
           return http.Response(
-            jsonEncode(const <Object>[]),
+            jsonEncode(responseBody),
             200,
             headers: const <String, String>{'content-type': 'application/json'},
             request: request,
@@ -86,6 +90,7 @@ void main() {
 
       await dependencies.map.loadSnapshot();
       await dependencies.stamp.loadCollected();
+      await dependencies.stamp.loadCollectedSigunguCount();
       await dependencies.recommendation.loadRecommendation(
         Coordinates(
           latitude: Latitude(37.579617),
@@ -96,6 +101,7 @@ void main() {
       expect(rpcRequests.map((request) => request.url.path), <String>[
         '/rest/v1/rpc/list_stamp_spots',
         '/rest/v1/rpc/list_collected_stamps',
+        '/rest/v1/rpc/get_collected_sigungu_count',
         '/rest/v1/rpc/get_stamp_recommendation',
         '/rest/v1/rpc/list_weekly_ranking',
       ]);

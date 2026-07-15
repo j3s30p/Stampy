@@ -23,10 +23,14 @@ void main() {
   );
 
   test('uses the injected clock and returns an immutable snapshot', () async {
-    final repository = FakeStampRepository(clock: () => collectedAt);
+    final repository = FakeStampRepository(
+      collectedSigunguCount: 2,
+      clock: () => collectedAt,
+    );
 
     final result = await repository.collect(request);
     final stamps = await repository.loadCollected();
+    final sigunguCount = await repository.loadCollectedSigunguCount();
 
     expect(
       result,
@@ -39,6 +43,7 @@ void main() {
     expect(stamps, hasLength(1));
     expect(stamps.single.verificationFix, verificationFix);
     expect(stamps.single.location, verificationFix.coordinates);
+    expect(sigunguCount, 2);
     expect(() => stamps.clear(), throwsUnsupportedError);
   });
 

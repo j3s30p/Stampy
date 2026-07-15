@@ -21,6 +21,20 @@ final class SupabaseStampRepository implements StampRepository {
   );
 
   @override
+  Future<int> loadCollectedSigunguCount() => _guard(
+    message: 'The collected district count could not be loaded.',
+    action: () async {
+      final response = await _client.rpc('get_collected_sigungu_count');
+      if (response is! int || response < 0) {
+        throw const StampRepositoryException(
+          'The collected district count response was invalid.',
+        );
+      }
+      return response;
+    },
+  );
+
+  @override
   Future<CollectStampResult> collect(CollectStampRequest request) => _guard(
     message: 'The stamp could not be collected.',
     action: () async {

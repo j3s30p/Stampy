@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(21);
+select plan(26);
 
 select ok(
   exists (select 1 from pg_extension where extname = 'postgis'),
@@ -20,8 +20,8 @@ select is(
     from information_schema.columns
     where table_schema = 'public' and table_name = 'stamp_spots'
   ),
-  4::bigint,
-  'stamp_spots has only the required columns'
+  6::bigint,
+  'stamp_spots has only the catalog and region columns'
 );
 
 select ok(
@@ -30,9 +30,23 @@ select ok(
     from information_schema.columns
     where table_schema = 'public'
       and table_name = 'stamp_spots'
+      and column_name in ('content_id', 'title', 'kind', 'location')
       and is_nullable = 'YES'
   ),
-  'every stamp_spots column is required'
+  'the original stamp spot columns remain required'
+);
+
+select is(
+  (
+    select count(*)
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'stamp_spots'
+      and is_nullable = 'YES'
+      and column_name in ('ldong_region_code', 'ldong_sigungu_code')
+  ),
+  2::bigint,
+  'only the region columns are nullable for legacy catalog rows'
 );
 
 select ok(
@@ -140,6 +154,102 @@ select throws_ok(
         extensions.st_point(126.977041, 37.579617),
         4326
       )::extensions.geography
+    )
+  $$,
+  '23514'
+);
+
+select throws_ok(
+  $$
+    insert into public.stamp_spots (
+      content_id,
+      title,
+      kind,
+      location,
+      ldong_region_code
+    )
+    values (
+      'tour-area-only',
+      '영역 코드만 있는 관광지',
+      'spot',
+      extensions.st_setsrid(
+        extensions.st_point(126.977041, 37.579617),
+        4326
+      )::extensions.geography,
+      '1'
+    )
+  $$,
+  '23514'
+);
+
+select throws_ok(
+  $$
+    insert into public.stamp_spots (
+      content_id,
+      title,
+      kind,
+      location,
+      ldong_sigungu_code
+    )
+    values (
+      'tour-sigungu-only',
+      '시군구 코드만 있는 관광지',
+      'spot',
+      extensions.st_setsrid(
+        extensions.st_point(126.977041, 37.579617),
+        4326
+      )::extensions.geography,
+      '23'
+    )
+  $$,
+  '23514'
+);
+
+select throws_ok(
+  $$
+    insert into public.stamp_spots (
+      content_id,
+      title,
+      kind,
+      location,
+      ldong_region_code,
+      ldong_sigungu_code
+    )
+    values (
+      'tour-invalid-area',
+      '잘못된 영역 코드 관광지',
+      'spot',
+      extensions.st_setsrid(
+        extensions.st_point(126.977041, 37.579617),
+        4326
+      )::extensions.geography,
+      '서울',
+      '11110'
+    )
+  $$,
+  '23514'
+);
+
+select throws_ok(
+  $$
+    insert into public.stamp_spots (
+      content_id,
+      title,
+      kind,
+      location,
+      ldong_region_code,
+      ldong_sigungu_code
+    )
+    values (
+      'tour-invalid-sigungu',
+      '잘못된 시군구 코드 관광지',
+      'spot',
+      extensions.st_setsrid(
+        extensions.st_point(126.977041, 37.579617),
+        4326
+      )::extensions.geography,
+      '11',
+      '종로'
     )
   $$,
   '23514'

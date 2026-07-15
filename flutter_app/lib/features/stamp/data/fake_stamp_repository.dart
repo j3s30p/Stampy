@@ -3,8 +3,10 @@ import '../domain/stamp_domain.dart';
 final class FakeStampRepository implements StampRepository {
   FakeStampRepository({
     Iterable<CollectedStamp> initialStamps = const <CollectedStamp>[],
+    this.collectedSigunguCount = 0,
     DateTime Function()? clock,
-  }) : _clock = clock ?? DateTime.now {
+  }) : assert(collectedSigunguCount >= 0),
+       _clock = clock ?? DateTime.now {
     for (final stamp in initialStamps) {
       if (_stampsByContentId.containsKey(stamp.contentId)) {
         throw ArgumentError.value(
@@ -18,6 +20,7 @@ final class FakeStampRepository implements StampRepository {
   }
 
   final DateTime Function() _clock;
+  final int collectedSigunguCount;
   final Map<String, CollectedStamp> _stampsByContentId =
       <String, CollectedStamp>{};
 
@@ -26,6 +29,10 @@ final class FakeStampRepository implements StampRepository {
       Future<List<CollectedStamp>>.value(
         List<CollectedStamp>.unmodifiable(_stampsByContentId.values),
       );
+
+  @override
+  Future<int> loadCollectedSigunguCount() =>
+      Future<int>.value(collectedSigunguCount);
 
   @override
   Future<CollectStampResult> collect(CollectStampRequest request) {

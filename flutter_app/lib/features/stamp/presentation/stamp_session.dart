@@ -15,6 +15,28 @@ final stampSessionProvider =
       StampSessionController.new,
     );
 
+final collectedSigunguCountProvider = FutureProvider.autoDispose<int>((ref) {
+  final authGate = ref.watch(
+    currentAuthUserProvider.select(
+      (authUser) => authUser.whenData((user) => user.id ?? ''),
+    ),
+  );
+  if (authGate.isLoading) {
+    return ref.watch(currentAuthUserProvider.future).then<int>((_) => 0);
+  }
+  if (authGate.hasError) {
+    return Future<int>.error(authGate.error!, authGate.stackTrace);
+  }
+  if (authGate.requireValue.isEmpty) {
+    return Future<int>.value(0);
+  }
+
+  ref.watch(
+    stampSessionProvider.select((session) => session.collectedStamps.length),
+  );
+  return ref.watch(stampRepositoryProvider).loadCollectedSigunguCount();
+}, retry: (_, _) => null);
+
 enum StampSessionLoadStatus { loading, loaded, failed }
 
 final class StampSessionState {
