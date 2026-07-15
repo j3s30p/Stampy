@@ -53,19 +53,20 @@ flutter run \
 
 Kakao JavaScript 키 없이도 앱 셸까지 실행할 수 있지만 실제 지도 타일은 표시되지 않는다.
 
-## Local Supabase database
+## Local Supabase
 
-Docker를 실행한 뒤 저장소 루트에서 고정된 CLI 버전으로 migration과 RLS를 검증한다.
+Docker를 실행한 뒤 저장소 루트에서 고정된 CLI 버전으로 migration, RLS, 실제 익명 Auth/JWT/RPC 연결을 검증한다. 아래 `start`는 테스트에 필요한 Postgres, GoTrue, Kong, PostgREST만 실행한다.
 
 ```sh
-npx supabase@2.109.1 db start
+npx supabase@2.109.1 start -x edge-runtime,imgproxy,logflare,mailpit,postgres-meta,realtime,storage-api,studio,supavisor,vector
 npx supabase@2.109.1 db reset
 npx supabase@2.109.1 test db
 npx supabase@2.109.1 db lint --level error --schema public
+npx supabase@2.109.1 status -o json | node supabase/tests/integration/local-contract-smoke.mjs
 npx supabase@2.109.1 stop
 ```
 
-`stamp_spots`는 서버가 관리하는 도장 대상 정본이다. 로그인한 사용자는 `list_stamp_spots()` RPC로 스칼라 좌표를 조회하며, 운영 데이터는 가짜 seed 없이 아래 TourAPI 동기화 함수로만 추가한다.
+HTTP smoke는 로컬 URL만 허용하며 고유 fixture와 익명 사용자 2명을 만든 뒤 성공·실패와 관계없이 삭제한다. `stamp_spots`는 서버가 관리하는 도장 대상 정본이다. 로그인한 사용자는 `list_stamp_spots()` RPC로 스칼라 좌표를 조회하며, 운영 데이터는 가짜 seed 없이 아래 TourAPI 동기화 함수로만 추가한다.
 
 ## TourAPI catalog sync
 
