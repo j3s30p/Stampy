@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stampy/app/theme/app_colors.dart';
+import 'package:stampy/core/config/app_config.dart';
 import 'package:stampy/core/location/location.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -16,7 +17,6 @@ import '../domain/map_selection.dart';
 import '../infrastructure/kakao_map_bridge.dart';
 import 'map_location_status.dart';
 
-const String _kakaoJavaScriptKey = String.fromEnvironment('KAKAO_JS_KEY');
 const String _mapAssetPath = 'assets/map/kakao_map.html';
 const String _keyPlaceholder = '__STAMPY_KAKAO_JS_KEY_JSON__';
 const String _mapBaseUrl = 'https://stampy.local/';
@@ -188,7 +188,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
 
     return template.replaceFirst(
       _keyPlaceholder,
-      jsonEncode(_kakaoJavaScriptKey),
+      jsonEncode(AppConfig.kakaoJavaScriptKey),
     );
   }
 
@@ -457,11 +457,11 @@ class _MapScreenState extends ConsumerState<MapScreen>
   }
 
   String _redactSecret(String message) {
-    if (_kakaoJavaScriptKey.isEmpty) {
+    if (AppConfig.kakaoJavaScriptKey.isEmpty) {
       return message;
     }
 
-    return message.replaceAll(_kakaoJavaScriptKey, '[redacted]');
+    return message.replaceAll(AppConfig.kakaoJavaScriptKey, '[redacted]');
   }
 
   void _showError(String message) {
