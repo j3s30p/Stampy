@@ -28,24 +28,32 @@ void main() {
     expect(repository.currentUser, isNull);
   });
 
-  test('launches Kakao OAuth with the app callback', () async {
+  test('launches Kakao OAuth externally with the app callback', () async {
     final client = _FakeGoTrueClient();
     addTearDown(client.dispose);
     OAuthProvider? provider;
+    LaunchMode? launchMode;
     final repository = SupabaseAuthRepository(
       client,
-      launchOAuth: (selectedProvider, {String? redirectTo}) async {
-        provider = selectedProvider;
-        // Capture the named parameter without shadowing the outer variable.
-        final callback = redirectTo;
-        expect(callback, kakaoAuthRedirectUrl);
-        return true;
-      },
+      launchOAuth:
+          (
+            selectedProvider, {
+            String? redirectTo,
+            required LaunchMode authScreenLaunchMode,
+          }) async {
+            provider = selectedProvider;
+            launchMode = authScreenLaunchMode;
+            // Capture the named parameter without shadowing the outer variable.
+            final callback = redirectTo;
+            expect(callback, kakaoAuthRedirectUrl);
+            return true;
+          },
     );
 
     await repository.signInWithKakao();
 
     expect(provider, OAuthProvider.kakao);
+    expect(launchMode, LaunchMode.externalApplication);
   });
 
   test('clears a legacy anonymous session before Kakao OAuth', () async {
@@ -55,7 +63,8 @@ void main() {
     addTearDown(client.dispose);
     final repository = SupabaseAuthRepository(
       client,
-      launchOAuth: (_, {redirectTo}) async => true,
+      launchOAuth: (_, {redirectTo, required authScreenLaunchMode}) async =>
+          true,
     );
 
     await repository.signInWithKakao();
@@ -69,7 +78,8 @@ void main() {
     addTearDown(client.dispose);
     final repository = SupabaseAuthRepository(
       client,
-      launchOAuth: (_, {redirectTo}) async => false,
+      launchOAuth: (_, {redirectTo, required authScreenLaunchMode}) async =>
+          false,
     );
 
     await expectLater(

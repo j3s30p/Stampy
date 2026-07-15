@@ -6,15 +6,23 @@ import 'auth_user.dart';
 const kakaoAuthRedirectUrl = 'com.stampy.app://login-callback/';
 
 typedef OAuthSignInLauncher =
-    Future<bool> Function(OAuthProvider provider, {String? redirectTo});
+    Future<bool> Function(
+      OAuthProvider provider, {
+      String? redirectTo,
+      required LaunchMode authScreenLaunchMode,
+    });
 
 final class SupabaseAuthRepository implements AuthRepository {
   SupabaseAuthRepository(GoTrueClient auth, {OAuthSignInLauncher? launchOAuth})
     : _auth = auth,
       _launchOAuth =
           launchOAuth ??
-          ((provider, {redirectTo}) =>
-              auth.signInWithOAuth(provider, redirectTo: redirectTo));
+          ((provider, {redirectTo, required authScreenLaunchMode}) =>
+              auth.signInWithOAuth(
+                provider,
+                redirectTo: redirectTo,
+                authScreenLaunchMode: authScreenLaunchMode,
+              ));
 
   final GoTrueClient _auth;
   final OAuthSignInLauncher _launchOAuth;
@@ -37,6 +45,7 @@ final class SupabaseAuthRepository implements AuthRepository {
       final launched = await _launchOAuth(
         OAuthProvider.kakao,
         redirectTo: kakaoAuthRedirectUrl,
+        authScreenLaunchMode: LaunchMode.externalApplication,
       );
       if (!launched) {
         throw const AuthRepositoryException(
