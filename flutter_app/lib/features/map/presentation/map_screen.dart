@@ -53,6 +53,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
   MapSnapshot? _snapshot;
   LocationState _locationState = const LocationState.loading();
   HeadingDegrees? _currentHeading;
+  ProviderSubscription<AsyncValue<LocationState>>? _locationSubscription;
   ProviderSubscription<AsyncValue<HeadingDegrees?>>? _headingSubscription;
   AppLifecycleState _appLifecycleState = AppLifecycleState.resumed;
   bool _mapVisible = false;
@@ -82,6 +83,19 @@ class _MapScreenState extends ConsumerState<MapScreen>
           unawaited(_handleBridgeMessage(message.message));
         },
       );
+    _locationSubscription = ref.listenManual<AsyncValue<LocationState>>(
+      currentLocationProvider,
+      (previous, next) {
+        next.when(
+          data: (state) => unawaited(_applyLocationState(state)),
+          error: (error, stackTrace) =>
+              unawaited(_applyLocationState(const LocationState.unavailable())),
+          loading: () =>
+              unawaited(_applyLocationState(const LocationState.loading())),
+        );
+      },
+      fireImmediately: true,
+    );
     unawaited(_loadMap());
   }
 
@@ -135,6 +149,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
 
   @override
   void dispose() {
+    _locationSubscription?.close();
     _headingSubscription?.close();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -461,16 +476,6 @@ class _MapScreenState extends ConsumerState<MapScreen>
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(currentLocationProvider);
-    ref.listen(currentLocationProvider, (previous, next) {
-      next.when(
-        data: (state) => unawaited(_applyLocationState(state)),
-        error: (error, stackTrace) =>
-            unawaited(_applyLocationState(const LocationState.unavailable())),
-        loading: () =>
-            unawaited(_applyLocationState(const LocationState.loading())),
-      );
-    });
     final selectedPin = _snapshot?.selectedPin;
     final locationStatus = describeMapLocation(_locationState);
     final collectAvailability = selectedPin == null
