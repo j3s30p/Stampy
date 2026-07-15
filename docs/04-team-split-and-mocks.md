@@ -41,7 +41,7 @@ Fake repository는 단위·위젯 테스트와 로컬 UI 개발을 위한 구현
 - 앱은 publishable key와 카카오로 인증된 회원 JWT만 사용한다.
 - service-role key, TourAPI key, 동기화 토큰은 Supabase Edge Function 밖으로 노출하지 않는다.
 - 도장 대상은 `stamp_spots`, 사용자 수집 기록은 RLS가 적용된 `collected_stamps`가 정본이다.
-- 추천·도장 수집·목록 조회는 migration으로 관리되는 RPC 계약을 사용한다.
+- 추천·랭킹·도장 수집·목록 조회는 migration으로 관리되는 RPC 계약을 사용한다.
 - TourAPI raw 응답은 Edge Function에서 검증·정규화한 뒤 DB에 저장한다.
 
 계약을 바꿀 때는 Dart repository 테스트, pgTAP, 로컬 Auth→RPC smoke를 함께 갱신한다.

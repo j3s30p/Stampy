@@ -66,6 +66,9 @@ try {
   const collectedA = await authenticatedRpc(userA.accessToken, 'list_collected_stamps');
   assertSingleFixture(collectedA, 'user A collected list');
 
+  const weeklyRankingA = await authenticatedRpc(userA.accessToken, 'list_weekly_ranking');
+  assertWeeklyRanking(weeklyRankingA, true, 'user A weekly ranking');
+
   const directA = await authenticatedRequest(
     userA.accessToken,
     `/rest/v1/collected_stamps?select=content_id&content_id=eq.${encodeURIComponent(fixture.content_id)}`,
@@ -75,6 +78,9 @@ try {
 
   const collectedB = await authenticatedRpc(userB.accessToken, 'list_collected_stamps');
   assert(collectedB.length === 0, 'user B can see user A collected RPC rows');
+
+  const weeklyRankingB = await authenticatedRpc(userB.accessToken, 'list_weekly_ranking');
+  assertWeeklyRanking(weeklyRankingB, false, 'user B weekly ranking');
 
   const directB = await authenticatedRequest(
     userB.accessToken,
@@ -222,6 +228,20 @@ function assertSingleFixture(rows, label) {
   assert(
     Array.isArray(rows) && rows.length === 1 && rows[0].content_id === fixture.content_id,
     `${label} did not return exactly the test fixture`,
+  );
+}
+
+function assertWeeklyRanking(rows, isCurrentUser, label) {
+  assert(Array.isArray(rows) && rows.length === 1, `${label} did not return one row`);
+  const [row] = rows;
+  assert.deepEqual(
+    Object.keys(row).sort(),
+    ['is_current_user', 'rank', 'stamp_count'],
+    `${label} exposed fields outside the anonymous contract`,
+  );
+  assert(
+    row.rank === 1 && row.stamp_count === 1 && row.is_current_user === isCurrentUser,
+    `${label} returned an unexpected rank`,
   );
 }
 

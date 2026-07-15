@@ -11,6 +11,8 @@ import 'package:stampy/features/map/data/fake_map_repository.dart';
 import 'package:stampy/features/map/data/supabase_map_repository.dart';
 import 'package:stampy/features/recommendation/data/fake_recommendation_repository.dart';
 import 'package:stampy/features/recommendation/data/supabase_recommendation_repository.dart';
+import 'package:stampy/features/ranking/data/fake_ranking_repository.dart';
+import 'package:stampy/features/ranking/data/supabase_ranking_repository.dart';
 import 'package:stampy/features/stamp/data/fake_stamp_repository.dart';
 import 'package:stampy/features/stamp/data/supabase_stamp_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -32,13 +34,14 @@ void main() {
     expect(dependencies.auth, isA<UnavailableAuthRepository>());
     expect(dependencies.map, isA<FakeMapRepository>());
     expect(dependencies.recommendation, isA<FakeRecommendationRepository>());
+    expect(dependencies.ranking, isA<FakeRankingRepository>());
     expect(dependencies.stamp, isA<FakeStampRepository>());
     expect(initializeCalls, 0);
     expect(reportedErrors, isEmpty);
   });
 
   test(
-    'uses one initialized client for Supabase auth, map, recommendation, and stamps',
+    'uses one initialized client for Supabase auth, map, recommendation, ranking, and stamps',
     () async {
       final rpcRequests = <http.Request>[];
       final client = SupabaseClient(
@@ -77,6 +80,7 @@ void main() {
         dependencies.recommendation,
         isA<SupabaseRecommendationRepository>(),
       );
+      expect(dependencies.ranking, isA<SupabaseRankingRepository>());
       expect(dependencies.stamp, isA<SupabaseStampRepository>());
       expect(initializeCalls, 1);
 
@@ -88,10 +92,12 @@ void main() {
           longitude: Longitude(126.977041),
         ),
       );
+      await dependencies.ranking.loadWeeklyRanking();
       expect(rpcRequests.map((request) => request.url.path), <String>[
         '/rest/v1/rpc/list_stamp_spots',
         '/rest/v1/rpc/list_collected_stamps',
         '/rest/v1/rpc/get_stamp_recommendation',
+        '/rest/v1/rpc/list_weekly_ranking',
       ]);
     },
   );
@@ -111,6 +117,7 @@ void main() {
       expect(dependencies.auth, isA<UnavailableAuthRepository>());
       expect(dependencies.map, isA<FakeMapRepository>());
       expect(dependencies.recommendation, isA<FakeRecommendationRepository>());
+      expect(dependencies.ranking, isA<FakeRankingRepository>());
       expect(dependencies.stamp, isA<FakeStampRepository>());
       expect(reportedErrors.single, isA<AppConfigException>());
     },
@@ -132,6 +139,7 @@ void main() {
     expect(dependencies.auth, isA<UnavailableAuthRepository>());
     expect(dependencies.map, isA<FakeMapRepository>());
     expect(dependencies.recommendation, isA<FakeRecommendationRepository>());
+    expect(dependencies.ranking, isA<FakeRankingRepository>());
     expect(dependencies.stamp, isA<FakeStampRepository>());
     expect(reportedErrors.single, isA<AuthRepositoryException>());
     expect(reportedErrors.single.toString(), isNot(contains('private')));

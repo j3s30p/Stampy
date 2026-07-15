@@ -6,6 +6,8 @@ import 'package:stampy/core/location/location.dart';
 import 'package:stampy/core/widgets/field_journal.dart';
 import 'package:stampy/features/recommendation/data/recommendation_providers.dart';
 import 'package:stampy/features/recommendation/domain/recommendation_domain.dart';
+import 'package:stampy/features/ranking/data/ranking_providers.dart';
+import 'package:stampy/features/ranking/domain/ranking_domain.dart';
 import 'package:stampy/features/stamp/presentation/stamp_session.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -18,6 +20,7 @@ class HomeScreen extends ConsumerWidget {
     final authUser = ref.watch(currentAuthUserProvider);
     final location = ref.watch(currentLocationProvider);
     final recommendation = ref.watch(nearbyRecommendationProvider);
+    final weeklyRank = _currentWeeklyRank(ref.watch(weeklyRankingProvider));
     final (:collectedStampCount, :loadStatus) = ref.watch(
       stampSessionProvider.select(
         (session) => (
@@ -104,8 +107,12 @@ class HomeScreen extends ConsumerWidget {
               ),
               Container(width: 1, height: 52, color: StampyColors.hairline),
               const SizedBox(width: 20),
-              const Expanded(
-                child: JournalStat(value: '—', label: '랭킹 준비 중'),
+              Expanded(
+                child: JournalStat(
+                  value: weeklyRank == null ? '—' : '$weeklyRank',
+                  suffix: weeklyRank == null ? null : '위',
+                  label: '이번 주 순위',
+                ),
               ),
             ],
           ),
@@ -113,6 +120,17 @@ class HomeScreen extends ConsumerWidget {
       ],
     );
   }
+}
+
+int? _currentWeeklyRank(AsyncValue<List<WeeklyRankingEntry>> weeklyRanking) {
+  if (weeklyRanking case AsyncData(:final value)) {
+    for (final entry in value) {
+      if (entry.isCurrentUser) {
+        return entry.rank;
+      }
+    }
+  }
+  return null;
 }
 
 String _gpsLabel(AsyncValue<LocationState> location) => location.when(

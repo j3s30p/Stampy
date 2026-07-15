@@ -11,6 +11,8 @@ import 'package:stampy/features/home/presentation/home_screen.dart';
 import 'package:stampy/features/recommendation/data/fake_recommendation_repository.dart';
 import 'package:stampy/features/recommendation/data/recommendation_providers.dart';
 import 'package:stampy/features/recommendation/domain/recommendation_domain.dart';
+import 'package:stampy/features/ranking/data/ranking_providers.dart';
+import 'package:stampy/features/ranking/domain/ranking_domain.dart';
 import 'package:stampy/features/stamp/data/fake_stamp_repository.dart';
 import 'package:stampy/features/stamp/domain/stamp_domain.dart';
 import 'package:stampy/features/stamp/presentation/stamp_session.dart';
@@ -161,14 +163,14 @@ void main() {
       isA<JournalStat>()
           .having((stat) => stat.value, 'value', '—')
           .having((stat) => stat.suffix, 'suffix', isNull)
-          .having((stat) => stat.label, 'label', '랭킹 준비 중'),
+          .having((stat) => stat.label, 'label', '이번 주 순위'),
     );
     expect(
       stats.where((stat) => stat.value == '0' && stat.suffix == '곳'),
       isEmpty,
     );
     expect(find.text('방문한 지역'), findsNothing);
-    expect(find.text('이번 주 순위'), findsNothing);
+    expect(find.text('이번 주 순위'), findsOneWidget);
 
     final container = ProviderScope.containerOf(
       tester.element(find.byType(HomeScreen)),
@@ -186,6 +188,78 @@ void main() {
     await tester.pump();
 
     expect(find.text('3'), findsOneWidget);
+  });
+
+  testWidgets('이번 주 top 3에 든 현재 사용자 순위를 보여준다', (tester) async {
+    await _pumpHome(
+      tester,
+      location: FakeLocationRepository(state: _availableLocation()),
+      recommendation: const FakeRecommendationRepository(),
+      weeklyRanking: () =>
+          Future<List<WeeklyRankingEntry>>.value(<WeeklyRankingEntry>[
+            _rankingEntry(rank: 1, stampCount: 5),
+            _rankingEntry(rank: 2, stampCount: 3, isCurrentUser: true),
+          ]),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      _rankStat(tester),
+      isA<JournalStat>()
+          .having((stat) => stat.value, 'value', '2')
+          .having((stat) => stat.suffix, 'suffix', '위')
+          .having((stat) => stat.label, 'label', '이번 주 순위'),
+    );
+  });
+
+  testWidgets('주간 랭킹이 로딩 중이면 순위를 확정하지 않는다', (tester) async {
+    final pending = Completer<List<WeeklyRankingEntry>>();
+    await _pumpHome(
+      tester,
+      location: FakeLocationRepository(state: _availableLocation()),
+      recommendation: const FakeRecommendationRepository(),
+      weeklyRanking: () => pending.future,
+    );
+    await tester.pump();
+
+    expect(
+      _rankStat(tester),
+      isA<JournalStat>()
+          .having((stat) => stat.value, 'value', '—')
+          .having((stat) => stat.suffix, 'suffix', isNull)
+          .having((stat) => stat.label, 'label', '이번 주 순위'),
+    );
+
+    pending.complete(const <WeeklyRankingEntry>[]);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('주간 랭킹 실패와 top 3 밖에서는 순위를 숨긴다', (tester) async {
+    await _pumpHome(
+      tester,
+      location: FakeLocationRepository(state: _availableLocation()),
+      recommendation: const FakeRecommendationRepository(),
+      weeklyRanking: () => Future<List<WeeklyRankingEntry>>.error(
+        StateError('private-ranking-error'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(_rankStat(tester).value, '—');
+    expect(find.textContaining('private-ranking-error'), findsNothing);
+
+    await _pumpHome(
+      tester,
+      location: FakeLocationRepository(state: _availableLocation()),
+      recommendation: const FakeRecommendationRepository(),
+      weeklyRanking: () => Future<List<WeeklyRankingEntry>>.value(
+        <WeeklyRankingEntry>[_rankingEntry(rank: 1, stampCount: 5)],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(_rankStat(tester).value, '—');
+    expect(_rankStat(tester).suffix, isNull);
   });
 
   testWidgets('shows a loading stamp stat before any stamp is known', (
@@ -290,6 +364,7 @@ Future<void> _pumpHome(
   required RecommendationRepository recommendation,
   StampRepository? stamp,
   StampSessionState? stampSession,
+  Future<List<WeeklyRankingEntry>> Function()? weeklyRanking,
   ValueChanged<Recommendation>? onRecommendationSelected,
 }) => tester.pumpWidget(
   ProviderScope(
@@ -308,6 +383,13 @@ Future<void> _pumpHome(
       if (stamp != null) stampRepositoryProvider.overrideWithValue(stamp),
       if (stampSession != null)
         stampSessionProvider.overrideWithBuild((ref, notifier) => stampSession),
+      weeklyRankingProvider.overrideWith(
+        (ref) =>
+            weeklyRanking?.call() ??
+            Future<List<WeeklyRankingEntry>>.value(
+              const <WeeklyRankingEntry>[],
+            ),
+      ),
     ],
     child: MaterialApp(
       home: HomeScreen(onRecommendationSelected: onRecommendationSelected),
@@ -317,6 +399,9 @@ Future<void> _pumpHome(
 
 JournalStat _stampStat(WidgetTester tester) =>
     tester.widgetList<JournalStat>(find.byType(JournalStat)).first;
+
+JournalStat _rankStat(WidgetTester tester) =>
+    tester.widgetList<JournalStat>(find.byType(JournalStat)).last;
 
 LocationState _availableLocation() => LocationState.available(_locationFix());
 
@@ -348,6 +433,16 @@ Recommendation _recommendation() => Recommendation(
   score: 78.15,
   reason: RecommendationReason.nearbyUncollected,
   generatedAt: DateTime.utc(2026, 7, 13, 12),
+);
+
+WeeklyRankingEntry _rankingEntry({
+  required int rank,
+  required int stampCount,
+  bool isCurrentUser = false,
+}) => WeeklyRankingEntry(
+  rank: rank,
+  stampCount: stampCount,
+  isCurrentUser: isCurrentUser,
 );
 
 final class _ErrorRecommendationRepository implements RecommendationRepository {
