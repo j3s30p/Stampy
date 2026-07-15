@@ -15,24 +15,30 @@ final stampSessionProvider =
       StampSessionController.new,
     );
 
+enum StampSessionLoadStatus { loading, loaded, failed }
+
 final class StampSessionState {
   StampSessionState({
     List<CollectedStamp> collectedStamps = const <CollectedStamp>[],
+    this.loadStatus = StampSessionLoadStatus.loading,
     this.isCollecting = false,
     this.error,
   }) : collectedStamps = List<CollectedStamp>.unmodifiable(collectedStamps);
 
   final List<CollectedStamp> collectedStamps;
+  final StampSessionLoadStatus loadStatus;
   final bool isCollecting;
   final Object? error;
 
   StampSessionState copyWith({
     List<CollectedStamp>? collectedStamps,
+    StampSessionLoadStatus? loadStatus,
     bool? isCollecting,
     Object? error,
     bool clearError = false,
   }) => StampSessionState(
     collectedStamps: collectedStamps ?? this.collectedStamps,
+    loadStatus: loadStatus ?? this.loadStatus,
     isCollecting: isCollecting ?? this.isCollecting,
     error: clearError ? null : error ?? this.error,
   );
@@ -71,6 +77,21 @@ final class StampSessionController extends Notifier<StampSessionState> {
     return state.collectedStamps.any(
       (stamp) => stamp.contentId == normalizedContentId,
     );
+  }
+
+  Future<void> retryLoad() async {
+    if (_sessionKey == null ||
+        state.loadStatus != StampSessionLoadStatus.failed) {
+      return;
+    }
+
+    final repository = _repository;
+    final generation = _generation;
+    state = state.copyWith(
+      loadStatus: StampSessionLoadStatus.loading,
+      clearError: true,
+    );
+    await _loadCollected(repository, generation);
   }
 
   Future<CollectStampResult> collect(CollectStampRequest request) async {
@@ -125,11 +146,15 @@ final class StampSessionController extends Notifier<StampSessionState> {
       }
       state = state.copyWith(
         collectedStamps: _mergeByContentId(collected, state.collectedStamps),
+        loadStatus: StampSessionLoadStatus.loaded,
         clearError: true,
       );
     } on Object catch (error) {
       if (_isCurrent(generation)) {
-        state = state.copyWith(error: error);
+        state = state.copyWith(
+          loadStatus: StampSessionLoadStatus.failed,
+          error: error,
+        );
       }
     }
   }

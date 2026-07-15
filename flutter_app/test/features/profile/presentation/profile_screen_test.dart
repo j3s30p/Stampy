@@ -7,6 +7,9 @@ import 'package:stampy/core/auth/auth.dart';
 import 'package:stampy/core/geo/coordinates.dart';
 import 'package:stampy/core/location/location.dart';
 import 'package:stampy/features/profile/presentation/profile_screen.dart';
+import 'package:stampy/features/stamp/data/fake_stamp_repository.dart';
+import 'package:stampy/features/stamp/domain/stamp_domain.dart';
+import 'package:stampy/features/stamp/presentation/stamp_session.dart';
 
 void main() {
   testWidgets('shows the development guest state and keeps app settings', (
@@ -33,10 +36,15 @@ void main() {
       FakeAuthRepository(
         currentUser: AuthUser.session(id: privateId, isAnonymous: true),
       ),
+      stamp: FakeStampRepository(
+        initialStamps: <CollectedStamp>[_stamp('a'), _stamp('b')],
+      ),
     );
 
     expect(find.text('ANONYMOUS'), findsOneWidget);
     expect(find.text('익명 세션 연결'), findsOneWidget);
+    expect(find.text('여행 기록이 연결됐습니다. 수집한 도장 2개를 불러왔습니다.'), findsOneWidget);
+    expect(find.textContaining('동기화는 준비 중'), findsNothing);
     expect(find.textContaining(privateId), findsNothing);
   });
 
@@ -53,7 +61,75 @@ void main() {
 
     expect(find.text('MEMBER'), findsOneWidget);
     expect(find.text('계정 연결'), findsOneWidget);
+    expect(find.text('여행 기록이 연결됐습니다. 수집한 도장 0개를 불러왔습니다.'), findsOneWidget);
     expect(find.textContaining(privateId), findsNothing);
+  });
+
+  testWidgets('moves from stamp sync loading to the loaded count', (
+    tester,
+  ) async {
+    final repository = _ControlledStampRepository();
+    final load = repository.queueLoad();
+    await _pumpProfile(
+      tester,
+      FakeAuthRepository(
+        currentUser: AuthUser.session(
+          id: 'pending-stamp-user',
+          isAnonymous: true,
+        ),
+      ),
+      stamp: repository,
+      settle: false,
+    );
+    await load.started.future;
+
+    expect(find.text('여행 기록을 동기화하고 있습니다.'), findsOneWidget);
+
+    load.result.complete(<CollectedStamp>[_stamp('a')]);
+    await tester.pumpAndSettle();
+
+    expect(find.text('여행 기록이 연결됐습니다. 수집한 도장 1개를 불러왔습니다.'), findsOneWidget);
+  });
+
+  testWidgets('retries only the failed stamp sync without exposing its error', (
+    tester,
+  ) async {
+    final repository = _ControlledStampRepository();
+    final failedLoad = repository.queueLoad();
+    final retryLoad = repository.queueLoad();
+    await _pumpProfile(
+      tester,
+      FakeAuthRepository(
+        currentUser: AuthUser.session(
+          id: 'retry-stamp-user',
+          isAnonymous: true,
+        ),
+      ),
+      stamp: repository,
+      settle: false,
+    );
+    await failedLoad.started.future;
+    failedLoad.result.completeError(StateError('private-stamp-error'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('여행 기록 동기화에 실패했습니다. 연결 상태를 확인한 뒤 다시 시도해 주세요.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('private-stamp-error'), findsNothing);
+
+    await tester.tap(find.text('여행 기록 다시 불러오기'));
+    await tester.pump();
+    await retryLoad.started.future;
+
+    expect(find.text('여행 기록을 동기화하고 있습니다.'), findsOneWidget);
+
+    retryLoad.result.complete(<CollectedStamp>[_stamp('a'), _stamp('b')]);
+    await tester.pumpAndSettle();
+
+    expect(repository.loadCalls, 2);
+    expect(find.text('여행 기록이 연결됐습니다. 수집한 도장 2개를 불러왔습니다.'), findsOneWidget);
+    expect(find.text('여행 기록 다시 불러오기'), findsNothing);
   });
 
   testWidgets('shows a sanitized error state', (tester) async {
@@ -188,6 +264,8 @@ Future<void> _pumpProfile(
   WidgetTester tester,
   AuthRepository repository, {
   LocationRepository? location,
+  StampRepository? stamp,
+  bool settle = true,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -197,11 +275,17 @@ Future<void> _pumpProfile(
           location ??
               FakeLocationRepository(state: const LocationState.unavailable()),
         ),
+        if (stamp != null) stampRepositoryProvider.overrideWithValue(stamp),
       ],
       child: const MaterialApp(home: ProfileScreen()),
     ),
   );
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+    await tester.pump();
+  }
 }
 
 LocationState _availableLocation() => LocationState.available(
@@ -213,6 +297,14 @@ LocationState _availableLocation() => LocationState.available(
     accuracyMeters: 5,
     timestamp: DateTime.utc(2026, 7, 13, 12),
   ),
+);
+
+CollectedStamp _stamp(String contentId) => CollectedStamp(
+  contentId: contentId,
+  title: '도장 $contentId',
+  kind: StampCandidateKind.spot,
+  verificationFix: _availableLocation().fix!,
+  collectedAt: DateTime.utc(2026, 7, 13, 12),
 );
 
 final class _StubAuthRepository implements AuthRepository {
@@ -243,4 +335,36 @@ final class _ErrorLocationRepository implements LocationRepository {
   @override
   Future<LocationState> getCurrentLocation() =>
       Future<LocationState>.error(StateError('private-location-error'));
+}
+
+final class _ControlledStampRepository implements StampRepository {
+  final List<_PendingStampLoad> _loads = <_PendingStampLoad>[];
+
+  int loadCalls = 0;
+
+  _PendingStampLoad queueLoad() {
+    final pending = _PendingStampLoad();
+    _loads.add(pending);
+    return pending;
+  }
+
+  @override
+  Future<List<CollectedStamp>> loadCollected() {
+    final pending = _loads[loadCalls];
+    loadCalls += 1;
+    pending.started.complete();
+    return pending.result.future;
+  }
+
+  @override
+  Future<CollectStampResult> collect(CollectStampRequest request) =>
+      Future<CollectStampResult>.error(
+        const StampRepositoryException('Collection is not used in this test.'),
+      );
+}
+
+final class _PendingStampLoad {
+  final Completer<void> started = Completer<void>();
+  final Completer<List<CollectedStamp>> result =
+      Completer<List<CollectedStamp>>();
 }
