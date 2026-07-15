@@ -10,17 +10,23 @@ import 'package:stampy/features/stamp/domain/stamp_domain.dart';
 import 'package:stampy/features/stamp/presentation/stamp_session.dart';
 
 void main() {
-  testWidgets('shows a first-stamp prompt when the collection is empty', (
-    tester,
-  ) async {
+  testWidgets('shows an honest ranking preparation state', (tester) async {
     await _pumpRankingState(
       tester,
       StampSessionState(loadStatus: StampSessionLoadStatus.loaded),
     );
 
+    expect(find.text('준비 중'), findsOneWidget);
+    expect(find.text('여행자들의 도장 기록을 비교하는 기능을 준비하고 있습니다.'), findsOneWidget);
+    expect(find.text('주간 랭킹을\n준비하고 있어요'), findsOneWidget);
+    expect(find.text('여행자들의 도장 기록을 비교하는 기능은 아직 준비 중이에요.'), findsOneWidget);
     expect(find.text('나의 기록'), findsOneWidget);
     expect(find.text('첫 도장을 모으면\n기록이 시작돼요'), findsOneWidget);
-    expect(find.text('— 도장'), findsNWidgets(3));
+    expect(find.text('이번 주'), findsNothing);
+    expect(find.text('첫 번째 여행자'), findsNothing);
+    expect(find.text('두 번째 여행자'), findsNothing);
+    expect(find.text('세 번째 여행자'), findsNothing);
+    expect(find.text('— 도장'), findsNothing);
   });
 
   testWidgets('shows the loaded personal stamp count without claiming a rank', (
