@@ -38,8 +38,8 @@ class ProfileScreen extends ConsumerWidget {
 
     return FieldJournalPage(
       eyebrow: '마이 페이지',
-      title: '나의 탐험 정보를\n관리하세요',
-      description: '계정, 위치 권한, 알림과 개인정보 설정을 한곳에서 확인할 수 있습니다.',
+      title: '나의 탐험 정보를\n확인하세요',
+      description: '계정과 위치 권한 등 현재 앱 상태를 한곳에서 확인할 수 있습니다.',
       trailing: JournalBadge(
         label: presentation.badge,
         emphasized: presentation.emphasized,
@@ -81,7 +81,7 @@ class ProfileScreen extends ConsumerWidget {
         ),
         JournalSection(
           index: '02',
-          title: '앱 설정',
+          title: '앱 상태',
           child: Column(
             children: [
               _SettingsRow(
@@ -89,7 +89,7 @@ class ProfileScreen extends ConsumerWidget {
                 value: _locationSettingValue(location),
               ),
               const _SettingsRow(label: '알림', value: '연결 전'),
-              const _SettingsRow(label: '개인정보', value: '보기'),
+              const _SettingsRow(label: '개인정보', value: '준비 중'),
             ],
           ),
         ),
@@ -193,12 +193,6 @@ class _SettingsRow extends StatelessWidget {
             child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
           ),
           Text(value, style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(width: 8),
-          const Icon(
-            Icons.chevron_right,
-            color: StampyColors.mutedInk,
-            size: 18,
-          ),
         ],
       ),
     );
