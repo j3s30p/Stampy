@@ -22,8 +22,14 @@ jobs:
         with:
           version: 2.109.1
 
-      - name: Start local Postgres
-        run: supabase db start
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Start local Supabase API
+        run: >-
+          supabase start -x
+          edge-runtime,imgproxy,logflare,mailpit,postgres-meta,realtime,storage-api,studio,supavisor,vector
 
       - name: Reset migrations
         run: supabase db reset
@@ -33,6 +39,9 @@ jobs:
 
       - name: Database lint
         run: supabase db lint --level error --schema public
+
+      - name: Local Auth to RPC contract smoke
+        run: supabase status -o json | node supabase/tests/integration/local-contract-smoke.mjs
 
   supabase-functions:
     name: Supabase Edge Functions (format + lint + test)

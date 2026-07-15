@@ -70,6 +70,10 @@ module.exports = {
   },
   overrides: [
     {
+      files: ['supabase/tests/integration/*.mjs'],
+      env: { node: true },
+    },
+    {
       files: ['*.tsx', '*.ts'],
       rules: {
         '@typescript-eslint/consistent-type-imports': [
