@@ -4,7 +4,7 @@
 
 ## 현재 상태
 
-`flutter_app/`이 iOS·Android 앱의 정본이다. 루트의 기존 Expo `app/`·`src/`는 Flutter 전환 중 동작 참고와 회귀 검사 용도로만 남아 있으며 새 제품 코드는 추가하지 않는다.
+`flutter_app/`이 iOS·Android 앱의 정본이다. Stampy v1은 행동 기반 추천 한 곳을 지도에서 확인하고 현재 GPS로 100m 이내 방문을 인증해 도장을 수집하는 흐름에 집중한다.
 
 ## Stack
 
@@ -25,7 +25,11 @@ flutter_app/
     features/              # 기능별 domain/data/presentation
   test/                    # 도메인·위젯 테스트
   assets/map/              # Kakao Maps WebView 문서
+supabase/                  # DB migration, RLS, RPC, Edge Functions
+design/                    # Field Journal 디자인 원본
 ```
+
+루트 Node 프로젝트는 앱 런타임이 아니라 Git 훅, 저장소 포맷, 로컬 Supabase 계약 smoke를 위한 개발 하네스다.
 
 상세 의도는 [`docs/02-architecture-decisions.md`](./docs/02-architecture-decisions.md) 참조.
 
@@ -100,6 +104,9 @@ curl --request POST \
 ## 검증
 
 ```sh
+npm ci
+npm run quality
+
 cd flutter_app
 dart format --output=none --set-exit-if-changed .
 flutter analyze
@@ -125,4 +132,4 @@ flutter build ios --simulator
 - [`docs/01-domain-glossary.md`](./docs/01-domain-glossary.md) — 도메인 용어
 - [`docs/02-architecture-decisions.md`](./docs/02-architecture-decisions.md) — 아키텍처 결정
 - [`docs/03-external-apis.md`](./docs/03-external-apis.md) — TourAPI·Kakao Maps 주의사항
-- [`docs/04-team-split-and-mocks.md`](./docs/04-team-split-and-mocks.md) — Mock-first repository 원칙
+- [`docs/04-team-split-and-mocks.md`](./docs/04-team-split-and-mocks.md) — Flutter repository 계약과 Fake 사용 범위

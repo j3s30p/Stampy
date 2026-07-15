@@ -5,7 +5,7 @@
 - **Status**: Accepted (2026-07-13)
 - **Context**: 기존 Expo SDK 52 앱은 화면 전면 재설계, 실제 백엔드 부재, 임시 GPS 좌표, Mock 중심 흐름이 겹쳐 점진 업그레이드보다 새 앱 셸의 비용이 낮다.
 - **Decision**: 최신 Flutter stable을 iOS/Android 클라이언트 정본으로 사용한다. Supabase가 Auth/Postgres/RLS/Data API/Edge Function/PostGIS를 맡고, 행동 기반 추천은 SQL/RPC로 계산한다. Kakao Maps는 Flutter WebView를 통해 JS SDK를 사용한다.
-- **Consequences**: 기존 TypeScript UI와 Expo 런타임은 이식하지 않는다. 100m 인증, 좌표 값 객체, TourAPI 정규화, repository contract처럼 검증된 도메인 의미만 Dart와 서버 계약으로 다시 구현한다. FastAPI와 LLM은 자연어 추천이 실제 범위가 될 때까지 도입하지 않는다.
+- **Consequences**: Stampy v1은 행동 기반 추천 한 곳 → 지도 → 현재 GPS 기반 100m 인증 → 도장 수집에 집중한다. 기존 TypeScript UI와 Expo 런타임은 제거하고, 검증된 도메인 의미만 Dart와 서버 계약으로 다시 구현한다. 관광지·행사 탐색 및 상세 화면은 v1 범위가 아니다. FastAPI와 LLM은 자연어 추천이 실제 범위가 될 때까지 도입하지 않는다.
 
 > ADR(Architecture Decision Record) 경량 포맷. 결정을 뒤집고 싶을 때 본 문서의 _Context_ 와 _Consequences_ 를 먼저 점검한다.
 
@@ -25,12 +25,12 @@
 - **Decision**: Expo Router v4 typed routes 사용.
 - **Consequences**: `app/` 디렉터리는 라우트 전용. 화면 본체는 `src/features/*/ui/*View.tsx` 로 분리하고 `app/` 은 얇은 어댑터만 둔다.
 
-## ADR-003 · Kakao Maps 는 WebView, 네이티브 SDK 미사용
+## ADR-003 · Kakao Maps는 Flutter WebView 사용
 
 - **Status**: Revised by ADR-008; WebView 결정은 유지
-- **Context**: Kakao 의 공식 RN SDK 부재. 비공식 fork 가용성/유지보수 불확실. ADR-001 의 Expo Managed 유지가 우선.
-- **Decision**: `react-native-webview` 로 Kakao Maps JS SDK 를 호스팅. RN ↔ WebView 통신은 `KakaoBridgeMessage` discriminated union.
-- **Consequences**: WebView 성능·메모리 한계 인지. 마커 1000개+ 시나리오는 클러스터링 필요. Naver Maps 로 변경 시 본 결정만 갱신하면 도메인 코드 영향 최소.
+- **Context**: Kakao Maps JS SDK와 앱 도메인 사이의 경계를 명확히 유지하고 네이티브 지도 SDK 의존을 피한다.
+- **Decision**: `webview_flutter`가 번들된 `flutter_app/assets/map/kakao_map.html`을 로드한다. Dart ↔ WebView 통신은 버전이 명시된 `KakaoMapBridge` JSON 계약만 사용한다.
+- **Consequences**: `https://stampy.local/` base URL과 Kakao JavaScript 도메인 등록이 필요하다. WebView에서 받은 메시지는 도메인 상태로 반영하기 전에 필드와 길이를 검증한다.
 
 ## ADR-004 · Feature-Sliced + 3-Tier hybrid
 
@@ -52,8 +52,8 @@
 - **Decision**: 100m 고정. 변동 가능성을 거의 두지 않는다.
 - **Consequences**: 너무 작게 잡으면 (50m) 가짜 negative 가, 너무 크게 잡으면 (200m) 가짜 positive 가 폭증. 100m 는 두 오류율의 trade-off 절충. 변경 시 본 ADR 갱신 + 회귀 테스트 필수.
 
-## ADR-007 · Branded coordinate types
+## ADR-007 · 좌표 값 객체
 
 - **Context**: 좌표 swap (lat ↔ lng) 은 위치 앱의 1순위 회귀. TourAPI 는 `mapx`=경도/`mapy`=위도 (OGC 관습), Kakao 는 `LatLng(lat, lng)` 으로 순서가 반대다.
-- **Decision**: `Latitude` / `Longitude` 를 nominal brand 로 정의 (`@shared/types/coordinates.ts`). 변환은 `asLatitude` / `asLongitude` 만 허용.
-- **Consequences**: 외부 DTO 와의 경계에서 한 번만 변환하고, 도메인 내부는 swap 불가능.
+- **Decision**: `flutter_app/lib/core/geo/coordinates.dart`의 `Latitude` / `Longitude` 값 객체로 범위를 검증한다. 외부 값은 repository 또는 플랫폼 adapter 경계에서 생성한다.
+- **Consequences**: 도메인 내부에서 위도와 경도를 별도 타입으로 유지하며 Kakao bridge 직렬화 시에만 `lat` / `lng` 숫자로 변환한다.

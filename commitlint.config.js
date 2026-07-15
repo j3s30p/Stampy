@@ -7,12 +7,12 @@ module.exports = {
       2,
       'always',
       [
-        'stamp', // src/features/stamp/
-        'map', // src/features/map/
-        'tour', // src/features/tour/
-        'core', // src/core/* (network/location/storage/auth)
-        'shared', // src/shared/*
-        'app', // app/ 라우트
+        'stamp', // flutter_app/lib/features/stamp/
+        'map', // flutter_app/lib/features/map/
+        'tour', // TourAPI catalog sync
+        'core', // flutter_app/lib/core/
+        'shared', // 공통 자산과 교차 영역 계약
+        'app', // flutter_app/lib/app/
         'harness', // ESLint·CI·개발 도구 등 인프라
         'docs', // README와 docs 본문 수정
         'deps', // 의존성 bump

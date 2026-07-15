@@ -1,4 +1,4 @@
-// Keep formatting consistent across the remaining TypeScript transition surface.
+// Keep formatting consistent across the repository harness and documentation.
 module.exports = {
   semi: true,
   singleQuote: true,
