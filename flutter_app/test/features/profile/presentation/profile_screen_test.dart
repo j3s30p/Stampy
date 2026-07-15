@@ -12,9 +12,11 @@ import 'package:stampy/features/stamp/domain/stamp_domain.dart';
 import 'package:stampy/features/stamp/presentation/stamp_session.dart';
 
 void main() {
-  testWidgets('shows the development guest state and keeps app settings', (
+  testWidgets('shows the development guest state and read-only app status', (
     tester,
   ) async {
+    final semanticsHandle = tester.ensureSemantics();
+
     await _pumpProfile(
       tester,
       const FakeAuthRepository(currentUser: AuthUser.guest()),
@@ -22,9 +24,25 @@ void main() {
 
     expect(find.text('GUEST'), findsOneWidget);
     expect(find.text('개발용 게스트 모드'), findsOneWidget);
+    expect(find.text('나의 탐험 정보를\n확인하세요'), findsOneWidget);
+    expect(find.text('계정과 위치 권한 등 현재 앱 상태를 한곳에서 확인할 수 있습니다.'), findsOneWidget);
+    expect(find.text('앱 상태'), findsOneWidget);
     expect(find.text('위치 권한'), findsOneWidget);
     expect(find.text('알림'), findsOneWidget);
     expect(find.text('개인정보'), findsOneWidget);
+    expect(find.text('준비 중'), findsOneWidget);
+    expect(find.text('나의 탐험 정보를\n관리하세요'), findsNothing);
+    expect(find.text('앱 설정'), findsNothing);
+    expect(find.text('보기'), findsNothing);
+    expect(find.byIcon(Icons.chevron_right), findsNothing);
+
+    for (final label in <String>['위치 권한', '알림', '개인정보']) {
+      expect(
+        tester.getSemantics(find.text(label)),
+        isSemantics(hasTapAction: false),
+      );
+    }
+    semanticsHandle.dispose();
   });
 
   testWidgets('shows an anonymous session without exposing its user id', (
