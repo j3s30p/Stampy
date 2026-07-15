@@ -12,18 +12,18 @@ import 'package:stampy/features/stamp/domain/stamp_domain.dart';
 import 'package:stampy/features/stamp/presentation/stamp_session.dart';
 
 void main() {
-  testWidgets('shows the development guest state and read-only app status', (
+  testWidgets('shows the signed-out state and read-only app status', (
     tester,
   ) async {
     final semanticsHandle = tester.ensureSemantics();
 
     await _pumpProfile(
       tester,
-      const FakeAuthRepository(currentUser: AuthUser.guest()),
+      FakeAuthRepository(currentUser: const AuthUser.signedOut()),
     );
 
-    expect(find.text('GUEST'), findsOneWidget);
-    expect(find.text('개발용 게스트 모드'), findsOneWidget);
+    expect(find.text('SIGNED OUT'), findsOneWidget);
+    expect(find.text('로그인이 필요해요'), findsOneWidget);
     expect(find.text('나의 탐험 정보를\n확인하세요'), findsOneWidget);
     expect(find.text('계정과 위치 권한 등 현재 앱 상태를 한곳에서 확인할 수 있습니다.'), findsOneWidget);
     expect(find.text('앱 상태'), findsOneWidget);
@@ -35,6 +35,7 @@ void main() {
     expect(find.text('앱 설정'), findsNothing);
     expect(find.text('보기'), findsNothing);
     expect(find.byIcon(Icons.chevron_right), findsNothing);
+    expect(find.text('로그아웃'), findsNothing);
 
     for (final label in <String>['위치 권한', '알림', '개인정보']) {
       expect(
@@ -81,6 +82,8 @@ void main() {
     expect(find.text('계정 연결'), findsOneWidget);
     expect(find.text('여행 기록이 연결됐습니다. 수집한 도장 0개를 불러왔습니다.'), findsOneWidget);
     expect(find.textContaining(privateId), findsNothing);
+    await tester.scrollUntilVisible(find.text('로그아웃'), 200);
+    expect(find.text('로그아웃'), findsOneWidget);
   });
 
   testWidgets('moves from stamp sync loading to the loaded count', (
@@ -155,7 +158,7 @@ void main() {
     await _pumpProfile(
       tester,
       _StubAuthRepository(
-        signIn: () => Future<AuthUser>.error(StateError(privateError)),
+        readCurrentUser: () => throw StateError(privateError),
       ),
     );
 
@@ -170,12 +173,12 @@ void main() {
     await _pumpProfile(
       tester,
       _StubAuthRepository(
-        signIn: () {
+        readCurrentUser: () {
           attempts += 1;
           if (attempts == 1) {
-            return Future<AuthUser>.error(StateError('offline'));
+            throw StateError('offline');
           }
-          return Future<AuthUser>.value(const AuthUser.guest());
+          return null;
         },
       ),
     );
@@ -183,7 +186,7 @@ void main() {
     await tester.tap(find.text('다시 시도'));
     await tester.pumpAndSettle();
 
-    expect(find.text('GUEST'), findsOneWidget);
+    expect(find.text('SIGNED OUT'), findsOneWidget);
     expect(find.text('다시 시도'), findsNothing);
     expect(attempts, 2);
   });
@@ -199,13 +202,10 @@ void main() {
   });
 
   testWidgets('shows a session loading state', (tester) async {
-    final pending = Completer<AuthUser>();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          authRepositoryProvider.overrideWithValue(
-            _StubAuthRepository(signIn: () => pending.future),
-          ),
+          authRepositoryProvider.overrideWithValue(FakeAuthRepository()),
           locationRepositoryProvider.overrideWithValue(
             FakeLocationRepository(state: const LocationState.unavailable()),
           ),
@@ -213,12 +213,9 @@ void main() {
         child: const MaterialApp(home: ProfileScreen()),
       ),
     );
-    await tester.pump();
-
     expect(find.text('SESSION'), findsOneWidget);
     expect(find.text('세션 준비 중'), findsOneWidget);
 
-    pending.complete(const AuthUser.guest());
     await tester.pumpAndSettle();
   });
 
@@ -234,7 +231,7 @@ void main() {
     ]) {
       await _pumpProfile(
         tester,
-        const FakeAuthRepository(currentUser: AuthUser.guest()),
+        FakeAuthRepository(currentUser: const AuthUser.signedOut()),
         location: FakeLocationRepository(state: state),
       );
 
@@ -250,7 +247,7 @@ void main() {
       ProviderScope(
         overrides: [
           authRepositoryProvider.overrideWithValue(
-            const FakeAuthRepository(currentUser: AuthUser.guest()),
+            FakeAuthRepository(currentUser: const AuthUser.signedOut()),
           ),
           locationRepositoryProvider.overrideWithValue(location),
         ],
@@ -269,7 +266,7 @@ void main() {
   testWidgets('sanitizes an unexpected GPS error', (tester) async {
     await _pumpProfile(
       tester,
-      const FakeAuthRepository(currentUser: AuthUser.guest()),
+      FakeAuthRepository(currentUser: const AuthUser.signedOut()),
       location: const _ErrorLocationRepository(),
     );
 
@@ -326,18 +323,21 @@ CollectedStamp _stamp(String contentId) => CollectedStamp(
 );
 
 final class _StubAuthRepository implements AuthRepository {
-  const _StubAuthRepository({required this.signIn});
+  const _StubAuthRepository({required this.readCurrentUser});
 
-  final Future<AuthUser> Function() signIn;
+  final AuthUser? Function() readCurrentUser;
 
   @override
-  AuthUser? get currentUser => null;
+  AuthUser? get currentUser => readCurrentUser();
 
   @override
   Stream<AuthUser?> get authStateChanges => const Stream<AuthUser?>.empty();
 
   @override
-  Future<AuthUser> signInAnonymously() => signIn();
+  Future<void> signInWithKakao() async {}
+
+  @override
+  Future<void> signOut() async {}
 }
 
 final class _PendingLocationRepository implements LocationRepository {

@@ -40,7 +40,7 @@ Future<AppDependencies> createAppDependencies({
     final credentials = loadConfig().supabaseCredentials;
     if (credentials == null) {
       return AppDependencies(
-        auth: const FakeAuthRepository(),
+        auth: const UnavailableAuthRepository(),
         map: const FakeMapRepository(),
         recommendation: const FakeRecommendationRepository(),
         stamp: FakeStampRepository(),

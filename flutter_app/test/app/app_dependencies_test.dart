@@ -16,7 +16,7 @@ import 'package:stampy/features/stamp/data/supabase_stamp_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
-  test('uses fake repositories when Supabase is not configured', () async {
+  test('blocks auth when Supabase is not configured', () async {
     var initializeCalls = 0;
     final reportedErrors = <Object>[];
 
@@ -29,7 +29,7 @@ void main() {
       reportError: (error, stackTrace) => reportedErrors.add(error),
     );
 
-    expect(dependencies.auth, isA<FakeAuthRepository>());
+    expect(dependencies.auth, isA<UnavailableAuthRepository>());
     expect(dependencies.map, isA<FakeMapRepository>());
     expect(dependencies.recommendation, isA<FakeRecommendationRepository>());
     expect(dependencies.stamp, isA<FakeStampRepository>());

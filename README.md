@@ -38,28 +38,31 @@ design/                    # Field Journal 디자인 원본
 ```sh
 cd flutter_app
 flutter pub get
-flutter run --dart-define=KAKAO_JS_KEY=<카카오 JavaScript 키>
-```
-
-Supabase 익명 세션과 운영 지도 카탈로그를 연결하려면 두 설정을 함께 추가한다.
-
-```sh
 flutter run \
   --dart-define=KAKAO_JS_KEY=<카카오 JavaScript 키> \
   --dart-define=SUPABASE_URL=<프로젝트 URL> \
   --dart-define=SUPABASE_PUBLISHABLE_KEY=<publishable key>
 ```
 
-- Supabase 설정을 둘 다 생략하면 개발용 guest 모드로 부팅한다.
+- 앱 셸은 복원된 회원 세션 또는 카카오 로그인을 통과한 뒤에만 열린다.
+- Supabase 설정을 생략하면 서비스 연결 실패 화면을 표시한다.
 - URL과 publishable key 중 하나만 설정하면 비밀값 없는 구성 오류를 기록하고 앱에서는 세션 연결 실패 상태를 표시한다.
-- Supabase Dashboard에서 anonymous sign-in을 활성화해야 한다.
+- Supabase Dashboard에서 Kakao provider를 활성화하고 anonymous sign-in은 비활성화한다.
 - 클라이언트에는 publishable key만 사용한다. secret/service-role key는 넣지 않는다.
 
-Kakao JavaScript 키 없이도 앱 셸까지 실행할 수 있지만 실제 지도 타일은 표시되지 않는다.
+Kakao JavaScript 키 없이도 로그인과 앱 셸은 실행할 수 있지만 실제 지도 타일은 표시되지 않는다. 로그인 provider에는 지도용 JavaScript 키가 아니라 Kakao REST API 키와 Login Client Secret을 사용하며, 두 값은 Supabase Dashboard에만 저장한다.
+
+### Kakao Auth callback
+
+- Kakao Developers REST API 키 Redirect URI: `https://xnqgyiidnpzviyakfwzn.supabase.co/auth/v1/callback`
+- Supabase URL Configuration Redirect URL: `com.stampy.app://login-callback/`
+- 앱 OAuth callback: `com.stampy.app://login-callback/`
+
+최초 카카오 인증은 회원가입, 이후 인증은 같은 계정의 로그인으로 처리된다. Kakao 이메일 동의를 사용하지 않으면 Supabase Kakao provider의 `Allow users without an email`을 활성화한다.
 
 ## Local Supabase
 
-Docker를 실행한 뒤 저장소 루트에서 고정된 CLI 버전으로 migration, RLS, 실제 익명 Auth/JWT/RPC 연결을 검증한다. 아래 `start`는 테스트에 필요한 Postgres, GoTrue, Kong, PostgREST만 실행한다.
+Docker를 실행한 뒤 저장소 루트에서 고정된 CLI 버전으로 migration, RLS, 실제 회원 Auth/JWT/RPC 연결을 검증한다. 아래 `start`는 테스트에 필요한 Postgres, GoTrue, Kong, PostgREST만 실행한다.
 
 ```sh
 npx supabase@2.109.1 start -x edge-runtime,imgproxy,logflare,mailpit,postgres-meta,realtime,storage-api,studio,supavisor,vector
@@ -70,7 +73,7 @@ npx supabase@2.109.1 status -o json | node supabase/tests/integration/local-cont
 npx supabase@2.109.1 stop
 ```
 
-HTTP smoke는 로컬 URL만 허용하며 고유 fixture와 익명 사용자 2명을 만든 뒤 성공·실패와 관계없이 삭제한다. `stamp_spots`는 서버가 관리하는 도장 대상 정본이다. 로그인한 사용자는 `list_stamp_spots()` RPC로 스칼라 좌표를 조회하며, 운영 데이터는 가짜 seed 없이 아래 TourAPI 동기화 함수로만 추가한다.
+HTTP smoke는 로컬 URL만 허용하며 고유 fixture와 확인된 테스트 회원 2명을 만든 뒤 성공·실패와 관계없이 삭제한다. `stamp_spots`는 서버가 관리하는 도장 대상 정본이다. 로그인한 사용자는 `list_stamp_spots()` RPC로 스칼라 좌표를 조회하며, 운영 데이터는 가짜 seed 없이 아래 TourAPI 동기화 함수로만 추가한다.
 
 ## TourAPI catalog sync
 

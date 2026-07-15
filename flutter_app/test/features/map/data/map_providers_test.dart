@@ -9,15 +9,13 @@ import 'package:stampy/features/map/domain/map_models.dart';
 import 'package:stampy/features/map/domain/map_repository.dart';
 
 void main() {
-  test('guest mode keeps the fake map repository', () async {
+  test('signed-out state keeps the map repository unavailable', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
     _listen(container);
 
     await container.read(currentAuthUserProvider.future);
-    final repository = container.read(readyMapRepositoryProvider).requireValue;
-
-    expect(repository, isA<FakeMapRepository>());
+    expect(container.read(readyMapRepositoryProvider).isLoading, isTrue);
   });
 
   test('reselecting the same content id increases the request revision', () {
@@ -36,6 +34,54 @@ void main() {
     expect(second.revision, 2);
   });
 
+  test('clears a map selection when the member signs out', () async {
+    final auth = _PendingAuthRepository(
+      currentUser: AuthUser.session(id: 'member-a', isAnonymous: false),
+    );
+    addTearDown(auth.dispose);
+    final container = ProviderContainer(
+      overrides: [authRepositoryProvider.overrideWithValue(auth)],
+    );
+    addTearDown(container.dispose);
+    await container.read(currentAuthUserProvider.future);
+    container.read(mapSelectionRequestProvider.notifier).select('tour-126508');
+
+    await auth.signOut();
+    await Future<void>.delayed(Duration.zero);
+
+    expect(container.read(mapSelectionRequestProvider), isNull);
+  });
+
+  test(
+    'keeps a selection for the same member and clears it for another',
+    () async {
+      final auth = _PendingAuthRepository(
+        currentUser: AuthUser.session(id: 'member-a', isAnonymous: false),
+      );
+      addTearDown(auth.dispose);
+      final container = ProviderContainer(
+        overrides: [authRepositoryProvider.overrideWithValue(auth)],
+      );
+      addTearDown(container.dispose);
+      await container.read(currentAuthUserProvider.future);
+      container
+          .read(mapSelectionRequestProvider.notifier)
+          .select('tour-126508');
+
+      auth.complete(AuthUser.session(id: 'member-a', isAnonymous: false));
+      await Future<void>.delayed(Duration.zero);
+
+      final sameMemberSelection = container.read(mapSelectionRequestProvider);
+      expect(sameMemberSelection?.contentId, 'tour-126508');
+      expect(sameMemberSelection?.revision, 1);
+
+      auth.complete(AuthUser.session(id: 'member-b', isAnonymous: false));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(container.read(mapSelectionRequestProvider), isNull);
+    },
+  );
+
   test('does not expose the real repository before auth is ready', () async {
     final auth = _PendingAuthRepository();
     addTearDown(auth.dispose);
@@ -49,14 +95,14 @@ void main() {
     addTearDown(container.dispose);
     _listen(container);
 
-    await Future<void>.delayed(Duration.zero);
+    await container.read(currentAuthUserProvider.future);
 
     expect(container.read(readyMapRepositoryProvider).isLoading, isTrue);
     expect(repository.loadCalls, 0);
 
-    auth.complete(AuthUser.session(id: 'anonymous-user', isAnonymous: true));
+    auth.complete(AuthUser.session(id: 'member', isAnonymous: false));
 
-    await container.read(currentAuthUserProvider.future);
+    await Future<void>.delayed(Duration.zero);
     expect(
       container.read(readyMapRepositoryProvider).requireValue,
       same(repository),
@@ -92,7 +138,7 @@ void main() {
     expect(repository.loadCalls, 0);
   });
 
-  test('waits again while a signed-out user is being replaced', () async {
+  test('stays unavailable after sign-out until a new member arrives', () async {
     final auth = _PendingAuthRepository(
       currentUser: AuthUser.session(id: 'expired-user', isAnonymous: true),
     );
@@ -113,17 +159,20 @@ void main() {
     addTearDown(authSubscription.close);
 
     await container.read(currentAuthUserProvider.future);
-    auth.signOut();
+    await auth.signOut();
     await Future<void>.delayed(Duration.zero);
-    expect(container.read(currentAuthUserProvider).isLoading, isTrue);
+    expect(
+      container.read(currentAuthUserProvider).requireValue.isSignedOut,
+      isTrue,
+    );
 
     _listen(container);
     expect(container.read(readyMapRepositoryProvider).isLoading, isTrue);
     expect(repository.loadCalls, 0);
 
-    auth.complete(AuthUser.session(id: 'replacement-user', isAnonymous: true));
+    auth.complete(AuthUser.session(id: 'replacement-user', isAnonymous: false));
 
-    await container.read(currentAuthUserProvider.future);
+    await Future<void>.delayed(Duration.zero);
     expect(
       container.read(readyMapRepositoryProvider).requireValue,
       same(repository),
@@ -143,7 +192,6 @@ void _listen(ProviderContainer container) {
 final class _PendingAuthRepository implements AuthRepository {
   _PendingAuthRepository({this.currentUser});
 
-  final Completer<AuthUser> _signIn = Completer<AuthUser>();
   final StreamController<AuthUser?> _changes = StreamController<AuthUser?>();
 
   @override
@@ -153,14 +201,15 @@ final class _PendingAuthRepository implements AuthRepository {
   Stream<AuthUser?> get authStateChanges => _changes.stream;
 
   @override
-  Future<AuthUser> signInAnonymously() => _signIn.future;
+  Future<void> signInWithKakao() async {}
 
   void complete(AuthUser user) {
     currentUser = user;
-    _signIn.complete(user);
+    _changes.add(user);
   }
 
-  void signOut() {
+  @override
+  Future<void> signOut() async {
     currentUser = null;
     _changes.add(null);
   }
@@ -174,13 +223,16 @@ final class _ErrorAuthRepository implements AuthRepository {
   final Object error;
 
   @override
-  AuthUser? get currentUser => null;
+  AuthUser? get currentUser => throw error;
 
   @override
   Stream<AuthUser?> get authStateChanges => const Stream<AuthUser?>.empty();
 
   @override
-  Future<AuthUser> signInAnonymously() => Future<AuthUser>.error(error);
+  Future<void> signInWithKakao() => Future<void>.error(error);
+
+  @override
+  Future<void> signOut() => Future<void>.error(error);
 }
 
 final class _SpyMapRepository implements MapRepository {

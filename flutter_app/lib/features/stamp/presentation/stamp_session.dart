@@ -56,7 +56,7 @@ final class StampSessionController extends Notifier<StampSessionState> {
     _sessionKey = ref.watch(
       currentAuthUserProvider.select(
         (authUser) => switch (authUser) {
-          AsyncData(:final value) => value.id ?? '',
+          AsyncData(:final value) => value.isSignedOut ? null : value.id,
           _ => null,
         },
       ),

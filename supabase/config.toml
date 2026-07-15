@@ -23,10 +23,10 @@ sql_paths = []
 [auth]
 enabled = true
 site_url = "http://127.0.0.1:3000"
-additional_redirect_urls = []
+additional_redirect_urls = ["com.stampy.app://login-callback/"]
 jwt_expiry = 3600
 enable_signup = true
-enable_anonymous_sign_ins = true
+enable_anonymous_sign_ins = false
 
 [functions.sync-stamp-spots]
 verify_jwt = false

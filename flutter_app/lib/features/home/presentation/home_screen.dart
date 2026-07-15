@@ -155,8 +155,8 @@ _RecommendationPresentation _recommendationPresentation(
         ),
       };
     }
-    if (authUser case AsyncData(:final value) when value.isGuest) {
-      return const _RecommendationPresentation.guest();
+    if (authUser case AsyncData(:final value) when value.isSignedOut) {
+      return const _RecommendationPresentation.signedOut();
     }
 
     return recommendation.when(
@@ -203,11 +203,11 @@ final class _RecommendationPresentation {
         description: '잠시 후 다시 홈을 열어주세요.',
       );
 
-  const _RecommendationPresentation.guest()
+  const _RecommendationPresentation.signedOut()
     : this._(
-        sectionLabel: '게스트 모드',
-        title: '추천 데이터 연결이 필요해요',
-        description: '앱 연결이 완료되면 현재 위치와 수집 기록으로 가까운 도장을 보여드려요.',
+        sectionLabel: '로그인 필요',
+        title: '카카오 로그인이 필요해요',
+        description: '로그인하면 현재 위치와 수집 기록으로 가까운 도장을 보여드려요.',
       );
 
   const _RecommendationPresentation.empty()

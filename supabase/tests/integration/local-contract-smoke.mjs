@@ -35,8 +35,8 @@ try {
     },
   });
 
-  const userA = await signInAnonymously('A');
-  const userB = await signInAnonymously('B');
+  const userA = await createConfirmedUser('A');
+  const userB = await createConfirmedUser('B');
 
   const spots = await authenticatedRpc(userA.accessToken, 'list_stamp_spots');
   const listedFixture = spots.find((spot) => spot.content_id === fixture.content_id);
@@ -95,7 +95,7 @@ const cleanupErrors = [];
 for (const userId of createdUserIds.reverse()) {
   try {
     await serviceRequest(`/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
-      label: 'anonymous user cleanup',
+      label: 'member user cleanup',
       method: 'DELETE',
     });
   } catch (error) {
@@ -123,24 +123,37 @@ if (failure || cleanupErrors.length > 0) {
   );
 }
 
-async function signInAnonymously(label) {
-  const response = await request('/auth/v1/signup', {
-    label: `anonymous sign-in ${label}`,
+async function createConfirmedUser(label) {
+  const email = `stampy-contract-${label.toLowerCase()}-${randomUUID()}@example.invalid`;
+  const password = `Smoke-${randomUUID()}-A9!`;
+  const created = await serviceRequest('/auth/v1/admin/users', {
+    label: `member creation ${label}`,
+    method: 'POST',
+    body: {
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { contract_smoke: true },
+    },
+  });
+  const createdUser = created?.user ?? created;
+  assert(createdUser?.id, `member creation ${label} returned no user id`);
+  createdUserIds.push(createdUser.id);
+
+  const response = await request('/auth/v1/token?grant_type=password', {
+    label: `member sign-in ${label}`,
     method: 'POST',
     apiKey: publicKey,
     accessToken: publicKey,
-    body: { data: { contract_smoke: true } },
+    body: { email, password },
   });
-  if (response?.user?.id) {
-    createdUserIds.push(response.user.id);
-  }
   assert(
     response?.access_token && response?.user?.id,
-    `anonymous sign-in ${label} returned an incomplete session`,
+    `member sign-in ${label} returned an incomplete session`,
   );
   assert(
-    response.user.is_anonymous === true,
-    `anonymous sign-in ${label} did not create an anonymous user`,
+    response.user.id === createdUser.id && response.user.is_anonymous !== true,
+    `member sign-in ${label} did not return the created member`,
   );
   return { accessToken: response.access_token };
 }

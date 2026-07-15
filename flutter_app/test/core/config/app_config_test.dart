@@ -3,7 +3,7 @@ import 'package:stampy/core/config/app_config.dart';
 
 void main() {
   group('AppConfig', () {
-    test('uses guest mode when both Supabase settings are blank', () {
+    test('allows missing service settings outside release builds', () {
       final config = AppConfig.fromValues(
         supabaseUrl: '  ',
         supabasePublishableKey: '',
@@ -57,7 +57,7 @@ void main() {
             supabaseUrl: entry.url,
             supabasePublishableKey: entry.key,
             kakaoJavaScriptKey: entry.kakao,
-            allowGuestMode: false,
+            allowMissingServices: false,
           ),
           throwsA(
             isA<AppConfigException>().having(
@@ -82,7 +82,7 @@ void main() {
           supabaseUrl: ' ',
           supabasePublishableKey: '',
           kakaoJavaScriptKey: '\n',
-          allowGuestMode: false,
+          allowMissingServices: false,
         ),
         throwsA(
           isA<AppConfigException>().having(
@@ -103,7 +103,7 @@ void main() {
         supabaseUrl: ' https://example.supabase.co ',
         supabasePublishableKey: ' publishable-key ',
         kakaoJavaScriptKey: ' kakao-key ',
-        allowGuestMode: false,
+        allowMissingServices: false,
       );
 
       expect(config.supabaseCredentials?.url, 'https://example.supabase.co');

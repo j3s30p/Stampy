@@ -24,7 +24,7 @@ import 'package:stampy/features/stamp/presentation/stamp_collection_screen.dart'
 import 'package:stampy/features/stamp/presentation/stamp_collect_success_screen.dart';
 import 'package:stampy/features/stamp/presentation/stamp_session.dart';
 
-final appRouterProvider = Provider<GoRouter>((ref) {
+final appRouterProvider = Provider.autoDispose<GoRouter>((ref) {
   final router = GoRouter(
     initialLocation: '/',
     routes: [
