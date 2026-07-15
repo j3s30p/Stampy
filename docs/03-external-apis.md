@@ -11,10 +11,11 @@
 
 ### 운영 도장 스팟 동기화
 
+- 위치 기반 부트스트랩은 `GET https://apis.data.go.kr/B551011/KorService2/locationBasedList2`를 사용해 거리순(`arrange=E`) `contentId`를 발견한다. 요청 반경은 1~20,000m, 최대 개수는 1~20으로 제한한다.
 - `GET https://apis.data.go.kr/B551011/KorService2/detailCommon2`를 사용한다.
 - 필수 파라미터는 `serviceKey`, `MobileOS`, `MobileApp`, `contentId`다. JSON 응답을 위해 `_type=json`을 함께 보낸다.
 - `contentTypeId`는 요청자가 보내지 않는다. 응답 `contenttypeid`를 정본으로 `15 → event`, 나머지 지원 타입 → `spot`으로 정규화한다.
-- 한 요청은 `contentId` 하나만 조회하므로 Edge Function이 명시된 ID 목록을 각각 조회한다. 모든 항목 검증이 끝난 뒤 한 번에 upsert하며, 요청하지 않은 기존 행은 삭제하지 않는다.
+- 함수 요청은 `contentIds` 또는 `nearby` 중 정확히 하나만 허용한다. 발견하거나 명시한 ID는 `detailCommon2`로 각각 조회하고, 모든 항목 검증이 끝난 뒤 한 번에 upsert한다. 요청하지 않은 기존 행은 삭제하지 않는다.
 - 함수 호출 자격은 별도 `STAMP_SPOT_SYNC_TOKEN`으로 검증한다. service-role 키는 함수 내부 DB 쓰기에만 사용한다.
 
 ### 좌표 표현

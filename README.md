@@ -92,7 +92,7 @@ npx supabase@2.109.1 functions serve sync-stamp-spots \
   --env-file supabase/functions/.env.local
 ```
 
-함수는 운영자가 명시한 TourAPI `contentId` 문자열만 동기화한다. 요청하지 않은 기존 행은 삭제하지 않는다.
+함수는 운영자가 `contentIds` 또는 `nearby` 중 정확히 하나를 지정해 호출한다. `nearby`는 `locationBasedList2`로 주변 `contentId`를 찾은 뒤 기존 상세 검증과 단일 upsert 흐름을 그대로 사용한다. 요청하지 않은 기존 행은 삭제하지 않는다.
 
 ```sh
 curl --request POST \
@@ -100,6 +100,16 @@ curl --request POST \
   --header 'Authorization: Bearer <STAMP_SPOT_SYNC_TOKEN>' \
   --header 'Content-Type: application/json' \
   --data '{"contentIds":["126508"]}'
+```
+
+위치 기반 부트스트랩은 위도·경도와 반경(1~20,000m), 최대 개수(1~20)를 지정한다.
+
+```sh
+curl --request POST \
+  --url http://127.0.0.1:54321/functions/v1/sync-stamp-spots \
+  --header 'Authorization: Bearer <STAMP_SPOT_SYNC_TOKEN>' \
+  --header 'Content-Type: application/json' \
+  --data '{"nearby":{"latitude":37.5760307,"longitude":126.9767219,"radiusMeters":1000,"limit":20}}'
 ```
 
 실제 운영 대상 ID 선정, 원격 secret 등록, 함수 배포는 환경 자격증명이 준비된 활성화 단계에서 수행한다. 앱에는 TourAPI 키, 동기화 토큰, service-role 키를 넣지 않는다.
